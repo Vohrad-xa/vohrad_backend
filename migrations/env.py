@@ -7,7 +7,12 @@ from sqlalchemy import MetaData
 from sqlalchemy import engine_from_config
 from sqlalchemy import pool
 from sqlalchemy import text
-from src.database.base import Base
+import sqlalchemy as sa
+from sqlalchemy.orm import DeclarativeBase
+
+class Base(DeclarativeBase):
+    __abstract__ = True
+    metadata = sa.MetaData(schema="tenant_default")
 
 load_dotenv()  # Load environment variables from .env file
 
