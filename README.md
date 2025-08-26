@@ -17,6 +17,7 @@ Vohrad is a SaaS inventory management solution designed for businesses requiring
 ## Technology Stack
 
 **Runtime**
+
 - Python 3.13
 - FastAPI
 - PostgreSQL 14+
@@ -24,6 +25,7 @@ Vohrad is a SaaS inventory management solution designed for businesses requiring
 - Uvicorn ASGI server
 
 **Development**
+
 - PDM (package management)
 - Alembic (migrations)
 - Ruff (linting/formatting)
@@ -54,15 +56,92 @@ Interactive API documentation available at `/docs` when running the development 
 ## Project Structure
 
 ```
-src/
-├── api/           # API endpoints and routing
-├── config/        # Application configuration
-├── database/      # Data layer and models
-├── services/      # Business logic layer
-└── main.py        # Application entry point
-
-migrations/        # Database schema versions
-management/        # CLI administration tools
+├── .env.example
+├── alembic.ini
+├── pyproject.toml                  # Project
+├── pytest.ini
+├── ruff.toml
+├── management/                     # CLI
+│   ├── commands/
+│   │   ├── format.py
+│   │   └── tenant.py
+│   └── manage.py                   # Main management script
+├── migrations/                     # Database schema versions
+│   ├── env.py
+│   ├── script.py.mako
+│   ├── tenant.py                   # Tenant-default migration utilities
+│   └── versions/
+│       ├── 001_create_migration
+│       └── 002_create_migration
+└── src/                            # Application core
+    ├── main.py                     # Application entry point
+    ├── api/
+    │   ├── common/
+    │   │   ├── dependencies.py
+    │   │   ├── router_utils.py
+    │   │   ├── schemas.py
+    │   │   └── validators.py
+    │   ├── system/
+    │   │   ├── models.py
+    │   │   ├── service.py
+    │   │   ├── schema.py
+    │   │   └── router.py
+    │   ├── tenant/
+    │   │   ├── models.py
+    │   │   ├── router.py
+    │   │   ├── schema.py
+    │   │   └── service.py
+    │   └── user/
+    │       ├── models.py
+    │       ├── router.py
+    │       ├── schema.py
+    │       └── service.py
+    ├── config/                     # Application configuration
+    │   ├── logging-config.yml
+    │   └── settings.py
+    ├── constants/                  # Application constants
+    │   ├── defaults.py
+    │   ├── enums.py
+    │   ├── messages.py
+    │   └── validation.py
+    ├── database/                   # Data layer and models
+    │   ├── base.py
+    │   ├── engine.py
+    │   ├── sessions.py
+    │   └── cache/
+    │       ├── interface.py
+    │       ├── lru_cache.py
+    │       └── tenant_cache.py
+    ├── domain/                     # Domain logic
+    │   └── subdomain.py
+    ├── exceptions/                 # Exception handling
+    │   ├── application.py
+    │   ├── base.py
+    │   ├── domain.py
+    │   ├── factory.py
+    │   ├── infrastructure.py
+    │   ├── integration.py
+    │   └── registry.py
+    ├── middleware/                 # HTTP middleware
+    │   ├── auth.py
+    │   ├── decorators.py
+    │   ├── exception_handler.py
+    │   └── logging_middleware.py
+    ├── observability/              # Monitoring and logging
+    │   ├── config.py
+    │   ├── context.py
+    │   ├── filters.py
+    │   ├── formatters.py
+    │   └── logger.py
+    ├── security/                   # Security utilities
+    │   └── key_manager.py
+    ├── services/
+    │   ├──
+    │   └── base_service.py
+    └── web/                        # Web utilities
+        ├── pagination.py
+        ├── response_factory.py
+        └── responses.py
 ```
 
 ## License
