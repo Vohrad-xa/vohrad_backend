@@ -1,6 +1,6 @@
 from api.system.router import routes as system_routes
 from api.tenant.router import routes as tenant_routes
-from api.user.router import routes as user_routes
+from api.auth.user.router import routes as user_routes
 from config.settings import get_settings
 from contextlib import asynccontextmanager
 from exceptions import BaseAppException

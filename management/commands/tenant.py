@@ -1,14 +1,19 @@
+from api.tenant.models import Tenant
+from database import Base
+from database.sessions import with_default_db
 import alembic
 import alembic.script
 import asyncio
 import sqlalchemy as sa
+import sys
 import typer
+from pathlib import Path
 from alembic.config import Config
 from alembic.migration import MigrationContext
-from api.tenant.models import Tenant
-from database import Base
-from database.sessions import with_default_db
 from typing import Annotated
+
+# Add src to path for imports
+sys.path.append(str(Path(__file__).parent.parent.parent / "src"))
 
 app = typer.Typer()
 

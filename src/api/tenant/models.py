@@ -5,7 +5,17 @@ from uuid import uuid4
 
 class Tenant(Base):
     __tablename__ = "tenants"
-    __table_args__ = ({"schema": "shared", "extend_existing": True},)
+    __table_args__ = (
+        sa.Index("idx_tenants_sub_domain", "sub_domain", unique=True),
+        sa.Index("idx_tenants_tenant_schema_name", "tenant_schema_name", unique=True),
+        sa.Index("idx_tenants_status", "status"),
+        sa.Index("idx_tenants_email", "email"),
+        sa.Index("idx_tenants_created_at", "created_at"),
+        sa.Index("idx_tenants_created_by", "created_by"),
+        sa.Index("idx_tenants_deleted_at", "deleted_at"),
+        sa.Index("idx_tenants_status_deleted", "status", "deleted_at"),
+        {"schema": "shared", "extend_existing": True},
+    )
 
     tenant_id = sa.Column(
         "tenant_id",

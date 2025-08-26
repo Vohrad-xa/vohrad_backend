@@ -18,9 +18,9 @@ branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
 
 def upgrade() -> None:
-    """Create global users table in shared schema"""
+    """Create admins table in shared schema"""
     op.create_table(
-        "global_users",
+        "admins",
         sa.Column("id", sa.UUID(), nullable=False, default=uuid4),
         sa.Column("email", sa.String(), nullable=False),
         sa.Column("password", sa.String(), nullable=False),
@@ -37,13 +37,13 @@ def upgrade() -> None:
     )
 
     # Create indexes for performance
-    op.create_index("idx_global_users_email", "global_users", ["email"], unique=True, schema="shared")
-    op.create_index("idx_global_users_role", "global_users", ["role"], schema="shared")
-    op.create_index("idx_global_users_active", "global_users", ["is_active"], schema="shared")
+    op.create_index("idx_admins_email", "admins", ["email"], unique=True, schema="shared")
+    op.create_index("idx_admins_role", "admins", ["role"], schema="shared")
+    op.create_index("idx_admins_active", "admins", ["is_active"], schema="shared")
 
 def downgrade() -> None:
-    """Drop global users table from shared schema"""
-    op.drop_index("idx_global_users_active", table_name="global_users", schema="shared")
-    op.drop_index("idx_global_users_role", table_name="global_users", schema="shared")
-    op.drop_index("idx_global_users_email", table_name="global_users", schema="shared")
-    op.drop_table("global_users", schema="shared")
+    """Drop admins table from shared schema"""
+    op.drop_index("idx_admins_active", table_name="admins", schema="shared")
+    op.drop_index("idx_admins_role", table_name="admins", schema="shared")
+    op.drop_index("idx_admins_email", table_name="admins", schema="shared")
+    op.drop_table("admins", schema="shared")
