@@ -1,0 +1,53 @@
+[project]
+name = "vohrad"
+version = "0.1.0"
+description = "Default template for PDM package"
+authors = [{ name = "Amine Abbouti", email = "example@email.com" }]
+requires-python = "==3.13.*"
+readme = "README.md"
+license = { text = "MIT" }
+# prerequisites = ["python>=3.13", "pdm>=2.13.0"]
+dependencies = [
+    "fastapi>=0.111.0",         # for web framework
+    "uvicorn>=0.29.0",          # for ASGI server
+    "pydantic[email]>=2.11.7",  # for data validation
+    "psycopg2-binary>=2.9.9",   # for PostgreSQL (sync fallback)
+    "asyncpg>=0.30.0",          # for async PostgreSQL
+    "SQLAlchemy>=2.0.28",       # for ORM
+    "alembic>=1.13.1",          # for database migrations
+    "typeguard>=4.1.5",         # for type checking
+    "typer>=0.12.3",            # for CLI
+    "pydantic-settings>=2.2.1", # for settings management
+    "python-dotenv>=1.0.1",     # for environment variables
+    "PyYAML>=6.0",              # for YAML configuration files
+    "passlib[bcrypt]>=1.7.4",
+    "requests>=2.32.5",
+    "aiosqlite>=0.21.0",
+    "cryptography>=45.0.6",
+    "faker>=37.5.3",
+    "httpx>=0.28.1",
+]
+
+[dependency-groups]
+dev = [
+    "ruff>=0.3.4",
+    "pytest>=8.4.1",
+    "pytest-asyncio>=1.1.0",
+    "httpx>=0.28.1",
+    "pre-commit>=3.6.0",
+    "autopep8>=2.3.2",
+]
+
+[tool.autopep8]
+max_line_length = 120
+ignore = ["E302", "E305"]
+aggressive = 2
+
+[tool.pdm]
+distribution = false
+
+[tool.pdm.scripts]
+start = "uvicorn main:app --reload --app-dir ./src"
+manage = "python ./management/manage.py"
+format = "python management/commands/format.py directory src"
+format-check = "python management/commands/format.py directory src --check"

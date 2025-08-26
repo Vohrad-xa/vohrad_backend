@@ -1,0 +1,44 @@
+repos:
+  - repo: local
+    hooks:
+      - id: ruff-local
+        name: Ruff Linter (Local Config)
+        entry: ruff check --fix
+        language: system
+        types: [python]
+        args: []
+
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.6.0
+    hooks:
+      - id: check-merge-conflict
+      - id: check-yaml
+        exclude: ^migrations/
+      - id: check-json
+        exclude: ^migrations/
+      - id: check-added-large-files
+        args: [--maxkb=1000]
+      - id: check-ast
+        exclude: ^migrations/
+      - id: debug-statements
+        exclude: ^migrations/
+
+  - repo: local
+    hooks:
+      - id: precision-format
+        name: Professional Code Formatting (Final)
+        entry: python management/commands/format.py directory src
+        language: system
+        types: [python]
+        pass_filenames: false
+        always_run: true
+
+  - repo: https://github.com/pre-commit/mirrors-mypy
+    rev: v1.13.0
+    hooks:
+      - id: mypy
+        exclude: ^(migrations/|tests/)
+        additional_dependencies:
+          - types-PyYAML
+          - types-requests
+        args: [--ignore-missing-imports, --no-strict-optional]

@@ -1,0 +1,1 @@
+"""Vohrad - Multi-tenant FastAPI application."""

@@ -1,0 +1,71 @@
+target-version = "py313"
+exclude = [
+    ".venv",   #
+    ".git",
+    ".github",
+    "tests",
+]
+
+line-length = 120
+indent-width = 4
+
+# Specifies which linting codes to enable, disable, or ignore, or which ones are fixable.
+[lint]
+preview = true
+select = [
+    "F",   # Pyflakes (F) - logic errors, unused imports, etc.
+    "B",   # flake8-bugbear (B) - bug-prone patterns
+    # Remove I (isort) - let precision formatter handle imports
+    "D",   # pydocstyle (D) - docstring style
+    "RUF", # Ruff (RUF) - ruff-specific rules
+    # Exclude all formatting-related E/W/I rules - let precision formatter handle everything
+]
+# ignore  starts one of the select codes
+ignore = [
+    "D100", # ignore missing docs
+    "D101", # ignore missing docstring in public class
+    "D104", # ignore missing docstring in public function
+    "D103", # ignore missing docstring in public function
+    "D102", # ignore missing docstring in public function
+    "D107", # ignore missing docstring in __init__
+    "D415", # First line should end with a period, question mark, or exclamation point
+    "B008", # Do not perform function calls in argument defaults.
+    "D209", #  Multi-line docstring closing quotes should be on a separate line
+    "D205", # 1 blank line required between summary line and description
+]
+# Only fix logical/import issues, not formatting
+fixable = [
+    "I001", # isort (I001) - import sorting
+    "F401", # unused imports
+    "RUF022", # __all__ is not sorted
+    "F841", # local variable assigned but never used
+    "RUF012", # mutable class attributes should use ClassVar
+    "RUF013", # implicit Optional should be explicit
+    "B904", # exception handling with raise ... from
+    # Remove all formatting-related fixable rules - let precision formatter handle those
+]
+extend-select = [
+    "E501", # `line-too-long`
+]
+
+# extend-select  starts one of the select codes
+[lint.pydocstyle]
+convention = "google"
+
+[lint.isort]
+lines-between-types = 0
+lines-after-imports = 2
+no-lines-before = ["standard-library", "third-party", "first-party", "local-folder"]
+
+# Formatting configuration
+[format]
+quote-style = "double"
+indent-style = "space"
+skip-magic-trailing-comma = false
+line-ending = "auto"
+docstring-code-format = true
+docstring-code-line-length = "dynamic"
+
+# Blank line configuration
+[lint.pycodestyle]
+max-line-length = 120
