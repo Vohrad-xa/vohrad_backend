@@ -10,7 +10,6 @@ from api.tenant.models import Tenant
 from database import Base
 from database.sessions import with_default_db
 
-
 app = typer.Typer()
 
 @app.command(name="create_tenant")

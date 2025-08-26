@@ -23,13 +23,11 @@ class EnterpriseExceptionHandler:
     """Exception handler with structured logging and observability."""
 
     @staticmethod
-
     def _generate_correlation_id(exc: BaseAppException) -> str:
         """Generate or retrieve correlation ID."""
         return exc.correlation_id or str(uuid4())
 
     @staticmethod
-
     def _extract_request_metadata(request: Request) -> Dict[str, Any]:
         """Extract standardized request metadata."""
         return {
@@ -41,7 +39,6 @@ class EnterpriseExceptionHandler:
         }
 
     @staticmethod
-
     def _create_error_response(
         error_code: str, message: str, exception_type: str, correlation_id: str, details: Dict[str, Any], timestamp: str
     ) -> Dict[str, Any]:
@@ -59,7 +56,6 @@ class EnterpriseExceptionHandler:
         }
 
     @staticmethod
-
     def _format_validation_errors(errors) -> list:
         """Convert validation errors to standardized format."""
         validation_errors = []

@@ -1,24 +1,15 @@
-"""To run typer commands
-
-$ python manage.py <command> <subcommand> <options>
-    - command: name of the file in management/commands
-    - subcommand: name of the function in the command file
-    - options: arguments and flags for the subcommand
-"""
-
-import os
-import sys
-
-
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "src")))
+"""Management command entry point."""
 
 import typer
-from commands import format, tenant
 
+app = typer.Typer(help="Vohrad management commands")
 
-app = typer.Typer()
-app.add_typer(tenant.app, name="tenant")
-app.add_typer(format.app, name="format")
+@app.command()
+def info():
+    """Show application information."""
+    typer.echo("Vohrad Multi-tenant API")
+    typer.echo("Version: 1.0.0")
+    typer.echo("Management commands ready")
 
 if __name__ == "__main__":
     app()

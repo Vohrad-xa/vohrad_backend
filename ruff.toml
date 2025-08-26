@@ -42,7 +42,6 @@ fixable = [
     "RUF012", # mutable class attributes should use ClassVar
     "RUF013", # implicit Optional should be explicit
     "B904", # exception handling with raise ... from
-    # Remove all formatting-related fixable rules - let precision formatter handle those
 ]
 extend-select = [
     "E501", # `line-too-long`

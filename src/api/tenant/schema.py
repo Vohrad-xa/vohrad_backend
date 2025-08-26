@@ -35,7 +35,6 @@ class TenantCreate(TenantBase):
 
     @field_validator("sub_domain")
     @classmethod
-
     def validate_sub_domain(cls, v):
         if not v or not v.strip():
             raise ValueError("sub_domain cannot be empty")

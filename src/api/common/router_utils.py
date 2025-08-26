@@ -18,7 +18,6 @@ class CRUDRouterFactory:
     """Factory for creating standardized CRUD routes for any model."""
 
     @staticmethod
-
     def create_crud_router(
         service: Any,
         create_schema: Type[CreateSchemaType],
@@ -131,7 +130,6 @@ class SearchableRouterMixin:
     """Mixin to add search functionality to routers."""
 
     @staticmethod
-
     def add_search_route(
         router: APIRouter, service: Any, response_schema: Type[ResponseSchemaType], tenant_scoped: bool = True
     ):

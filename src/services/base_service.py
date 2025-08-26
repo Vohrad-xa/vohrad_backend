@@ -65,7 +65,6 @@ class BaseService(Generic[ModelType, CreateSchemaType, UpdateSchemaType], ABC):
         return objects, total
 
     @abstractmethod
-
     def get_search_fields(self) -> List[str]:
         """Return list of fields that should be searchable for this model."""
         pass
