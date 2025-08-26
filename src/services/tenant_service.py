@@ -1,0 +1,82 @@
+"""Tenant service layer for schema resolution and caching."""
+
+from typing import Optional
+from database.cache import TenantCache
+from exceptions import tenant_not_found
+
+class TenantSchemaService:
+    """Service for tenant schema resolution with caching."""
+
+    def __init__(self, cache: Optional[TenantCache] = None):
+        """Initialize tenant service.
+
+        Args:
+            cache: Optional cache instance (uses default if None)
+        """
+        self._cache = cache or TenantCache()
+
+    async def resolve_tenant_schema(self, subdomain: str) -> str:
+        """Resolve tenant schema name with cache-first strategy.
+
+        Args:
+            subdomain: Tenant subdomain to resolve
+
+        Returns:
+            Tenant schema name
+
+        Raises:
+            tenant_not_found: If tenant doesn't exist
+        """
+        # Try cache first
+        cached_schema = await self._cache.get_tenant_schema(subdomain)
+        if cached_schema:
+            return cached_schema
+
+        # Cache miss - query database
+        schema_name = await self._query_tenant_from_database(subdomain)
+
+        # Cache the result for future requests
+        await self._cache.cache_tenant_schema(subdomain, schema_name)
+
+        return schema_name
+
+    async def _query_tenant_from_database(self, subdomain: str) -> str:
+        """Query tenant schema from database."""
+        from sqlalchemy import select
+        from api.tenant.models import Tenant
+        from database.sessions import with_default_db
+
+        async with with_default_db() as db:
+            result = await db.execute(select(Tenant.tenant_schema_name).filter(Tenant.sub_domain == subdomain))
+            schema_name = result.scalar_one_or_none()
+
+        if schema_name is None:
+            raise tenant_not_found(subdomain)
+
+        return schema_name
+
+    async def invalidate_tenant_cache(self, subdomain: str) -> bool:
+        """Invalidate cached tenant (useful after tenant updates).
+
+        Args:
+            subdomain: Tenant subdomain to invalidate
+
+        Returns:
+            True if tenant was cached and removed
+        """
+        return await self._cache.invalidate_tenant(subdomain)
+
+    async def get_cache_performance(self) -> dict:
+        """Get cache performance metrics."""
+        return await self._cache.get_cache_stats()
+
+    async def clear_cache(self) -> None:
+        """Clear all tenant cache entries."""
+        await self._cache.clear_all_tenants()
+
+# Global instance for easy access
+_tenant_schema_service = TenantSchemaService()
+
+def get_tenant_schema_service() -> TenantSchemaService:
+    """Get global tenant schema service instance."""
+    return _tenant_schema_service
