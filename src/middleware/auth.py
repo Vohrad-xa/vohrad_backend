@@ -1,7 +1,8 @@
 """Authentication utilities for password hashing and verification."""
 
-from typing import ClassVar, Optional
 from passlib.context import CryptContext
+from typing import ClassVar
+from typing import Optional
 
 class PasswordManager:
     """Centralized password hashing and verification utility."""

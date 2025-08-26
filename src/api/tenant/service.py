@@ -1,9 +1,11 @@
+from api.tenant.models import Tenant
+from api.tenant.schema import TenantCreate
+from api.tenant.schema import TenantUpdate
+from exceptions import duplicate_subdomain
+from exceptions import tenant_not_found
+from services import BaseService
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
-from api.tenant.models import Tenant
-from api.tenant.schema import TenantCreate, TenantUpdate
-from exceptions import duplicate_subdomain, tenant_not_found
-from services import BaseService
 
 class TenantService(BaseService[Tenant, TenantCreate, TenantUpdate]):
     """Service class for tenant business logic"""

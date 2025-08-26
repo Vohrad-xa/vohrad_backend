@@ -1,9 +1,10 @@
 """Reusable base schema classes for consistent model patterns."""
 
 from datetime import datetime
+from pydantic import BaseModel
+from pydantic import ConfigDict
 from typing import Optional
 from uuid import UUID
-from pydantic import BaseModel, ConfigDict
 
 class BaseCreateSchema(BaseModel):
     """Base schema for create operations - extend for new models."""

@@ -27,11 +27,11 @@ repos:
     hooks:
       - id: precision-format
         name: Professional Code Formatting (Final)
-        entry: pdm run python management/commands/format.py all
+        entry: pdm run python management/commands/format.py
         language: system
         types: [python]
-        pass_filenames: false
-        always_run: true
+        pass_filenames: true
+        stages: [pre-commit, manual]
 
   - repo: https://github.com/pre-commit/mirrors-mypy
     rev: v1.13.0

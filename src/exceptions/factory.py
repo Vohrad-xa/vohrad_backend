@@ -1,14 +1,18 @@
 """Enterprise exception factory for clean, automated error handling."""
 
-from typing import Any, Dict, Optional
-from uuid import uuid4
 from .base import BaseAppException
-from .registry import ErrorDefinition, ErrorRegistry
+from .registry import ErrorDefinition
+from .registry import ErrorRegistry
+from typing import Any
+from typing import Dict
+from typing import Optional
+from uuid import uuid4
 
 class ExceptionFactory:
     """Factory for creating standardized exceptions with minimal boilerplate."""
 
     @staticmethod
+
     def create(
         error_def: ErrorDefinition,
         details: Optional[Dict[str, Any]] = None,
@@ -29,6 +33,7 @@ class ExceptionFactory:
         )
 
     @staticmethod
+
     def not_found(entity_type: str, identifier: Any = None) -> BaseAppException:
         """Create entity not found exception."""
         f"{entity_type}" + (f" with ID {identifier}" if identifier else "")
@@ -39,6 +44,7 @@ class ExceptionFactory:
         )
 
     @staticmethod
+
     def already_exists(entity_type: str, field: str, value: Any) -> BaseAppException:
         """Create entity already exists exception."""
         return ExceptionFactory.create(
@@ -48,11 +54,13 @@ class ExceptionFactory:
         )
 
     @staticmethod
+
     def business_rule(rule_description: str, details: Optional[Dict[str, Any]] = None) -> BaseAppException:
         """Create business rule violation exception."""
         return ExceptionFactory.create(ErrorRegistry.BUSINESS_RULE_VIOLATION, details=details, context=rule_description)
 
     @staticmethod
+
     def invalid_state(entity_type: str, current_state: str, required_state: str) -> BaseAppException:
         """Create invalid domain state exception."""
         return ExceptionFactory.create(
@@ -62,11 +70,13 @@ class ExceptionFactory:
         )
 
     @staticmethod
+
     def authentication_failed(reason: Optional[str] = None) -> BaseAppException:
         """Create authentication failed exception."""
         return ExceptionFactory.create(ErrorRegistry.AUTHENTICATION_FAILED, context=reason)
 
     @staticmethod
+
     def authorization_failed(resource: str, action: str) -> BaseAppException:
         """Create authorization failed exception."""
         return ExceptionFactory.create(
@@ -76,6 +86,7 @@ class ExceptionFactory:
         )
 
     @staticmethod
+
     def validation_failed(field: str, reason: str) -> BaseAppException:
         """Create validation error exception."""
         return ExceptionFactory.create(
@@ -85,6 +96,7 @@ class ExceptionFactory:
         )
 
     @staticmethod
+
     def database_error(operation: str, details: Optional[Dict[str, Any]] = None) -> BaseAppException:
         """Create database error exception."""
         return ExceptionFactory.create(
@@ -94,6 +106,7 @@ class ExceptionFactory:
         )
 
     @staticmethod
+
     def external_service_error(
         service: str, operation: str, details: Optional[Dict[str, Any]] = None
     ) -> BaseAppException:
@@ -105,6 +118,7 @@ class ExceptionFactory:
         )
 
     @staticmethod
+
     def service_unavailable(service: str, reason: Optional[str] = None) -> BaseAppException:
         """Create service unavailable exception."""
         return ExceptionFactory.create(

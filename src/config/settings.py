@@ -1,10 +1,12 @@
 import os
-from typing import ClassVar, Optional
-
-from pydantic import Field, field_validator
-from pydantic_settings import BaseSettings, SettingsConfigDict
-
-from observability.logger import get_logger, setup_logging
+from observability.logger import get_logger
+from observability.logger import setup_logging
+from pydantic import Field
+from pydantic import field_validator
+from pydantic_settings import BaseSettings
+from pydantic_settings import SettingsConfigDict
+from typing import ClassVar
+from typing import Optional
 
 setup_logging()
 logger = get_logger()
@@ -59,6 +61,7 @@ class Settings(BaseSettings):
 
     @field_validator("ENVIRONMENT")
     @classmethod
+
     def validate_environment(cls, v):
         """Validate environment value."""
         allowed = ["development", "staging", "production"]
@@ -68,6 +71,7 @@ class Settings(BaseSettings):
 
     @field_validator("DEBUG", mode="before")
     @classmethod
+
     def validate_debug(cls, v):
         """Convert string debug values to boolean."""
         if isinstance(v, str):
@@ -75,16 +79,19 @@ class Settings(BaseSettings):
         return v
 
     @property
+
     def database_url(self) -> str:
         """Generate database URL from components."""
         return f"postgresql://{self.DB_USER}:{self.DB_PASS}@{self.DB_HOST}:{self.DB_PORT}/{self.DB_NAME}"
 
     @property
+
     def is_development(self) -> bool:
         """Check if running in development mode."""
         return self.ENVIRONMENT == "development"
 
     @property
+
     def is_production(self) -> bool:
         """Check if running in production mode."""
         return self.ENVIRONMENT == "production"
@@ -98,6 +105,7 @@ class Settings(BaseSettings):
         return cls._instance
 
     @classmethod
+
     def instance(cls) -> "Settings":
         """Get singleton instance of settings."""
         if cls._instance is None:

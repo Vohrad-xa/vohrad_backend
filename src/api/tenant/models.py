@@ -1,7 +1,7 @@
-from uuid import uuid4
 import sqlalchemy as sa
-from sqlalchemy.sql import func
 from database import Base
+from sqlalchemy.sql import func
+from uuid import uuid4
 
 class Tenant(Base):
     __tablename__ = "tenants"

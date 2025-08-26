@@ -1,8 +1,8 @@
 """User-facing messages for validation, errors, and success responses."""
 
-from typing import Final
 from .defaults import TenantDefaults
 from .validation import ValidationConstraints
+from typing import Final
 
 class ValidationMessages:
     """Standardized validation error messages."""

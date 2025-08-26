@@ -1,7 +1,6 @@
-import asyncio
-from typing import Annotated
 import alembic
 import alembic.script
+import asyncio
 import sqlalchemy as sa
 import typer
 from alembic.config import Config
@@ -9,6 +8,7 @@ from alembic.migration import MigrationContext
 from api.tenant.models import Tenant
 from database import Base
 from database.sessions import with_default_db
+from typing import Annotated
 
 app = typer.Typer()
 

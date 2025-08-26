@@ -2,9 +2,10 @@
 
 import logging
 import logging.config
-from pathlib import Path
-from typing import Any, Dict
 from .filters import SmartFilter
+from pathlib import Path
+from typing import Any
+from typing import Dict
 
 class LoggingConfig:
     """Clean logging configuration manager for different environments."""

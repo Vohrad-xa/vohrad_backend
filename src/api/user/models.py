@@ -1,8 +1,8 @@
-from uuid import uuid4
 import sqlalchemy as sa
+from database import Base
 from sqlalchemy.dialects.postgresql import UUID as PostgresUUID
 from sqlalchemy.sql import func
-from database import Base
+from uuid import uuid4
 
 class User(Base):
     __tablename__ = "users"

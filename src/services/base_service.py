@@ -1,12 +1,20 @@
 """Base service class with common CRUD operations."""
 
-from abc import ABC, abstractmethod
-from typing import Any, Generic, List, Optional, Protocol, Type, TypeVar
-from uuid import UUID
-from pydantic import BaseModel
-from sqlalchemy import or_, select
-from sqlalchemy.ext.asyncio import AsyncSession
+from abc import ABC
+from abc import abstractmethod
 from exceptions import ExceptionFactory
+from pydantic import BaseModel
+from sqlalchemy import or_
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
+from typing import Any
+from typing import Generic
+from typing import List
+from typing import Optional
+from typing import Protocol
+from typing import Type
+from typing import TypeVar
+from uuid import UUID
 from web import PaginationUtil
 
 class DatabaseModel(Protocol):
@@ -65,6 +73,7 @@ class BaseService(Generic[ModelType, CreateSchemaType, UpdateSchemaType], ABC):
         return objects, total
 
     @abstractmethod
+
     def get_search_fields(self) -> List[str]:
         """Return list of fields that should be searchable for this model."""
         pass

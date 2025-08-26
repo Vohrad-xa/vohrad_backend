@@ -1,9 +1,10 @@
-from contextlib import asynccontextmanager
-from typing import Optional
-from fastapi import Depends, Request
-from sqlalchemy.ext.asyncio import AsyncSession
-from domain.subdomain import SubdomainExtractor
 from .engine import async_engine
+from contextlib import asynccontextmanager
+from domain.subdomain import SubdomainExtractor
+from fastapi import Depends
+from fastapi import Request
+from sqlalchemy.ext.asyncio import AsyncSession
+from typing import Optional
 
 __all__ = ["get_default_db_session", "get_tenant_db_session", "with_default_db", "with_tenant_db"]
 

@@ -54,7 +54,8 @@ convention = "google"
 [lint.isort]
 lines-between-types = 0
 lines-after-imports = 2
-no-lines-before = ["standard-library", "third-party", "first-party", "local-folder"]
+force-single-line = true
+no-sections = true
 
 # Formatting configuration
 [format]

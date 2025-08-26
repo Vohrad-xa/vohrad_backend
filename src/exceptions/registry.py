@@ -1,8 +1,9 @@
 """Centralized error registry for enterprise-grade error handling."""
 
 from dataclasses import dataclass
-from typing import Dict, Final
 from fastapi import status
+from typing import Dict
+from typing import Final
 
 @dataclass(frozen=True)
 class ErrorDefinition:
@@ -95,11 +96,13 @@ class ErrorRegistry:
     )
 
     @classmethod
+
     def get_all_errors(cls) -> Dict[str, ErrorDefinition]:
         """Get all registered errors."""
         return {name: getattr(cls, name) for name in dir(cls) if isinstance(getattr(cls, name), ErrorDefinition)}
 
     @classmethod
+
     def get_by_code(cls, code: str) -> ErrorDefinition:
         """Get error definition by code."""
         for error_def in cls.get_all_errors().values():

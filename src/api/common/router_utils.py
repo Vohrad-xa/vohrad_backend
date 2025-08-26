@@ -1,13 +1,22 @@
 """Common router utilities for consistent endpoint patterns across all models."""
 
-from typing import Any, List, Type, TypeVar
-from uuid import UUID
-from fastapi import APIRouter, Depends, Query, status
-from pydantic import BaseModel
-from sqlalchemy.ext.asyncio import AsyncSession
 from api.common.dependencies import get_current_tenant
 from database import get_tenant_db_session
-from web import PaginationParams, PaginationUtil, ResponseFactory, pagination_params
+from fastapi import APIRouter
+from fastapi import Depends
+from fastapi import Query
+from fastapi import status
+from pydantic import BaseModel
+from sqlalchemy.ext.asyncio import AsyncSession
+from typing import Any
+from typing import List
+from typing import Type
+from typing import TypeVar
+from uuid import UUID
+from web import PaginationParams
+from web import PaginationUtil
+from web import ResponseFactory
+from web import pagination_params
 
 T = TypeVar("T")
 CreateSchemaType = TypeVar("CreateSchemaType", bound=BaseModel)
@@ -18,6 +27,7 @@ class CRUDRouterFactory:
     """Factory for creating standardized CRUD routes for any model."""
 
     @staticmethod
+
     def create_crud_router(
         service: Any,
         create_schema: Type[CreateSchemaType],
@@ -130,6 +140,7 @@ class SearchableRouterMixin:
     """Mixin to add search functionality to routers."""
 
     @staticmethod
+
     def add_search_route(
         router: APIRouter, service: Any, response_schema: Type[ResponseSchemaType], tenant_scoped: bool = True
     ):

@@ -1,9 +1,8 @@
 import functools
-from typing import Callable
 from alembic import op
 from sqlalchemy import text
 from typeguard import typechecked
-
+from typing import Callable
 
 @typechecked
 def for_each_tenant_schema(func: Callable) -> Callable:

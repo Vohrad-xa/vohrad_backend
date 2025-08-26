@@ -2,9 +2,12 @@
 
 import asyncio
 import time
-from collections import OrderedDict
-from typing import Any, Dict, Optional, Tuple
 from .interface import CacheInterface
+from collections import OrderedDict
+from typing import Any
+from typing import Dict
+from typing import Optional
+from typing import Tuple
 
 class LRUCache(CacheInterface):
     """In-memory LRU cache with TTL support and size limits."""

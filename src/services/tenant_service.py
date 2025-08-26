@@ -1,8 +1,8 @@
 """Tenant service layer for schema resolution and caching."""
 
-from typing import Optional
 from database.cache import TenantCache
 from exceptions import tenant_not_found
+from typing import Optional
 
 class TenantSchemaService:
     """Service for tenant schema resolution with caching."""
@@ -42,9 +42,9 @@ class TenantSchemaService:
 
     async def _query_tenant_from_database(self, subdomain: str) -> str:
         """Query tenant schema from database."""
-        from sqlalchemy import select
         from api.tenant.models import Tenant
         from database.sessions import with_default_db
+        from sqlalchemy import select
 
         async with with_default_db() as db:
             result = await db.execute(select(Tenant.tenant_schema_name).filter(Tenant.sub_domain == subdomain))

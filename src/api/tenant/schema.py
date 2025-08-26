@@ -1,8 +1,10 @@
-from typing import Optional
-from uuid import UUID
-from pydantic import BaseModel, EmailStr, field_validator
 from api.common import BaseResponseSchema
 from constants import TenantDefaults
+from pydantic import BaseModel
+from pydantic import EmailStr
+from pydantic import field_validator
+from typing import Optional
+from uuid import UUID
 
 class TenantBase(BaseModel):
     """Base tenant schema"""
@@ -35,6 +37,7 @@ class TenantCreate(TenantBase):
 
     @field_validator("sub_domain")
     @classmethod
+
     def validate_sub_domain(cls, v):
         if not v or not v.strip():
             raise ValueError("sub_domain cannot be empty")

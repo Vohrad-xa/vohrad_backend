@@ -1,13 +1,17 @@
-from typing import Optional
-from uuid import UUID
-from sqlalchemy import func
-from sqlalchemy.ext.asyncio import AsyncSession
 from api.tenant.models import Tenant
 from api.user.models import User
-from api.user.schema import UserCreate, UserPasswordUpdate, UserUpdate
-from exceptions import duplicate_email, invalid_credentials
-from middleware import hash_password, verify_password
+from api.user.schema import UserCreate
+from api.user.schema import UserPasswordUpdate
+from api.user.schema import UserUpdate
+from exceptions import duplicate_email
+from exceptions import invalid_credentials
+from middleware import hash_password
+from middleware import verify_password
 from services import BaseService
+from sqlalchemy import func
+from sqlalchemy.ext.asyncio import AsyncSession
+from typing import Optional
+from uuid import UUID
 
 class UserService(BaseService[User, UserCreate, UserUpdate]):
     """Service class for user business logic"""

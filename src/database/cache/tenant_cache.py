@@ -1,7 +1,7 @@
 """Tenant-specific cache implementation for schema lookups."""
 
-from typing import Optional
 from .lru_cache import LRUCache
+from typing import Optional
 
 class TenantCache:
     """High-level tenant schema cache with business logic."""

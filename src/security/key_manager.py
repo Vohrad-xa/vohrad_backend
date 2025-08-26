@@ -2,9 +2,9 @@
 
 import base64
 import secrets
-from typing import Optional
-from cryptography.fernet import Fernet
 from config.settings import get_settings
+from cryptography.fernet import Fernet
+from typing import Optional
 
 class KeyManager:
     """Centralized key management for encryption and JWT operations."""
@@ -14,6 +14,7 @@ class KeyManager:
         self._encryption_key: Optional[bytes] = None
 
     @property
+
     def jwt_secret_key(self) -> str:
         """Get JWT secret key with validation."""
         if not self.settings.SECRET_KEY:
@@ -21,6 +22,7 @@ class KeyManager:
         return self.settings.SECRET_KEY
 
     @property
+
     def jwt_algorithm(self) -> str:
         """Get JWT algorithm."""
         return self.settings.JWT_ALGORITHM
@@ -77,11 +79,13 @@ class KeyManager:
         return decrypted_bytes.decode()
 
     @staticmethod
+
     def generate_secret_key() -> str:
         """Generate a cryptographically secure secret key."""
         return secrets.token_urlsafe(64)
 
     @staticmethod
+
     def generate_encryption_key() -> str:
         """Generate a base64-encoded encryption key."""
         key = Fernet.generate_key()

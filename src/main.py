@@ -1,15 +1,16 @@
-from contextlib import asynccontextmanager
-from fastapi import FastAPI
-from fastapi.exceptions import RequestValidationError
-from pydantic import ValidationError as PydanticValidationError
 from api.system.router import routes as system_routes
 from api.tenant.router import routes as tenant_routes
 from api.user.router import routes as user_routes
 from config.settings import get_settings
+from contextlib import asynccontextmanager
 from exceptions import BaseAppException
+from fastapi import FastAPI
+from fastapi.exceptions import RequestValidationError
 from middleware import EnterpriseExceptionHandler
 from middleware.logging_middleware import RequestLoggingMiddleware
-from observability import get_logger, setup_logging
+from observability import get_logger
+from observability import setup_logging
+from pydantic import ValidationError as PydanticValidationError
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):  # noqa: RUF029

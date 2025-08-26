@@ -1,8 +1,10 @@
 """Integration exceptions for third-party services."""
 
-from typing import Any, Dict, Optional
-from fastapi import status
 from .base import BaseAppException
+from fastapi import status
+from typing import Any
+from typing import Dict
+from typing import Optional
 
 class IntegrationException(BaseAppException):
     """Base class for external system integration exceptions."""

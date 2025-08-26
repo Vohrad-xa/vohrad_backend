@@ -15,6 +15,7 @@ class PerformanceTracker:
     """Simple and effective performance tracking for requests and operations."""
 
     @staticmethod
+
     def start_request(
         correlation_id: Optional[str] = None, user_id: Optional[str] = None, tenant_id: Optional[str] = None
     ) -> str:
@@ -33,6 +34,7 @@ class PerformanceTracker:
         return correlation_id
 
     @staticmethod
+
     def end_request():
         """Clear all request context variables."""
         correlation_id_var.set(None)
@@ -41,11 +43,13 @@ class PerformanceTracker:
         tenant_id_var.set(None)
 
     @staticmethod
+
     def get_correlation_id() -> Optional[str]:
         """Get current correlation ID."""
         return correlation_id_var.get()
 
     @staticmethod
+
     def get_request_duration() -> Optional[float]:
         """Get current request duration in milliseconds."""
         start_time = request_start_time_var.get()
@@ -54,6 +58,7 @@ class PerformanceTracker:
         return None
 
     @staticmethod
+
     def get_context_info() -> dict:
         """Get all current context information as a dictionary."""
         context = {}

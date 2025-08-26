@@ -1,11 +1,21 @@
-from uuid import UUID
-from fastapi import APIRouter, Depends, Query, status
-from sqlalchemy.ext.asyncio import AsyncSession
 from api.common import get_current_tenant
-from api.user.schema import UserCreate, UserPasswordUpdate, UserResponse, UserUpdate
+from api.user.schema import UserCreate
+from api.user.schema import UserPasswordUpdate
+from api.user.schema import UserResponse
+from api.user.schema import UserUpdate
 from api.user.service import user_service
 from database.sessions import get_tenant_db_session
-from web import DeletedResponse, PaginationParams, PaginationUtil, ResponseFactory, pagination_params
+from fastapi import APIRouter
+from fastapi import Depends
+from fastapi import Query
+from fastapi import status
+from sqlalchemy.ext.asyncio import AsyncSession
+from uuid import UUID
+from web import DeletedResponse
+from web import PaginationParams
+from web import PaginationUtil
+from web import ResponseFactory
+from web import pagination_params
 
 routes = APIRouter(
     tags=["users"],

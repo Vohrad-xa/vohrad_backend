@@ -1,21 +1,21 @@
 """Exception handlers with structured logging."""
 
 import logging
-from datetime import datetime, timezone
-from typing import Any, Dict
-from uuid import uuid4
-from fastapi import Request, status
+from datetime import datetime
+from datetime import timezone
+from exceptions import ApplicationException
+from exceptions import BaseAppException
+from exceptions import DomainException
+from exceptions import InfrastructureException
+from exceptions import IntegrationException
+from fastapi import Request
+from fastapi import status
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 from pydantic import ValidationError as PydanticValidationError
-from exceptions import (
-
-    ApplicationException,
-    BaseAppException,
-    DomainException,
-    InfrastructureException,
-    IntegrationException,
-)
+from typing import Any
+from typing import Dict
+from uuid import uuid4
 
 logger = logging.getLogger(__name__)
 
@@ -23,11 +23,13 @@ class EnterpriseExceptionHandler:
     """Exception handler with structured logging and observability."""
 
     @staticmethod
+
     def _generate_correlation_id(exc: BaseAppException) -> str:
         """Generate or retrieve correlation ID."""
         return exc.correlation_id or str(uuid4())
 
     @staticmethod
+
     def _extract_request_metadata(request: Request) -> Dict[str, Any]:
         """Extract standardized request metadata."""
         return {
@@ -39,6 +41,7 @@ class EnterpriseExceptionHandler:
         }
 
     @staticmethod
+
     def _create_error_response(
         error_code: str, message: str, exception_type: str, correlation_id: str, details: Dict[str, Any], timestamp: str
     ) -> Dict[str, Any]:
@@ -56,6 +59,7 @@ class EnterpriseExceptionHandler:
         }
 
     @staticmethod
+
     def _format_validation_errors(errors) -> list:
         """Convert validation errors to standardized format."""
         validation_errors = []

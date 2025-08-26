@@ -1,8 +1,10 @@
 """Base exception classes with structured metadata."""
 
 from abc import ABC
-from typing import Any, Dict, Optional
 from fastapi import status
+from typing import Any
+from typing import Dict
+from typing import Optional
 
 class BaseAppException(Exception, ABC):
     """Base exception for all application-specific errors."""

@@ -1,13 +1,18 @@
 """Professional precision code formatter - elegant, efficient, and uncompromising."""
 
-import typer
 import os
 import re
 import subprocess
 import sys
+import typer
 from dataclasses import dataclass
 from pathlib import Path
-from typing import ClassVar, FrozenSet, List, Optional, Pattern, Tuple
+from typing import ClassVar
+from typing import FrozenSet
+from typing import List
+from typing import Optional
+from typing import Pattern
+from typing import Tuple
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "src")))
 
@@ -86,8 +91,7 @@ class PrecisionFormatter:
 
             if (in_class and line.strip().startswith('def ') and
                 i > 0 and result and result[-1].strip() and
-                not result[-1].strip().startswith('"""') and
-                    not result[-1].strip().startswith('@')):
+                    not result[-1].strip().startswith('"""')):
                 result.append('')
 
             result.append(line)
@@ -103,31 +107,19 @@ class PrecisionFormatter:
     def process_file(self, file_path: Path, check_only: bool = False) -> bool:
         """Process a single file with precision formatting."""
         try:
-            autopep8_modified = False
-            original_content = file_path.read_text(encoding='utf-8')
-
             if not self._run_autopep8(file_path):
                 return False
 
-            # Check if autopep8 modified the file
-            content_after_autopep8 = file_path.read_text(encoding='utf-8')
-            if original_content != content_after_autopep8:
-                autopep8_modified = True
-
-            formatted_content, precision_modified = self.format_content(content_after_autopep8)
+            content = file_path.read_text(encoding='utf-8')
+            formatted_content, was_modified = self.format_content(content)
 
             self._stats["files_processed"] += 1
-            any_modification = autopep8_modified or precision_modified
 
-            if any_modification:
+            if was_modified:
                 if not check_only:
                     file_path.write_text(formatted_content, encoding='utf-8')
                     self._stats["files_modified"] += 1
-                    # Return False to indicate file was modified (pre-commit should re-run)
-                    return False
-                else:
-                    # In check mode, return False if file needs formatting
-                    return False
+                return not check_only
 
             return True
 
@@ -164,6 +156,7 @@ class FileDiscovery:
     """Efficient file discovery with smart filtering."""
 
     @staticmethod
+
     def find_python_files(path: Path, recursive: bool = True,
                           exclude_patterns: Optional[FrozenSet[str]] = None) -> List[Path]:
         """Discover Python files with intelligent filtering."""
@@ -179,18 +172,22 @@ class OutputFormatter:
     """Elegant output formatting for user feedback."""
 
     @staticmethod
+
     def success(message: str) -> None:
         typer.echo(f"SUCCESS: {message}")
 
     @staticmethod
+
     def error(message: str) -> None:
         typer.echo(f"ERROR: {message}", err=True)
 
     @staticmethod
+
     def info(message: str) -> None:
         typer.echo(f"INFO: {message}")
 
     @staticmethod
+
     def report_stats(stats: dict, total_files: int) -> None:
         success_rate = (stats["files_processed"] - stats["errors"]) / total_files * 100
         typer.echo("\nFormatting Summary:")
@@ -230,10 +227,14 @@ def file(
         else:
             raise typer.Exit(1)
 
-def _format_directory(
-    dir_path: str, recursive: bool = True, check: bool = False, exclude: Optional[List[str]] = None
+@app.command()
+def directory(
+    dir_path: str = typer.Argument("src", help="Directory to format"),
+    recursive: bool = typer.Option(True, "--recursive/--no-recursive", "-r"),
+    check: bool = typer.Option(False, "--check", "-c"),
+    exclude: Optional[List[str]] = typer.Option(None, "--exclude", "-e")
 ) -> None:
-    """Internal function to format directory."""
+    """Format all Python files in a directory with precision styling."""
     path = Path(dir_path)
 
     if not path.exists() or not path.is_dir():
@@ -242,7 +243,7 @@ def _format_directory(
 
     config = FormattingConfig()
     if exclude:
-        config = FormattingConfig(excluded_patterns=frozenset(config.excluded_patterns | set(exclude)))
+        config = FormattingConfig(excluded_patterns=config.excluded_patterns | set(exclude))
 
     files = FileDiscovery.find_python_files(path, recursive, config.excluded_patterns)
 
@@ -283,26 +284,83 @@ def _format_directory(
     if not check:
         OutputFormatter.success("All files formatted with precision styling")
 
-@app.command()
-def directory(
-    dir_path: str = typer.Argument("src", help="Directory to format"),
-    recursive: bool = typer.Option(True, "--recursive/--no-recursive", "-r"),
-    check: bool = typer.Option(False, "--check", "-c"),
-    exclude: Optional[List[str]] = typer.Option(None, "--exclude", "-e")
-) -> None:
-    """Format all Python files in a directory with precision styling."""
-    _format_directory(dir_path, recursive, check, exclude)
+@app.callback(invoke_without_command=True)
+def main(files: List[str] = typer.Argument(None), check: bool = typer.Option(False, "--check", "-c")) -> None:
+    """Format specific files or run without command for pre-commit integration."""
+    if files:
+        # Pre-commit mode - format specific files
+        format_files(files, check)
+    else:
+        # No arguments provided - show help
+        typer.echo("Use 'all' command to format entire project or provide file paths")
+        raise typer.Exit(1)
+
+def format_files(files: List[str], check: bool = False) -> None:
+    """Format specific files provided as arguments."""
+    config = FormattingConfig()
+    formatter = PrecisionFormatter(config)
+
+    # Filter to only Python files
+    python_files = [Path(f) for f in files if f.endswith('.py') and Path(f).exists()]
+
+    if not python_files:
+        return  # No Python files to process
+
+    failed_files = []
+
+    for file_path in python_files:
+        result = formatter.process_file(file_path, check_only=check)
+        if not result and not check:
+            failed_files.append(str(file_path))
+
+    if failed_files:
+        OutputFormatter.error(f"Failed to format {len(failed_files)} files")
+        raise typer.Exit(1)
 
 @app.command()
 def all(check: bool = typer.Option(False, "--check", "-c")) -> None:
     """Format entire project with precision styling."""
     OutputFormatter.info("Applying precision formatting to entire project...")
 
-    directories = ["src", "management", "migrations", "tests"]
+    directories = ["src"]
+    if Path("management").exists():
+        directories.append("management")
 
     for dir_name in directories:
         try:
-            _format_directory(dir_name, recursive=True, check=check)
+            # Call directory formatting logic directly
+            path = Path(dir_name)
+
+            if not path.exists() or not path.is_dir():
+                OutputFormatter.error(f"Directory not found: {dir_name}")
+                raise typer.Exit(1)
+
+            config = FormattingConfig()
+            files = FileDiscovery.find_python_files(path, True, config.excluded_patterns)
+
+            if not files:
+                OutputFormatter.info(f"No Python files found in {dir_name}")
+                continue
+
+            OutputFormatter.info(f"Discovered {len(files)} Python files")
+            formatter = PrecisionFormatter(config)
+
+            failed_files = []
+
+            with typer.progressbar(files, label="Processing files") as progress:
+                for file_path in progress:
+                    result = formatter.process_file(file_path, check_only=check)
+                    if not result:
+                        if not check:
+                            failed_files.append(str(file_path))
+
+            stats = formatter.get_stats()
+            OutputFormatter.report_stats(stats, len(files))
+
+            if failed_files:
+                OutputFormatter.error(f"Failed to format {len(failed_files)} files")
+                raise typer.Exit(1)
+
         except typer.Exit as e:
             if e.exit_code != 0:
                 OutputFormatter.error(f"Formatting failed in {dir_name}/")
@@ -312,4 +370,11 @@ def all(check: bool = typer.Option(False, "--check", "-c")) -> None:
         OutputFormatter.success("Project formatted with precision styling")
 
 if __name__ == "__main__":
-    app()
+    # Handle both pre-commit (with file arguments) and manual usage
+    if len(sys.argv) > 1 and not any(arg.startswith('-') for arg in sys.argv[1:]) and sys.argv[1] != 'all':
+        # Called with file arguments (pre-commit mode)
+        files = sys.argv[1:]
+        format_files(files)
+    else:
+        # Called with commands or no arguments
+        app()

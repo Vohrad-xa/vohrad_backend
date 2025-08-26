@@ -1,9 +1,11 @@
 """Main logging interface and utility functions."""
 
 import logging
-from typing import Any, Dict, Optional
 from .config import LoggingConfig
 from .context import PerformanceTracker
+from typing import Any
+from typing import Dict
+from typing import Optional
 
 def setup_logging(settings: Optional[Dict[str, Any]] = None):
     """Setup logging configuration based on environment settings.

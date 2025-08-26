@@ -1,10 +1,14 @@
-from uuid import UUID
-from fastapi import APIRouter, Depends, status
-from sqlalchemy.ext.asyncio import AsyncSession
 from api.common import get_current_tenant
-from api.tenant.schema import TenantCreate, TenantResponse, TenantUpdate
+from api.tenant.schema import TenantCreate
+from api.tenant.schema import TenantResponse
+from api.tenant.schema import TenantUpdate
 from api.tenant.service import tenant_service
 from database import get_default_db_session
+from fastapi import APIRouter
+from fastapi import Depends
+from fastapi import status
+from sqlalchemy.ext.asyncio import AsyncSession
+from uuid import UUID
 from web import ResponseFactory
 
 routes = APIRouter(

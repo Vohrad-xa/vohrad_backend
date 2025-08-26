@@ -1,8 +1,10 @@
 """Infrastructure layer exceptions for external dependencies."""
 
-from typing import Any, Dict, Optional
-from fastapi import status
 from .base import BaseAppException
+from fastapi import status
+from typing import Any
+from typing import Dict
+from typing import Optional
 
 class InfrastructureException(BaseAppException):
     """Base class for infrastructure layer exceptions."""

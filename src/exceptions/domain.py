@@ -1,8 +1,10 @@
 """Domain layer exceptions - Base classes for type checking."""
 
-from typing import Any, Dict, Optional
-from fastapi import status
 from .base import BaseAppException
+from fastapi import status
+from typing import Any
+from typing import Dict
+from typing import Optional
 
 class DomainException(BaseAppException):
     """Base class for domain layer exceptions."""
