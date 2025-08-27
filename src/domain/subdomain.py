@@ -42,7 +42,7 @@ class SubdomainExtractor:
     @staticmethod
 
     def from_host_string(host: str) -> Optional[str]:
-        """Extract subdomain from host string.
+        """Extract subdomain from the host string.
 
         Args:
             host: Host string (e.g., "company1.example.com:8000")
@@ -69,7 +69,7 @@ class SubdomainExtractor:
     @staticmethod
 
     def is_valid_subdomain(subdomain: str) -> bool:
-        """Validate if subdomain is valid according to RFC standards.
+        """Validate if the subdomain is valid, according to RFC standards.
 
         Args:
             subdomain: Subdomain string to validate

@@ -2,7 +2,7 @@
 
 from fastapi import APIRouter
 from security import get_key_manager
-from services.tenant_service import get_tenant_schema_service
+from services import get_tenant_schema_service
 
 routes = APIRouter(tags=["system"], prefix="/system")
 

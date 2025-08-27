@@ -1,7 +1,5 @@
 from api.common import get_current_tenant
-from api.tenant.schema import TenantCreate
-from api.tenant.schema import TenantResponse
-from api.tenant.schema import TenantUpdate
+from api.tenant.schema import TenantCreate, TenantUpdate, TenantResponse
 from api.tenant.service import tenant_service
 from database import get_default_db_session
 from fastapi import APIRouter
@@ -41,7 +39,8 @@ async def get_tenant_by_subdomain(subdomain: str, db: AsyncSession = Depends(get
 
 @routes.put("/")
 async def update_tenant(
-    tenant_data: TenantUpdate, tenant=Depends(get_current_tenant), db: AsyncSession = Depends(get_default_db_session)
+        tenant_data: TenantUpdate, tenant=Depends(get_current_tenant),
+        db: AsyncSession = Depends(get_default_db_session)
 ):
     """Update tenant"""
     updated_tenant = await tenant_service.update_tenant(db, tenant, tenant_data)
@@ -49,7 +48,7 @@ async def update_tenant(
 
 @routes.put("/{tenant_id}")
 async def update_tenant_by_id(
-    tenant_id: UUID, tenant_data: TenantUpdate, db: AsyncSession = Depends(get_default_db_session)
+        tenant_id: UUID, tenant_data: TenantUpdate, db: AsyncSession = Depends(get_default_db_session)
 ):
     """Update tenant by ID"""
     updated_tenant = await tenant_service.update_tenant_by_id(db, tenant_id, tenant_data)
@@ -57,7 +56,7 @@ async def update_tenant_by_id(
 
 @routes.put("/subdomain/{subdomain}")
 async def update_tenant_by_subdomain(
-    subdomain: str, tenant_data: TenantUpdate, db: AsyncSession = Depends(get_default_db_session)
+        subdomain: str, tenant_data: TenantUpdate, db: AsyncSession = Depends(get_default_db_session)
 ):
     """Update tenant by subdomain"""
     updated_tenant = await tenant_service.update_tenant_by_subdomain(db, subdomain, tenant_data)

@@ -35,7 +35,7 @@ class BaseService(Generic[ModelType, CreateSchemaType, UpdateSchemaType], ABC):
         self.model = model
 
     async def get_by_id(self, db: AsyncSession, obj_id: Any, tenant_id: Optional[UUID] = None) -> ModelType:
-        """Get object by ID with optional tenant filtering."""
+        """Get an object by ID with optional tenant filtering."""
         if hasattr(self.model, "tenant_id") and self.model.__tablename__ == "tenants":
             query = select(self.model).where(self.model.tenant_id == obj_id)
         else:
@@ -51,7 +51,7 @@ class BaseService(Generic[ModelType, CreateSchemaType, UpdateSchemaType], ABC):
         return obj
 
     async def get_multi(
-        self, db: AsyncSession, page: int = 1, size: int = 20, tenant_id: Optional[UUID] = None
+            self, db: AsyncSession, page: int = 1, size: int = 20, tenant_id: Optional[UUID] = None
     ) -> tuple[List[ModelType], int]:
         """Get multiple objects with pagination and optional tenant filtering."""
         query = select(self.model)
@@ -75,11 +75,11 @@ class BaseService(Generic[ModelType, CreateSchemaType, UpdateSchemaType], ABC):
     @abstractmethod
 
     def get_search_fields(self) -> List[str]:
-        """Return list of fields that should be searchable for this model."""
+        """Return the list of fields that should be searchable for this model."""
         pass
 
     async def search(
-        self, db: AsyncSession, search_term: str, page: int = 1, size: int = 20, tenant_id: Optional[UUID] = None
+            self, db: AsyncSession, search_term: str, page: int = 1, size: int = 20, tenant_id: Optional[UUID] = None
     ) -> tuple[List[ModelType], int]:
         """Generic search method that all models can use."""
         query = select(self.model)
@@ -125,7 +125,7 @@ class BaseService(Generic[ModelType, CreateSchemaType, UpdateSchemaType], ABC):
         return obj
 
     async def update(
-        self, db: AsyncSession, obj_id: Any, obj_data: UpdateSchemaType, tenant_id: Optional[UUID] = None
+            self, db: AsyncSession, obj_id: Any, obj_data: UpdateSchemaType, tenant_id: Optional[UUID] = None
     ) -> ModelType:
         """Update an existing object."""
         obj = await self.get_by_id(db, obj_id, tenant_id)
@@ -145,7 +145,7 @@ class BaseService(Generic[ModelType, CreateSchemaType, UpdateSchemaType], ABC):
         await db.commit()
 
     async def get_by_field(
-        self, db: AsyncSession, field_name: str, field_value: Any, tenant_id: Optional[UUID] = None
+            self, db: AsyncSession, field_name: str, field_value: Any, tenant_id: Optional[UUID] = None
     ) -> Optional[ModelType]:
         """Get object by a specific field value."""
         if not hasattr(self.model, field_name):
@@ -160,12 +160,12 @@ class BaseService(Generic[ModelType, CreateSchemaType, UpdateSchemaType], ABC):
         return result.scalar_one_or_none()
 
     async def exists(
-        self,
-        db: AsyncSession,
-        field_name: str,
-        field_value: Any,
-        tenant_id: Optional[UUID] = None,
-        exclude_id: Optional[Any] = None,
+            self,
+            db: AsyncSession,
+            field_name: str,
+            field_value: Any,
+            tenant_id: Optional[UUID] = None,
+            exclude_id: Optional[Any] = None,
     ) -> bool:
         """Check if an object exists with the given field value."""
         if not hasattr(self.model, field_name):
@@ -187,12 +187,12 @@ class BaseService(Generic[ModelType, CreateSchemaType, UpdateSchemaType], ABC):
         return result.scalar_one_or_none() is not None
 
     async def get_filtered(
-        self,
-        db: AsyncSession,
-        filters,
-        page: int = 1,
-        size: int = 20,
-        tenant_id: Optional[UUID] = None,
+            self,
+            db: AsyncSession,
+            filters,
+            page: int = 1,
+            size: int = 20,
+            tenant_id: Optional[UUID] = None,
     ) -> tuple[List[ModelType], int]:
         """Get filtered objects with pagination and optional tenant filtering."""
         query = select(self.model)

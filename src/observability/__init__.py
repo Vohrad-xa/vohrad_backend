@@ -1,15 +1,10 @@
 """Clean, modular enterprise observability system."""
 
-# Main logging interface
 from .config import LoggingConfig
-
-# Performance and correlation tracking
 from .context import PerformanceTracker
 from .filters import LevelFilter
 from .filters import ModuleFilter
 from .filters import SmartFilter
-
-# Individual components for advanced usage
 from .formatters import ColoredConsoleFormatter
 from .formatters import DetailedFileFormatter
 from .formatters import EnterpriseJSONFormatter

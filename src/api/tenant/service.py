@@ -94,7 +94,7 @@ class TenantService(BaseService[Tenant, TenantCreate, TenantUpdate]):
         await db.commit()
 
     async def update_tenant(self, db: AsyncSession, tenant: Tenant, tenant_data: TenantUpdate) -> Tenant:
-        """Update tenant - now accepts tenant as parameter to avoid repeated queries"""
+        """Update tenant - now accepts tenant as a parameter to avoid repeated queries"""
         # Check subdomain uniqueness if being updated
         if tenant_data.sub_domain and tenant_data.sub_domain != tenant.sub_domain:
             if await self.exists(db, "sub_domain", tenant_data.sub_domain, exclude_id=tenant.tenant_id):
@@ -109,7 +109,7 @@ class TenantService(BaseService[Tenant, TenantCreate, TenantUpdate]):
         return tenant
 
     async def delete_tenant(self, db: AsyncSession, tenant: Tenant) -> None:
-        """Delete tenant - now accepts tenant as parameter to avoid repeated queries"""
+        """Delete tenant - now accepts tenant as a parameter to avoid repeated queries"""
         await db.delete(tenant)
         await db.commit()
 

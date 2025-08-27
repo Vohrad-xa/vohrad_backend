@@ -8,25 +8,11 @@ class TenantSchemaService:
     """Service for tenant schema resolution with caching."""
 
     def __init__(self, cache: Optional[TenantCache] = None):
-        """Initialize tenant service.
-
-        Args:
-            cache: Optional cache instance (uses default if None)
-        """
+        """Initialize tenant service."""
         self._cache = cache or TenantCache()
 
     async def resolve_tenant_schema(self, subdomain: str) -> str:
-        """Resolve tenant schema name with cache-first strategy.
-
-        Args:
-            subdomain: Tenant subdomain to resolve
-
-        Returns:
-            Tenant schema name
-
-        Raises:
-            tenant_not_found: If tenant doesn't exist
-        """
+        """Resolve the tenant schema name with a cache-first strategy."""
         # Try cache first
         cached_schema = await self._cache.get_tenant_schema(subdomain)
         if cached_schema:
@@ -41,7 +27,7 @@ class TenantSchemaService:
         return schema_name
 
     async def _query_tenant_from_database(self, subdomain: str) -> str:
-        """Query tenant schema from database."""
+        """Query tenant schema from a database."""
         from api.tenant.models import Tenant
         from database.sessions import with_default_db
         from sqlalchemy import select
@@ -56,14 +42,7 @@ class TenantSchemaService:
         return schema_name
 
     async def invalidate_tenant_cache(self, subdomain: str) -> bool:
-        """Invalidate cached tenant (useful after tenant updates).
-
-        Args:
-            subdomain: Tenant subdomain to invalidate
-
-        Returns:
-            True if tenant was cached and removed
-        """
+        """Invalidate cached tenant (useful after tenant updates)."""
         return await self._cache.invalidate_tenant(subdomain)
 
     async def get_cache_performance(self) -> dict:
@@ -74,7 +53,6 @@ class TenantSchemaService:
         """Clear all tenant cache entries."""
         await self._cache.clear_all_tenants()
 
-# Global instance for easy access
 _tenant_schema_service = TenantSchemaService()
 
 def get_tenant_schema_service() -> TenantSchemaService:
