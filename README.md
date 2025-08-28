@@ -25,6 +25,34 @@ Vohrad is a SaaS inventory management solution designed for businesses requiring
 - Uvicorn ASGI server
 
 **Development**
+- PDM (package management)
+- Alembic (migrations)
+- Ruff (linting/formatting)
+- MyPy (type checking)
+- Pytest (testing)
+- Pre-commit (code quality)
+
+## Development Setup
+
+```bash
+# Install dependencies
+pdm install --no-self
+
+# Configure environment
+cp .env.example .env
+
+# Initialize database
+alembic upgrade head
+
+=======
+
+- Python 3.13
+- FastAPI
+- PostgreSQL 14+
+- SQLAlchemy 2.0 (async)
+- Uvicorn ASGI server
+
+**Development**
 
 - PDM (package management)
 - Alembic (migrations)
@@ -56,6 +84,16 @@ Interactive API documentation available at `/docs` when running the development 
 ## Project Structure
 
 ```
+src/
+├── api/           # API endpoints and routing
+├── config/        # Application configuration
+├── database/      # Data layer and models
+├── services/      # Business logic layer
+└── main.py        # Application entry point
+
+migrations/        # Database schema versions
+management/        # CLI administration tools
+=======
 ├── .env.example
 ├── alembic.ini
 ├── pyproject.toml                  # Project
