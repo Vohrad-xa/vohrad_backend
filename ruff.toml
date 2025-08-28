@@ -42,7 +42,6 @@ fixable = [
     "RUF012", # mutable class attributes should use ClassVar
     "RUF013", # implicit Optional should be explicit
     "B904", # exception handling with raise ... from
-    # Remove all formatting-related fixable rules - let precision formatter handle those
 ]
 extend-select = [
     "E501", # `line-too-long`
@@ -55,7 +54,8 @@ convention = "google"
 [lint.isort]
 lines-between-types = 0
 lines-after-imports = 2
-no-lines-before = ["standard-library", "third-party", "first-party", "local-folder"]
+force-single-line = true
+no-sections = true
 
 # Formatting configuration
 [format]

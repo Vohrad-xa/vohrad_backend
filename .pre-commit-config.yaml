@@ -3,7 +3,7 @@ repos:
     hooks:
       - id: ruff-local
         name: Ruff Linter (Local Config)
-        entry: ruff check --fix
+        entry: pdm run ruff check --fix
         language: system
         types: [python]
         args: []
@@ -27,11 +27,11 @@ repos:
     hooks:
       - id: precision-format
         name: Professional Code Formatting (Final)
-        entry: python management/commands/format.py directory src
+        entry: pdm run python management/commands/format.py
         language: system
         types: [python]
-        pass_filenames: false
-        always_run: true
+        pass_filenames: true
+        stages: [pre-commit, manual]
 
   - repo: https://github.com/pre-commit/mirrors-mypy
     rev: v1.13.0

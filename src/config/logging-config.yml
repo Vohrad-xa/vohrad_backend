@@ -1,0 +1,129 @@
+version: 1
+disable_existing_loggers: false
+
+formatters:
+  simple:
+    format: '[%(asctime)s] [%(name)s] %(levelname)-8s %(message)s'
+    datefmt: '%Y-%m-%dT%H:%M:%S%z'
+  detailed:
+    format: '[%(asctime)s] [%(name)s] %(levelname)-8s [%(filename)s:%(lineno)d] %(funcName)s() - %(message)s'
+    datefmt: '%Y-%m-%dT%H:%M:%S%z'
+  json:
+    (): observability.logger.EnterpriseJSONFormatter
+
+filters:
+  smart_filter:
+    (): observability.logger.SmartFilter
+
+handlers:
+  stdout:
+    class: logging.StreamHandler
+    level: INFO
+    formatter: simple
+    stream: ext://sys.stdout
+    filters: [smart_filter]
+
+  file:
+    class: logging.handlers.RotatingFileHandler
+    level: INFO
+    formatter: detailed
+    filename: logs/app.log
+    maxBytes: 52428800  # 50MB
+    backupCount: 10
+    encoding: utf8
+    filters: [smart_filter]
+
+  error_file:
+    class: logging.handlers.RotatingFileHandler
+    level: ERROR
+    formatter: detailed
+    filename: logs/error.log
+    maxBytes: 26214400   # 25MB
+    backupCount: 5
+    encoding: utf8
+
+  audit_file:
+    class: logging.handlers.RotatingFileHandler
+    level: INFO
+    formatter: json
+    filename: logs/audit.log
+    maxBytes: 52428800  # 50MB
+    backupCount: 20
+    encoding: utf8
+
+  security_file:
+    class: logging.handlers.RotatingFileHandler
+    level: INFO
+    formatter: json
+    filename: logs/security.log
+    maxBytes: 52428800  # 50MB
+    backupCount: 15
+    encoding: utf8
+
+loggers:
+  root:
+    level: WARNING
+    handlers: [stdout]
+
+  vohrad:
+    level: INFO
+    handlers: [stdout, file, error_file]
+    propagate: false
+
+  vohrad.audit:
+    level: INFO
+    handlers: [audit_file]
+    propagate: false
+
+  vohrad.security:
+    level: INFO
+    handlers: [security_file]
+    propagate: false
+
+  # Third-party libraries - reduced noise
+  faker:
+    level: WARNING
+    handlers: [stdout]
+    propagate: false
+
+  sqlalchemy.engine:
+    level: WARNING
+    handlers: [file]
+    propagate: false
+
+  sqlalchemy.pool:
+    level: WARNING
+    handlers: [file]
+    propagate: false
+
+  alembic:
+    level: INFO
+    handlers: [file]
+    propagate: false
+
+  # Uvicorn - smart filtering
+  uvicorn:
+    level: INFO
+    handlers: [stdout, file]
+    propagate: false
+
+  uvicorn.access:
+    level: WARNING
+    handlers: [file]
+    propagate: false
+
+  uvicorn.error:
+    level: INFO
+    handlers: [stdout, file, error_file]
+    propagate: false
+
+  # HTTP clients
+  httpx:
+    level: WARNING
+    handlers: [file]
+    propagate: false
+
+  urllib3:
+    level: WARNING
+    handlers: [file]
+    propagate: false
