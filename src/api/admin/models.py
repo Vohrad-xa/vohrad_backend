@@ -7,12 +7,12 @@ class Admin(Base):
     """Platform administrators in shared schema"""
     __tablename__ = "admins"
     __table_args__ = (
-        {"schema": "shared", "extend_existing": True},
         sa.Index("idx_admins_email", "email", unique=True),
         sa.Index("idx_admins_role", "role"),
         sa.Index("idx_admins_is_active", "is_active"),
         sa.Index("idx_admins_role_active", "role", "is_active"),
         sa.CheckConstraint("role IN ('super_admin', 'admin', 'support')", name="check_global_user_role"),
+        {"schema": "shared", "extend_existing": True},
     )
 
     id = sa.Column(sa.UUID, primary_key=True, default=uuid4, nullable=False)
