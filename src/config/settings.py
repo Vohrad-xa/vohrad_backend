@@ -53,6 +53,7 @@ class Settings(BaseSettings):
 
     # Security settings
     SECRET_KEY                 : Optional[str] = Field(default=None, description="Secret key for JWT tokens")
+    ENCRYPTION_KEY             : Optional[str] = Field(default=None, description="Encryption key for sensitive data")
     JWT_ALGORITHM              : str           = Field(default="RS256", description="JWT algorithm - RS256")
     JWT_PRIVATE_KEY_PATH       : Optional[str] = Field(default=None, description="Path to JWT private key file")
     JWT_PUBLIC_KEY_PATH        : Optional[str] = Field(default=None, description="Path to JWT public key file")
