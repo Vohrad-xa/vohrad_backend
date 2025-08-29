@@ -3,11 +3,11 @@
 from fastapi import Request
 from typing import Optional
 
+
 class SubdomainExtractor:
     """Utility class for extracting subdomain from various sources."""
 
     @staticmethod
-
     def from_request(request: Request) -> Optional[str]:
         """Extract subdomain from FastAPI request.
 
@@ -40,7 +40,6 @@ class SubdomainExtractor:
             return None
 
     @staticmethod
-
     def from_host_string(host: str) -> Optional[str]:
         """Extract subdomain from the host string.
 
@@ -67,7 +66,6 @@ class SubdomainExtractor:
             return None
 
     @staticmethod
-
     def is_valid_subdomain(subdomain: str) -> bool:
         """Validate if the subdomain is valid, according to RFC standards.
 
@@ -90,6 +88,7 @@ class SubdomainExtractor:
             return False
 
         return True
+
 
 def get_subdomain_from_request(request: Request) -> Optional[str]:
     """Backward compatible function for subdomain extraction."""

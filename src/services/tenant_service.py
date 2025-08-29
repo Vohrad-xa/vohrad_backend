@@ -4,6 +4,7 @@ from database.cache import TenantCache
 from exceptions import tenant_not_found
 from typing import Optional
 
+
 class TenantSchemaService:
     """Service for tenant schema resolution with caching."""
 
@@ -53,7 +54,9 @@ class TenantSchemaService:
         """Clear all tenant cache entries."""
         await self._cache.clear_all_tenants()
 
+
 _tenant_schema_service = TenantSchemaService()
+
 
 def get_tenant_schema_service() -> TenantSchemaService:
     """Get global tenant schema service instance."""

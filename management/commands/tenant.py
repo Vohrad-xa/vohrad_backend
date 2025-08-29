@@ -1,43 +1,44 @@
-from api.tenant.models import Tenant
-from database import Base
-from database.sessions import with_default_db
+import sys
+import typer
+from pathlib import Path
+
+sys.path.append(str(Path(__file__).parent.parent.parent / "src"))
 import alembic
 import alembic.script
 import asyncio
 import sqlalchemy as sa
-import sys
-import typer
-from pathlib import Path
 from alembic.config import Config
 from alembic.migration import MigrationContext
+from api.tenant.models import Tenant
+from database import Base
+from database.sessions import with_default_db
 from typing import Annotated
-
-# Add src to path for imports
-sys.path.append(str(Path(__file__).parent.parent.parent / "src"))
 
 app = typer.Typer()
 
+
 @app.command(name="create_tenant")
 def create_tenant(
-    schema_name: Annotated[
-        str, typer.Option("--schema-name", "-s", help="The name of the schema for the tenant in the database.")
-    ],
-    sub_domain: Annotated[
-        str, typer.Option("--sub-domain", "-d", help="The subdomain for the tenant. example: tenant1.example.com")
-    ],
+        schema_name: Annotated[
+            str, typer.Option("--schema-name", "-s", help="The name of the schema for the tenant in the database.")
+        ],
+        sub_domain: Annotated[
+            str, typer.Option("--sub-domain", "-d", help="The subdomain for the tenant. example: tenant1.example.com")
+        ],
 ):
     """Create a new tenant in the shared schema tenants table and create the schema in the database."""
     typer.echo(" Creating a new tenant")
     asyncio.run(_create_tenant(schema_name, sub_domain))
     typer.echo(" Tenant created successfully")
 
+
 async def _create_tenant(schema_name: str, sub_domain: str) -> None:
     """Create a new tenant in the shared schema tenants table and create the schema in the database.
+
     1. check if the database is up-to-date with migrations.
     2. add the new tenant.
     3. create the schema in the database.
-    4. commit the transaction.
-    """
+    4. commit the transaction."""
     async with with_default_db() as db:
         connection = await db.connection()
 
@@ -79,6 +80,7 @@ async def _create_tenant(schema_name: str, sub_domain: str) -> None:
     async with engine_with_schema.begin() as conn:
         await conn.run_sync(create_tables_sync)
 
+
 def get_tenant_specific_metadata():
     meta = sa.MetaData()
     for table in Base.metadata.tables.values():
@@ -86,6 +88,10 @@ def get_tenant_specific_metadata():
             table.tometadata(
                 meta,
                 referred_schema_fn=lambda table, to_schema, constraint, **kw: constraint.referred_table.schema
-                or to_schema,
+                                                                              or to_schema,
             )
     return meta
+
+
+if __name__ == "__main__":
+    app()

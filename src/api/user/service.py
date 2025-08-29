@@ -1,17 +1,20 @@
 from api.tenant.models import Tenant
-from api.auth.user.models import User
-from api.auth.user.schema import UserCreate
-from api.auth.user.schema import UserPasswordUpdate
-from api.auth.user.schema import UserUpdate
+from api.user.models import User
+from api.user.schema import UserCreate
+from api.user.schema import UserPasswordUpdate
+from api.user.schema import UserUpdate
 from exceptions import duplicate_email
 from exceptions import invalid_credentials
 from middleware import hash_password
 from middleware import verify_password
 from services import BaseService
 from sqlalchemy import func
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
+from typing import Any
 from typing import Optional
 from uuid import UUID
+
 
 class UserService(BaseService[User, UserCreate, UserUpdate]):
     """Service class for user business logic"""
@@ -24,19 +27,24 @@ class UserService(BaseService[User, UserCreate, UserUpdate]):
         return ["email", "first_name", "last_name", "city"]
 
     async def create_user(self, db: AsyncSession, user_data: UserCreate, tenant: Tenant) -> User:
-        """Create new user with email uniqueness check."""
-        if await self.exists(db, "email", user_data.email, tenant.tenant_id):
-            raise duplicate_email(user_data.email)
-        hashed_password = hash_password(user_data.password)
-        user_dict = user_data.model_dump(exclude={"password"})
-        user_dict["password"] = hashed_password
-        user_dict["tenant_id"] = tenant.tenant_id
+        """Create new user - enterprise pattern with database-first approach."""
+        try:
+            hashed_password = hash_password(user_data.password)
+            user_dict = user_data.model_dump(exclude={"password"})
+            user_dict["password"] = hashed_password
+            user_dict["tenant_id"] = tenant.tenant_id
 
-        user = User(**user_dict)
-        db.add(user)
-        await db.commit()
-        await db.refresh(user)
-        return user
+            user = User(**user_dict)
+            db.add(user)
+            await db.commit()
+            await db.refresh(user)
+            return user
+
+        except IntegrityError as e:
+            await db.rollback()
+            await self._handle_integrity_error(
+                e, {"operation": "create_user", "email": user_data.email, "tenant_id": tenant.tenant_id}
+            )
 
     async def get_user_by_id(self, db: AsyncSession, user_id: UUID, tenant: Tenant) -> User:
         """Get user by ID."""
@@ -54,10 +62,7 @@ class UserService(BaseService[User, UserCreate, UserUpdate]):
         return await self.get_multi(db, page, size, tenant_id)
 
     async def update_user(self, db: AsyncSession, user_id: UUID, user_data: UserUpdate, tenant: Tenant) -> User:
-        """Update a user - accepts tenant as parameter"""
-        if user_data.email:
-            if await self.exists(db, "email", user_data.email, tenant.tenant_id, exclude_id=user_id):
-                raise duplicate_email(user_data.email)
+        """Update user - enterprise pattern with inherited constraint protection."""
         return await self.update(db, user_id, user_data, tenant.tenant_id)
 
     async def update_user_password(
@@ -90,5 +95,16 @@ class UserService(BaseService[User, UserCreate, UserUpdate]):
         """Search users using the generic search method."""
         tenant_id = tenant.tenant_id if tenant else None
         return await self.search(db, search_term, page, size, tenant_id)
+
+    async def _handle_integrity_error(self, error: IntegrityError, operation_context: dict[str, Any]) -> None:
+        """Handle user-specific constraint violations - enterprise pattern."""
+        constraint_name = self._extract_constraint_name(error)
+
+        if constraint_name == "idx_users_email" or "email" in str(error):
+            email = operation_context.get("email") or "unknown"
+            raise duplicate_email(email)
+
+        raise error
+
 
 user_service = UserService()

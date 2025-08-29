@@ -10,6 +10,7 @@ from typing import TypeVar
 
 T = TypeVar("T")
 
+
 class BaseResponse(BaseModel, Generic[T]):
     """Base response model with optional data and metadata."""
 
@@ -18,10 +19,12 @@ class BaseResponse(BaseModel, Generic[T]):
     data: Optional[T] = Field(None, description="Response data")
     metadata: Optional[Dict[str, Any]] = Field(None, description="Optional metadata")
 
+
 class SuccessResponse(BaseResponse[T]):
     """Success response model."""
 
     success: bool = Field(True, description="Operation was successful")
+
 
 class ErrorResponse(BaseModel):
     """Error response model."""
@@ -31,10 +34,12 @@ class ErrorResponse(BaseModel):
     error_type: Optional[str] = Field(None, description="Error type")
     details: Optional[Dict[str, Any]] = Field(None, description="Additional error details")
 
+
 class MessageResponse(BaseModel):
     """Simple message response."""
 
     message: str = Field(description="Response message")
+
 
 class CreatedResponse(BaseResponse[T]):
     """Response for successful creation operations."""
@@ -42,11 +47,13 @@ class CreatedResponse(BaseResponse[T]):
     success: bool = Field(True, description="Resource created successfully")
     message: str = Field("Resource created successfully", description="Success message")
 
+
 class UpdatedResponse(BaseResponse[T]):
     """Response for successful update operations."""
 
     success: bool = Field(True, description="Resource updated successfully")
     message: str = Field("Resource updated successfully", description="Success message")
+
 
 class DeletedResponse(BaseModel):
     """Response for successful delete operations."""
