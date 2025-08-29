@@ -1,23 +1,26 @@
+"""Tenant creation commands."""
 import sys
 import typer
 from pathlib import Path
 
-sys.path.append(str(Path(__file__).parent.parent.parent / "src"))
+sys.path.append(str(Path(__file__).parent.parent.parent.parent / "src"))
 import alembic
 import alembic.script
 import asyncio
 import sqlalchemy as sa
 from alembic.config import Config
 from alembic.migration import MigrationContext
+from api.admin.models import Admin  # noqa: F401
+from api.assignment.models import Assignment  # noqa: F401
+from api.permission.models import Permission  # noqa: F401
+from api.role.models import Role  # noqa: F401
 from api.tenant.models import Tenant
+from api.user.models import User  # noqa: F401
 from database import Base
 from database.sessions import with_default_db
 from typing import Annotated
 
-app = typer.Typer()
 
-
-@app.command(name="create_tenant")
 def create_tenant(
         schema_name: Annotated[
             str, typer.Option("--schema-name", "-s", help="The name of the schema for the tenant in the database.")
@@ -27,9 +30,9 @@ def create_tenant(
         ],
 ):
     """Create a new tenant in the shared schema tenants table and create the schema in the database."""
-    typer.echo(" Creating a new tenant")
+    typer.echo("Creating a new tenant")
     asyncio.run(_create_tenant(schema_name, sub_domain))
-    typer.echo(" Tenant created successfully")
+    typer.echo("Tenant created successfully")
 
 
 async def _create_tenant(schema_name: str, sub_domain: str) -> None:
@@ -91,7 +94,3 @@ def get_tenant_specific_metadata():
                                                                               or to_schema,
             )
     return meta
-
-
-if __name__ == "__main__":
-    app()
