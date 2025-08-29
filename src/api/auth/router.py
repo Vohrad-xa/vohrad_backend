@@ -86,6 +86,26 @@ async def logout(
     )
 
 
+@router.post("/logout-all", response_model=SuccessResponse[dict], summary="Logout All Devices")
+async def logout_all_devices(
+    current_user: AuthenticatedUser = Depends(get_current_user),
+    auth_service                    = Depends(get_auth_jwt_service)
+):
+    """Logout user from all devices by revoking all their tokens."""
+    revoked_count = await auth_service.logout_user_from_all_devices(
+        current_user.user_id,
+        "logout_all_devices"
+    )
+
+    return ResponseFactory.success(
+        data={
+            "revoked_tokens": revoked_count,
+            "user_id": str(current_user.user_id)
+        },
+        message = f"Logged out {current_user.email} from {revoked_count} device(s)"
+    )
+
+
 @router.get("/status", response_model=SuccessResponse[AuthStatusResponse], summary="Service Status")
 async def auth_status():
     """Authentication service health check and status information."""

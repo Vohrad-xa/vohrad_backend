@@ -118,6 +118,10 @@ class AuthJWTService:
             expires_at = refresh_expires
         )
 
+        # Track tokens for bulk revocation capabilities
+        await self.blacklist_service.track_user_token(user.id, access_payload["jti"])
+        await self.blacklist_service.track_user_token(user.id, refresh_payload["jti"])
+
         return TokenPair(
             access_token  = access_token,
             refresh_token = refresh_token
@@ -156,6 +160,10 @@ class AuthJWTService:
             payload    = refresh_payload,
             expires_at = refresh_expires
         )
+
+        # Track tokens for bulk revocation capabilities
+        await self.blacklist_service.track_user_token(admin.id, access_payload["jti"])
+        await self.blacklist_service.track_user_token(admin.id, refresh_payload["jti"])
 
         return TokenPair(
             access_token  = access_token,
@@ -274,6 +282,10 @@ class AuthJWTService:
             return False
         except Exception:
             return True
+
+    async def logout_user_from_all_devices(self, user_id: UUID, reason: str = "logout_all_devices") -> int:
+        """Logout user from all devices by revoking all their tokens."""
+        return await self.blacklist_service.revoke_user_tokens(user_id, reason)
 
 
 _auth_jwt_service: Optional[AuthJWTService] = None

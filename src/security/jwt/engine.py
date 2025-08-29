@@ -95,17 +95,11 @@ class JWTEngine:
         except Exception as e:
             raise TokenInvalidException(f"Token decode failed: {e!s}") from e
 
-    def get_token_claims(self, token: str) -> Dict[str, Any]:
-        """Extract token claims without signature verification. For debugging and token inspection."""
-        try:
-            return jwt.decode(token, options={"verify_signature": False})
-        except Exception as e:
-            raise TokenInvalidException(f"Failed to extract claims: {e!s}") from e
-
     def is_token_expired(self, token: str) -> bool:
         """Check if token is expired without full validation."""
         try:
-            claims = self.get_token_claims(token)
+            # Extract claims without signature verification
+            claims = jwt.decode(token, options={"verify_signature": False})
             exp    = claims.get("exp")
             if not exp:
                 return True
