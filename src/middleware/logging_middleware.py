@@ -38,15 +38,13 @@ class RequestLoggingMiddleware(BaseHTTPMiddleware):
 
         start_time     = time.time()
         correlation_id = self._get_or_create_correlation_id(request)
-        user_id        = self._extract_user_id(request)
         tenant_id      = self._extract_tenant_id(request)
 
-        PerformanceTracker.start_request(correlation_id, user_id, tenant_id)
+        PerformanceTracker.start_request(correlation_id, None, tenant_id)
 
         self._log_request_start(
             request,
             correlation_id,
-            user_id,
             tenant_id
         )
 
@@ -58,7 +56,6 @@ class RequestLoggingMiddleware(BaseHTTPMiddleware):
                 response,
                 correlation_id,
                 duration_ms,
-                user_id,
                 tenant_id
             )
             response.headers["X-Correlation-ID"] = correlation_id
@@ -71,7 +68,6 @@ class RequestLoggingMiddleware(BaseHTTPMiddleware):
                 exc,
                 correlation_id,
                 duration_ms,
-                user_id,
                 tenant_id
             )
             raise
@@ -83,11 +79,6 @@ class RequestLoggingMiddleware(BaseHTTPMiddleware):
         """Get correlation ID from headers or create new one."""
         return request.headers.get("X-Correlation-ID") or request.headers.get("X-Request-ID") or str(uuid4())
 
-    def _extract_user_id(self, request: Request) -> str:
-        """Extract user ID from request context (JWT, session, etc.)."""
-        # TODO: Implement based on authentication system
-        return request.headers.get("X-User-ID")
-
     def _extract_tenant_id(self, request: Request) -> str:
         """Extract tenant ID from request (subdomain, header, etc.)."""
         host = request.headers.get("host", "")
@@ -95,7 +86,7 @@ class RequestLoggingMiddleware(BaseHTTPMiddleware):
             return host.split(".")[0]
         return request.headers.get("X-Tenant-ID")
 
-    def _log_request_start(self, request: Request, correlation_id: str, user_id: str, tenant_id: str):
+    def _log_request_start(self, request: Request, correlation_id: str, tenant_id: str):
         """Log request start."""
         self.logger.info(
             "Request started",
@@ -107,7 +98,6 @@ class RequestLoggingMiddleware(BaseHTTPMiddleware):
                 "query_params"  : dict(request.query_params),
                 "user_agent"    : request.headers.get("user-agent"),
                 "client_ip"     : self._get_client_ip(request),
-                "user_id"       : user_id,
                 "tenant_id"     : tenant_id,
                 "content_type"  : request.headers.get("content-type"),
                 "event_type"    : "request_start",
@@ -120,7 +110,6 @@ class RequestLoggingMiddleware(BaseHTTPMiddleware):
         response      : Response,
         correlation_id: str,
         duration_ms   : float,
-        user_id       : str,
         tenant_id     : str,
     ):
         """Log successful request completion."""
@@ -137,7 +126,6 @@ class RequestLoggingMiddleware(BaseHTTPMiddleware):
                 "path"          : request.url.path,
                 "status_code"   : response.status_code,
                 "duration_ms"   : duration_ms,
-                "user_id"       : user_id,
                 "tenant_id"     : tenant_id,
                 "client_ip"     : self._get_client_ip(request),
                 "response_size" : response.headers.get("content-length"),
@@ -153,8 +141,7 @@ class RequestLoggingMiddleware(BaseHTTPMiddleware):
                     "method"        : request.method,
                     "path"          : request.url.path,
                     "status_code"   : response.status_code,
-                    "user_id"       : user_id,
-                    "tenant_id"     : tenant_id,
+                        "tenant_id"     : tenant_id,
                     "client_ip"     : self._get_client_ip(request),
                     "event_type"    : "sensitive_access",
                 },
@@ -162,7 +149,7 @@ class RequestLoggingMiddleware(BaseHTTPMiddleware):
 
         """Log authentication events automatically"""
         if self._is_auth_endpoint(request.url.path):
-            self._log_auth_event(request, response, correlation_id, user_id, tenant_id)
+            self._log_auth_event(request, response, correlation_id, tenant_id)
 
     def _log_request_error(
         self,
@@ -170,7 +157,6 @@ class RequestLoggingMiddleware(BaseHTTPMiddleware):
         exc           : Exception,
         correlation_id: str,
         duration_ms   : float,
-        user_id       : str,
         tenant_id     : str
     ):
         """Log request error."""
@@ -182,7 +168,6 @@ class RequestLoggingMiddleware(BaseHTTPMiddleware):
                 "url"              : str(request.url),
                 "path"             : request.url.path,
                 "duration_ms"      : duration_ms,
-                "user_id"          : user_id,
                 "tenant_id"        : tenant_id,
                 "client_ip"        : self._get_client_ip(request),
                 "exception_type"   : exc.__class__.__name__,
@@ -238,7 +223,6 @@ class RequestLoggingMiddleware(BaseHTTPMiddleware):
         request       : Request,
         response      : Response,
         correlation_id: str,
-        user_id       : str,
         tenant_id     : str
     ):
         """Log authentication events with structured audit data."""
@@ -275,7 +259,6 @@ class RequestLoggingMiddleware(BaseHTTPMiddleware):
             "method"        : request.method,
             "path"          : request.url.path,
             "status_code"   : response.status_code,
-            "user_id"       : user_id,
             "tenant_id"     : tenant_id,
             "client_ip"     : client_ip,
             "user_agent"    : request.headers.get("user-agent"),
