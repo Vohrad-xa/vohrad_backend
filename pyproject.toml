@@ -58,5 +58,12 @@ start = "uvicorn main:app --reload --app-dir ./src"
 manage = "python ./management/manage.py"
 format = "python management/commands/format.py directory src"
 format-check = "python management/commands/format.py directory src --check"
-adduser = "python management/commands/user.py"
-addtenant = "python management/commands/tenant.py"
+# Security commands
+validate-keys = "python management/manage.py security validate-keys"
+generate-secret = "python management/manage.py security generate-secret"
+generate-encryption-key = "python management/manage.py security generate-encryption-key"
+generate-jwt-keys = "python management/manage.py security generate-jwt-keys"
+# Tenant commands  
+addtenant = "python management/manage.py tenant create_tenant"
+# User commands
+adduser = "python management/manage.py user create-user"
