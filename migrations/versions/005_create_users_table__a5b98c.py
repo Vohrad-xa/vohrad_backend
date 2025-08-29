@@ -12,7 +12,6 @@ from migrations.tenant import for_each_tenant_schema
 from typing import Sequence
 from typing import Union
 
-
 # revision identifiers, used by Alembic.
 revision: str = "a5b98cda4300"
 down_revision: Union[str, None] = "ead5e1c6d28f"
