@@ -6,6 +6,7 @@ from typing import Any
 from typing import Dict
 from typing import Optional
 
+
 class CacheInterface(ABC):
     """Abstract base class defining cache operations."""
 

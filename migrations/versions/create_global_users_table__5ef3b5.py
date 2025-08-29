@@ -5,10 +5,10 @@ Revises: a5b98cda4300
 Create Date: 2025-08-26 20:47:44.716827
 
 """
-from typing import Sequence, Union
-
-from alembic import op
 import sqlalchemy as sa
+from alembic import op
+from typing import Sequence
+from typing import Union
 from uuid import uuid4
 
 # revision identifiers, used by Alembic.
@@ -16,6 +16,7 @@ revision: str = '5ef3b50c709c'
 down_revision: Union[str, None] = 'a5b98cda4300'
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
+
 
 def upgrade() -> None:
     """Create admins table in shared schema"""
@@ -40,6 +41,7 @@ def upgrade() -> None:
     op.create_index("idx_admins_email", "admins", ["email"], unique=True, schema="shared")
     op.create_index("idx_admins_role", "admins", ["role"], schema="shared")
     op.create_index("idx_admins_active", "admins", ["is_active"], schema="shared")
+
 
 def downgrade() -> None:
     """Drop admins table from shared schema"""

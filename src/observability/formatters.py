@@ -12,14 +12,14 @@ from .context import user_id_var
 from datetime import datetime
 from datetime import timezone
 
+
 class ColoredConsoleFormatter(logging.Formatter):
     """Colored formatter for development console output with clear visual distinction."""
-
     COLORS: typing.ClassVar[dict[str, str]] = {
-        "DEBUG": "\033[36m",  # Cyan - for debugging info
-        "INFO": "\033[32m",  # Green - for normal operations
-        "WARNING": "\033[33m",  # Yellow - for warnings
-        "ERROR": "\033[31m",  # Red - for errors
+        "DEBUG"   : "\033[36m",  # Cyan - for debugging info
+        "INFO"    : "\033[32m",  # Green - for normal operations
+        "WARNING" : "\033[33m",  # Yellow - for warnings
+        "ERROR"   : "\033[31m",  # Red - for errors
         "CRITICAL": "\033[35m",  # Magenta - for critical issues
     }
     RESET: typing.ClassVar[str] = "\033[0m"
@@ -41,32 +41,33 @@ class ColoredConsoleFormatter(logging.Formatter):
 
         return message
 
+
 class EnterpriseJSONFormatter(logging.Formatter):
     """JSON formatter with enterprise fields for production environments."""
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.hostname = os.getenv("HOSTNAME", "localhost")
+        self.hostname     = os.getenv("HOSTNAME", "localhost")
         self.service_name = os.getenv("SERVICE_NAME", "vohrad-api")
-        self.environment = os.getenv("ENVIRONMENT", "development")
-        self.version = os.getenv("APP_VERSION", "1.0.0")
+        self.environment  = os.getenv("ENVIRONMENT", "development")
+        self.version      = os.getenv("APP_VERSION", "1.0.0")
 
     def format(self, record: logging.LogRecord) -> str:
         """Format log record as structured JSON with enterprise metadata."""
         log_data = {
-            "@timestamp": datetime.fromtimestamp(record.created, tz=timezone.utc).isoformat(),
-            "service": self.service_name,
-            "version": self.version,
+            "@timestamp" : datetime.fromtimestamp(record.created, tz=timezone.utc).isoformat(),
+            "service"    : self.service_name,
+            "version"    : self.version,
             "environment": self.environment,
-            "hostname": self.hostname,
-            "level": record.levelname,
-            "logger": record.name,
-            "message": record.getMessage(),
-            "module": record.module,
-            "function": record.funcName,
-            "line": record.lineno,
-            "thread_id": record.thread,
-            "process_id": record.process,
+            "hostname"   : self.hostname,
+            "level"      : record.levelname,
+            "logger"     : record.name,
+            "message"    : record.getMessage(),
+            "module"     : record.module,
+            "function"   : record.funcName,
+            "line"       : record.lineno,
+            "thread_id"  : record.thread,
+            "process_id" : record.process,
         }
 
         if correlation_id := correlation_id_var.get():
@@ -86,12 +87,13 @@ class EnterpriseJSONFormatter(logging.Formatter):
 
         if record.exc_info:
             log_data["exception"] = {
-                "class": record.exc_info[0].__name__ if record.exc_info[0] else None,
-                "message": str(record.exc_info[1]) if record.exc_info[1] else None,
+                "class"    : record.exc_info[0].__name__ if record.exc_info[0] else None,
+                "message"  : str(record.exc_info[1]) if record.exc_info[1] else None,
                 "traceback": self.formatException(record.exc_info),
             }
 
         return json.dumps(log_data, ensure_ascii=False)
+
 
 class DetailedFileFormatter(logging.Formatter):
     """Detailed formatter for file logging with function and line info."""

@@ -5,10 +5,10 @@ Revises: 5ef3b50c709c
 Create Date: 2025-08-26 21:20:10.930235
 
 """
-from typing import Sequence, Union
-
-from alembic import op
 import sqlalchemy as sa
+from alembic import op
+from typing import Sequence
+from typing import Union
 from uuid import uuid4
 
 # revision identifiers, used by Alembic.
@@ -17,6 +17,7 @@ down_revision: Union[str, None] = '5ef3b50c709c'
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
 
+
 def get_tenant_schemas():
     """Get list of existing tenant schemas"""
     connection = op.get_bind()
@@ -24,6 +25,7 @@ def get_tenant_schemas():
         sa.text("SELECT tenant_schema_name FROM shared.tenants WHERE tenant_schema_name != 'shared'")
     )
     return [row[0] for row in result]
+
 
 def create_auth_tables_for_schema(schema_name: str, user_table_name: str):
     """Create roles, permissions, and assignments tables for a specific schema"""
@@ -87,6 +89,7 @@ def create_auth_tables_for_schema(schema_name: str, user_table_name: str):
     )
     op.create_index(f"idx_roles_active_name_{schema_name}", "roles", ["is_active", "name"], schema=schema_name)
 
+
 def drop_auth_tables_for_schema(schema_name: str):
     """Drop roles, permissions, and assignments tables for a specific schema"""
     op.drop_index(f"idx_roles_active_name_{schema_name}", table_name="roles", schema=schema_name)
@@ -104,6 +107,7 @@ def drop_auth_tables_for_schema(schema_name: str):
     op.drop_table("permissions", schema=schema_name)
     op.drop_table("roles", schema=schema_name)
 
+
 def upgrade() -> None:
     """Create RBAC tables for both shared schema (admins) and all tenant schemas (users)"""
     # Create auth tables for shared schema (for admins)
@@ -113,6 +117,7 @@ def upgrade() -> None:
     tenant_schemas = get_tenant_schemas()
     for schema_name in tenant_schemas:
         create_auth_tables_for_schema(schema_name, "users")
+
 
 def downgrade() -> None:
     """Remove RBAC tables from both shared and tenant schemas"""

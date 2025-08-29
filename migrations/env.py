@@ -1,5 +1,6 @@
 import logging
 import os
+import sqlalchemy as sa
 from alembic import context
 from dotenv import load_dotenv
 from logging.config import fileConfig
@@ -7,12 +8,13 @@ from sqlalchemy import MetaData
 from sqlalchemy import engine_from_config
 from sqlalchemy import pool
 from sqlalchemy import text
-import sqlalchemy as sa
 from sqlalchemy.orm import DeclarativeBase
+
 
 class Base(DeclarativeBase):
     __abstract__ = True
     metadata = sa.MetaData(schema="tenant_default")
+
 
 load_dotenv()  # Load environment variables from .env file
 
@@ -45,6 +47,7 @@ config.set_main_option(
     f"postgresql://{db_user}:{db_pass}@{db_host}:{db_port}/{db_name}",
 )
 
+
 def run_migrations_offline() -> None:
     """Run migrations in 'offline' mode.
 
@@ -66,6 +69,7 @@ def run_migrations_offline() -> None:
 
     with context.begin_transaction():
         context.run_migrations()
+
 
 def run_migrations_online() -> None:
     """Run migrations in 'online' mode.
@@ -118,6 +122,7 @@ def run_migrations_online() -> None:
             except Exception as e:
                 logging.error(f"\033[91mError running migrations: {e}\033[0m")
                 context.get_context().connection.execute(text("ROLLBACK"))
+
 
 if context.is_offline_mode():
     """

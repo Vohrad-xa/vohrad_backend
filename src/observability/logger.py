@@ -7,6 +7,7 @@ from typing import Any
 from typing import Dict
 from typing import Optional
 
+
 def setup_logging(settings: Optional[Dict[str, Any]] = None):
     """Setup logging configuration based on environment settings.
 
@@ -19,6 +20,7 @@ def setup_logging(settings: Optional[Dict[str, Any]] = None):
     config_manager = LoggingConfig(settings)
     config_manager.setup()
 
+
 def get_logger(name: str = "vohrad") -> logging.Logger:
     """Get a logger instance.
 
@@ -30,6 +32,7 @@ def get_logger(name: str = "vohrad") -> logging.Logger:
     """
     return logging.getLogger(name)
 
+
 def get_audit_logger() -> logging.Logger:
     """Get audit logger for compliance and sensitive operations.
 
@@ -38,6 +41,7 @@ def get_audit_logger() -> logging.Logger:
     """
     return logging.getLogger("vohrad.audit")
 
+
 def get_security_logger() -> logging.Logger:
     """Get security logger for authentication and authorization events.
 
@@ -45,6 +49,7 @@ def get_security_logger() -> logging.Logger:
         Security logger instance
     """
     return logging.getLogger("vohrad.security")
+
 
 def log_with_context(logger: logging.Logger, level: int, message: str, **extra_fields):
     """Log a message with additional context fields.
@@ -59,6 +64,7 @@ def log_with_context(logger: logging.Logger, level: int, message: str, **extra_f
     record.extra_fields = extra_fields
     logger.handle(record)
 
+
 def get_contextual_logger(name: str = "vohrad") -> "ContextualLogger":
     """Get a logger that automatically includes context information.
 
@@ -70,6 +76,7 @@ def get_contextual_logger(name: str = "vohrad") -> "ContextualLogger":
     """
     base_logger = get_logger(name)
     return ContextualLogger(base_logger)
+
 
 class ContextualLogger:
     """Logger wrapper that automatically includes correlation context."""

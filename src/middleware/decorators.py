@@ -9,6 +9,7 @@ from typing import TypeVar
 
 T = TypeVar("T")
 
+
 def with_database_session(session_type: str = "tenant"):
     """Async decorator to automatically manage database sessions."""
 
@@ -32,6 +33,7 @@ def with_database_session(session_type: str = "tenant"):
 
     return decorator
 
+
 def handle_service_exceptions(func: Callable[..., Awaitable[T]]) -> Callable[..., Awaitable[T]]:
     """Decorator to handle common service exceptions consistently."""
 
@@ -45,6 +47,7 @@ def handle_service_exceptions(func: Callable[..., Awaitable[T]]) -> Callable[...
 
             error_msg = str(e).lower()
             if "not found" in error_msg:
+
                 from exceptions import tenant_not_found
                 from exceptions import user_not_found
 
