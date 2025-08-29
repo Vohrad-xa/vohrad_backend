@@ -31,52 +31,48 @@ async def get_current_user(
         raise AuthenticationException("Authentication failed") from e
 
 
-async def get_current_admin(
+def get_current_admin(
     current_user: AuthenticatedUser = Depends(get_current_user)
 ) -> AuthenticatedUser:
     """Get current authenticated admin user."""
-    user = await current_user
-    if not user.is_admin():
+    if not current_user.is_admin():
         raise AuthorizationException("admin", "access")
 
-    return user
+    return current_user
 
 
-async def get_current_tenant_user(
+def get_current_tenant_user(
     current_user: AuthenticatedUser = Depends(get_current_user)
 ) -> AuthenticatedUser:
     """Get current authenticated tenant user."""
-    user = await current_user
-    if not user.is_tenant_user():
+    if not current_user.is_tenant_user():
         raise AuthorizationException("tenant", "access")
 
-    return user
+    return current_user
 
 
 def require_permission(resource: str, action: str):
     """Create dependency that requires specific permission."""
     permission = f"{resource}:{action}"
 
-    async def permission_dependency(
+    def permission_dependency(
         current_user: AuthenticatedUser = Depends(get_current_user)
     ) -> AuthenticatedUser:
-        user = await current_user
-        if not user.has_permission(permission):
+        if not current_user.has_permission(permission):
             raise AuthorizationException(resource, action, {"required_permission": permission})
-        return user
+        return current_user
 
     return permission_dependency
 
 
 def require_role(*roles: str):
     """Create dependency that requires specific role(s)."""
-    async def role_dependency(
+    def role_dependency(
         current_user: AuthenticatedUser = Depends(get_current_user)
     ) -> AuthenticatedUser:
-        user = await current_user
-        if not any(user.has_role(role) for role in roles):
+        if not any(current_user.has_role(role) for role in roles):
             raise AuthorizationException("roles", "access", {"required_roles": list(roles)})
-        return user
+        return current_user
 
     return role_dependency
 
