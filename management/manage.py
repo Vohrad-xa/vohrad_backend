@@ -1,10 +1,12 @@
 """Management command entry point."""
 
 import typer
+from commands import security
 from commands import tenant
 from commands import user
 
 app = typer.Typer(help="Vohrad management commands")
+app.add_typer(security.app, name="security", help="Security and key management commands")
 app.add_typer(tenant.app, name="tenant", help="Tenant management commands")
 app.add_typer(user.app, name="user", help="User management commands")
 

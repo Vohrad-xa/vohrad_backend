@@ -42,3 +42,4 @@ htmlcov/
 /.guide
 /tests
 /.dev_keys
+/docs
