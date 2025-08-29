@@ -11,11 +11,13 @@ from alembic import op
 from typing import Sequence
 from typing import Union
 
+
 # revision identifiers, used by Alembic.
 revision: str = "4647208018d3"
 down_revision: Union[str, None] = "6c588759fb5e"
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
+
 
 def upgrade() -> None:
     op.execute("CREATE SCHEMA IF NOT EXISTS shared")
@@ -42,6 +44,7 @@ def upgrade() -> None:
         unique=True,
         schema="shared"
     )
+
 
 def downgrade() -> None:
     op.drop_index(op.f("ix_tenants_name"), table_name="tenants", schema="shared")

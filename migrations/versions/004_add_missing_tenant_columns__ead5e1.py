@@ -11,11 +11,13 @@ from alembic import op
 from typing import Sequence
 from typing import Union
 
+
 # revision identifiers, used by Alembic.
 revision: str = "ead5e1c6d28f"
 down_revision: Union[str, None] = "4647208018d3"
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
+
 
 def upgrade() -> None:
     op.add_column("tenants", sa.Column("email", sa.String(), nullable=True), schema="shared")
@@ -53,6 +55,7 @@ def upgrade() -> None:
     op.create_index("idx_tenants_created_by", "tenants", ["created_by"], schema="shared")
     op.create_index("idx_tenants_deleted_at", "tenants", ["deleted_at"], schema="shared")
     op.create_index("idx_tenants_status_deleted", "tenants", ["status", "deleted_at"], schema="shared")
+
 
 def downgrade() -> None:
     op.drop_index("idx_tenants_status_deleted", table_name="tenants", schema="shared")
