@@ -4,6 +4,7 @@ from .dependencies import get_current_user
 from .schema import AdminLoginRequest
 from .schema import AuthStatusResponse
 from .schema import RefreshTokenRequest
+from .schema import SecurityStatusResponse
 from .schema import TokenResponse
 from .schema import UserLoginRequest
 from api.tenant.dependencies import get_current_tenant
@@ -118,4 +119,33 @@ async def auth_status():
     return ResponseFactory.success(
         data    = status_info,
         message = "Authentication service is operational"
+    )
+
+
+@router.get(
+    "/security-status",
+    response_model = SuccessResponse[SecurityStatusResponse],
+    summary        = "Security Configuration Status"
+)
+async def security_status():
+    """Get security configuration status and key validation information."""
+    from config.keys import get_key_manager
+
+    key_manager = get_key_manager()
+    validation_result = key_manager.validate_keys()
+
+    security_info = SecurityStatusResponse(
+        service                   = validation_result.get("service", "security"),
+        secret_key_configured     = validation_result["secret_key_configured"],
+        secret_key_length         = validation_result["secret_key_length"],
+        secret_key_strength       = validation_result["secret_key_strength"],
+        encryption_key_configured = validation_result["encryption_key_configured"],
+        jwt_algorithm             = validation_result["jwt_algorithm"],
+        environment               = validation_result["environment"],
+        warnings                  = validation_result["warnings"]
+    )
+
+    return ResponseFactory.success(
+        data    = security_info,
+        message = "Security configuration validated successfully"
     )

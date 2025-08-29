@@ -42,3 +42,15 @@ class AuthStatusResponse(BaseModel):
     service    : str = Field(default="authentication", description="Service name")
     status     : str = Field(default="healthy", description="Service health status")
     jwt_service: str = Field(default="operational", description="JWT service status")
+
+
+class SecurityStatusResponse(BaseModel):
+    """Security configuration status response schema."""
+    service                  : str       = Field(default="security", description="Service name")
+    secret_key_configured    : bool      = Field(..., description="Whether SECRET_KEY is configured")
+    secret_key_length        : int       = Field(..., description="Length of SECRET_KEY")
+    secret_key_strength      : str       = Field(..., description="Strength assessment of SECRET_KEY")
+    encryption_key_configured: bool      = Field(..., description="Whether ENCRYPTION_KEY is configured")
+    jwt_algorithm            : str       = Field(..., description="JWT signing algorithm in use")
+    environment              : str       = Field(..., description="Current environment")
+    warnings                 : list[str] = Field(..., description="Security warnings")
