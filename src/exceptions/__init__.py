@@ -22,8 +22,10 @@ from .base import BaseAppException
 from .domain import DomainException
 from .factory import ExceptionFactory
 from .factory import duplicate_email
+from .factory import duplicate_role_name
 from .factory import duplicate_subdomain
 from .factory import invalid_credentials
+from .factory import role_not_found
 from .factory import tenant_not_found
 from .factory import user_not_found
 from .infrastructure import InfrastructureException
@@ -56,9 +58,11 @@ __all__ = [
     "TokenMissingException",
     "TokenRevokedException",
     "duplicate_email",
+    "duplicate_role_name",
     "duplicate_subdomain",
     "invalid_credentials",
     # Convenience functions (recommended)
+    "role_not_found",
     "tenant_not_found",
     "user_not_found",
 ]
