@@ -142,3 +142,13 @@ def duplicate_subdomain(subdomain: str) -> BaseAppException:
 def invalid_credentials() -> BaseAppException:
     """Shorthand for invalid credentials."""
     return ExceptionFactory.authentication_failed("Invalid credentials")
+
+
+def role_not_found(identifier: Any = None) -> BaseAppException:
+    """Shorthand for role not found."""
+    return ExceptionFactory.not_found("Role", identifier)
+
+
+def duplicate_role_name(role_name: str) -> BaseAppException:
+    """Shorthand for duplicate role name."""
+    return ExceptionFactory.already_exists("Role", "name", role_name)
