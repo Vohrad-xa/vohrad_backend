@@ -170,8 +170,8 @@ class AuthJWTService:
             refresh_token = refresh_token
         )
 
-    async def validate_access_token(self, token: str) -> AuthenticatedUser:
-        """Validate token and return user context."""
+    async def validate_access_token(self, token: str, request_subdomain: Optional[str] = None) -> AuthenticatedUser:
+        """Validate token and return user context with enterprise tenant-subdomain validation."""
         payload = self.jwt_engine.decode_token(token)
 
         if payload.get("token_type") != "access":
@@ -181,6 +181,36 @@ class AuthJWTService:
         jti = payload.get("jti")
         if jti and await self.blacklist_service.is_token_revoked(jti):
             raise TokenInvalidException("Token has been revoked")
+
+        # Enterprise security: Always validate tenant-subdomain match for tenant users
+        jwt_tenant_id = payload.get("tenant_id")
+        user_type = payload.get("user_type")
+
+        if user_type == "user" and jwt_tenant_id and request_subdomain:
+            try:
+                # Resolve tenant schema from subdomain
+                actual_tenant_schema = await self.tenant_schema_service.resolve_tenant_schema(request_subdomain)
+
+                # Get tenant details from JWT tenant_id for validation
+                from api.tenant.service import TenantService
+                tenant_service = TenantService()
+
+                async with with_default_db() as shared_db:
+                    jwt_tenant = await tenant_service.get_by_id(shared_db, UUID(jwt_tenant_id))
+                    if not jwt_tenant:
+                        raise TokenInvalidException("Token references invalid tenant")
+
+                    # Critical security check: validate schema names match
+                    if jwt_tenant.tenant_schema_name != actual_tenant_schema:
+                        raise TokenInvalidException(
+                            f"Security violation: JWT tenant '{jwt_tenant.tenant_schema_name}' "
+                            f"does not match request subdomain '{request_subdomain}'"
+                        )
+
+            except TokenInvalidException:
+                raise
+            except Exception as e:
+                raise TokenInvalidException(f"Tenant validation failed: {e!s}") from e
 
         return AuthenticatedUser(
             user_id     = UUID(payload["sub"]),

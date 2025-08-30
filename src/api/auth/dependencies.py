@@ -4,6 +4,7 @@ from exceptions import AuthenticationException
 from exceptions import AuthorizationException
 from exceptions import TokenMissingException
 from fastapi import Depends
+from fastapi import Request
 from fastapi.security import HTTPAuthorizationCredentials
 from fastapi.security import HTTPBearer
 from security.jwt import AuthenticatedUser
@@ -15,15 +16,21 @@ security_scheme = HTTPBearer(auto_error=False, description="JWT Bearer token aut
 
 
 async def get_current_user(
+    request: Request,
     credentials: Optional[HTTPAuthorizationCredentials] = Depends(security_scheme)
 ) -> AuthenticatedUser:
-    """Get current authenticated user from JWT token."""
+    """Get current authenticated user from JWT token with tenant-subdomain validation."""
     if not credentials:
         raise TokenMissingException("Authentication token required")
 
     try:
         auth_service = get_auth_jwt_service()
-        return await auth_service.validate_access_token(credentials.credentials)
+
+        # Extract subdomain from request for tenant-subdomain validation
+        from domain.subdomain import SubdomainExtractor
+        subdomain = SubdomainExtractor.from_request(request)
+
+        return await auth_service.validate_access_token(credentials.credentials, subdomain)
     except Exception as e:
         # Let JWT exceptions bubble up naturally, convert others to AuthenticationException
         if hasattr(e, 'error_code'):  # It's already a structured exception
@@ -78,6 +85,7 @@ def require_role(*roles: str):
 
 
 async def get_optional_user(
+    request: Request,
     credentials: Optional[HTTPAuthorizationCredentials] = Depends(security_scheme)
 ) -> Optional[AuthenticatedUser]:
     """Get authenticated user if present, None otherwise."""
@@ -86,7 +94,12 @@ async def get_optional_user(
 
     try:
         auth_service = get_auth_jwt_service()
-        return await auth_service.validate_access_token(credentials.credentials)
+
+        # Extract subdomain for validation
+        from domain.subdomain import SubdomainExtractor
+        subdomain = SubdomainExtractor.from_request(request)
+
+        return await auth_service.validate_access_token(credentials.credentials, subdomain)
     except Exception:
         return None
 
