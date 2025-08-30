@@ -1,6 +1,5 @@
 import os
 from observability.logger import get_logger
-from observability.logger import setup_logging
 from pydantic import Field
 from pydantic import field_validator
 from pydantic_settings import BaseSettings
@@ -8,8 +7,8 @@ from pydantic_settings import SettingsConfigDict
 from typing import ClassVar
 from typing import Optional
 
-setup_logging()
 logger = get_logger()
+
 
 def get_settings():
     settings = Settings.instance()
@@ -21,24 +20,25 @@ def get_settings():
     else:
         raise ValueError("ENVIRONMENT variable is not set to development or production", settings.ENVIRONMENT)
 
+
 class Settings(BaseSettings):
     """Application settings with validation and type safety."""
 
     model_config = SettingsConfigDict(
-        env_prefix="",
-        case_sensitive=True,
-        populate_by_name=True,
-        env_file=".env",
-        env_file_encoding="utf-8",
-        extra="ignore",
+        env_prefix        = "",
+        case_sensitive    = True,
+        populate_by_name  = True,
+        env_file          = ".env",
+        env_file_encoding = "utf-8",
+        extra             = "ignore",
     )
 
     # Application settings
-    ENVIRONMENT: str = Field(default="development", description="Application environment")
-    BASE_DIR: str = Field(default_factory=lambda: os.path.dirname(os.path.abspath(__file__)))
-    APP_NAME: str = Field(default="Multi-Tenant FastAPI Application", description="Application name")
-    VERSION: str = Field(default="1.0.0", description="Application version")
-    DEBUG: bool = Field(default=False, description="Enable debug mode")
+    ENVIRONMENT: str  = Field(default="development", description="Application environment")
+    BASE_DIR   : str  = Field(default_factory=lambda: os.path.dirname(os.path.abspath(__file__)))
+    APP_NAME   : str  = Field(default="Multi-Tenant FastAPI Application", description="Application name")
+    VERSION    : str  = Field(default="1.0.0", description="Application version")
+    DEBUG      : bool = Field(default=False, description="Enable debug mode")
 
     # Server settings
     HOST: str = Field(default="localhost", description="Server host")
@@ -52,16 +52,24 @@ class Settings(BaseSettings):
     DB_PORT: str = Field(default="5432", description="Database port")
 
     # Security settings
-    SECRET_KEY: Optional[str] = Field(default=None, description="Secret key for JWT tokens")
-    ACCESS_TOKEN_EXPIRE_MINUTES: int = Field(default=30, description="Access token expiration time")
+    SECRET_KEY                 : Optional[str] = Field(default=None, description="Secret key for JWT tokens")
+    ENCRYPTION_KEY             : Optional[str] = Field(default=None, description="Encryption key for sensitive data")
+    JWT_ALGORITHM              : str           = Field(default="RS256", description="JWT algorithm - RS256")
+    JWT_PRIVATE_KEY_PATH       : Optional[str] = Field(default=None, description="Path to JWT private key file")
+    JWT_PUBLIC_KEY_PATH        : Optional[str] = Field(default=None, description="Path to JWT public key file")
+    ACCESS_TOKEN_EXPIRE_MINUTES: int           = Field(default=30, description="Access token expiration time")
+
+    # Enterprise caching settings
+    ENABLE_TENANT_CACHE  : bool = Field(default=True, description="Enable tenant schema caching")
+    TENANT_CACHE_TTL     : int  = Field(default=3600, description="Tenant cache TTL in seconds")
+    TENANT_CACHE_MAX_SIZE: int  = Field(default=1000, description="Maximum tenants to cache")
 
     # Pagination defaults
     DEFAULT_PAGE_SIZE: int = Field(default=20, description="Default pagination page size")
-    MAX_PAGE_SIZE: int = Field(default=100, description="Maximum pagination page size")
+    MAX_PAGE_SIZE    : int = Field(default=100, description="Maximum pagination page size")
 
     @field_validator("ENVIRONMENT")
     @classmethod
-
     def validate_environment(cls, v):
         """Validate environment value."""
         allowed = ["development", "staging", "production"]
@@ -71,7 +79,6 @@ class Settings(BaseSettings):
 
     @field_validator("DEBUG", mode="before")
     @classmethod
-
     def validate_debug(cls, v):
         """Convert string debug values to boolean."""
         if isinstance(v, str):
@@ -79,19 +86,16 @@ class Settings(BaseSettings):
         return v
 
     @property
-
     def database_url(self) -> str:
         """Generate database URL from components."""
         return f"postgresql://{self.DB_USER}:{self.DB_PASS}@{self.DB_HOST}:{self.DB_PORT}/{self.DB_NAME}"
 
     @property
-
     def is_development(self) -> bool:
         """Check if running in development mode."""
         return self.ENVIRONMENT == "development"
 
     @property
-
     def is_production(self) -> bool:
         """Check if running in production mode."""
         return self.ENVIRONMENT == "production"
@@ -105,9 +109,8 @@ class Settings(BaseSettings):
         return cls._instance
 
     @classmethod
-
     def instance(cls) -> "Settings":
-        """Get singleton instance of settings."""
+        """Get a singleton instance of settings."""
         if cls._instance is None:
             cls._instance = cls()
             logger.info(f"Settings loaded for environment: {cls._instance.ENVIRONMENT}")

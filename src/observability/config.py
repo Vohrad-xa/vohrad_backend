@@ -7,14 +7,14 @@ from pathlib import Path
 from typing import Any
 from typing import Dict
 
+
 class LoggingConfig:
     """Clean logging configuration manager for different environments."""
-
     def __init__(self, settings: Dict[str, Any]):
-        self.settings = settings
+        self.settings    = settings
         self.environment = settings.get("ENVIRONMENT", "development")
-        self.log_level = settings.get("LOG_LEVEL", "INFO")
-        self.log_dir = Path("logs")
+        self.log_level   = settings.get("LOG_LEVEL", "INFO")
+        self.log_dir     = Path("logs")
         self.log_dir.mkdir(exist_ok=True)
 
     def setup(self):
@@ -35,16 +35,19 @@ class LoggingConfig:
     def _base_config(self) -> Dict[str, Any]:
         """Base configuration shared across all environments."""
         return {
-            "version": 1,
+            "version"                 : 1,
             "disable_existing_loggers": False,
-            "formatters": {
+            "formatters"              : {
                 "colored": {"()": "observability.formatters.ColoredConsoleFormatter"},
-                "simple": {"format": "[%(asctime)s] [%(name)s] %(levelname)-8s %(message)s", "datefmt": "%H:%M:%S"},
+                "simple" : {
+                    "format" : "[%(asctime)s] [%(name)s] %(levelname)-8s %(message)s",
+                    "datefmt": "%H:%M:%S",
+                },
                 "detailed": {"()": "observability.formatters.DetailedFileFormatter"},
-                "json": {"()": "observability.formatters.EnterpriseJSONFormatter"},
+                "json"    : {"()": "observability.formatters.EnterpriseJSONFormatter"},
             },
             "filters": {
-                "smart_filter": {"()": "observability.filters.SmartFilter"},
+                "smart_filter"          : {"()": "observability.filters.SmartFilter"},
                 "smart_filter_for_files": {"()": "observability.filters.SmartFilter", "filter_for_files": True},
             },
         }
@@ -57,28 +60,50 @@ class LoggingConfig:
             {
                 "handlers": {
                     "console": {
-                        "class": "logging.StreamHandler",
-                        "level": "DEBUG",
+                        "class"    : "logging.StreamHandler",
+                        "level"    : "DEBUG",
                         "formatter": "colored",
-                        "stream": "ext://sys.stdout",
-                        "filters": ["smart_filter"],
+                        "stream"   : "ext://sys.stdout",
+                        "filters"  : ["smart_filter"],
                     },
                     "file": {
-                        "class": "logging.handlers.RotatingFileHandler",
-                        "level": "INFO",
-                        "formatter": "detailed",
-                        "filename": str(self.log_dir / "app.log"),
-                        "maxBytes": 10485760,
+                        "class"      : "logging.handlers.RotatingFileHandler",
+                        "level"      : "INFO",
+                        "formatter"  : "detailed",
+                        "filename"   : str(self.log_dir / "app.log"),
+                        "maxBytes"   : 10485760,
                         "backupCount": 5,
-                        "encoding": "utf8",
-                        "filters": ["smart_filter_for_files"],
+                        "encoding"   : "utf8",
+                        "filters"    : ["smart_filter_for_files"],
+                    },
+                    "audit_file": {
+                        "class"      : "logging.handlers.RotatingFileHandler",
+                        "level"      : "INFO",
+                        "formatter"  : "detailed",
+                        "filename"   : str(self.log_dir / "audit.log"),
+                        "maxBytes"   : 10485760,
+                        "backupCount": 5,
+                        "encoding"   : "utf8",
+                        "filters"    : ["smart_filter_for_files"],
+                    },
+                    "security_file": {
+                        "class"      : "logging.handlers.RotatingFileHandler",
+                        "level"      : "INFO",
+                        "formatter"  : "detailed",
+                        "filename"   : str(self.log_dir / "security.log"),
+                        "maxBytes"   : 10485760,
+                        "backupCount": 5,
+                        "encoding"   : "utf8",
+                        "filters"    : ["smart_filter_for_files"],
                     },
                 },
                 "loggers": {
-                    "root": {"level": "WARNING", "handlers": ["console"]},
-                    "vohrad": {"level": self.log_level, "handlers": ["console", "file"], "propagate": False},
-                    "uvicorn.error": {"level": "INFO", "handlers": ["console", "file"], "propagate": False},
-                    "uvicorn.access": {"level": "WARNING", "handlers": ["file"], "propagate": False},
+                    "root"           : {"level": "WARNING", "handlers": ["console"]},
+                    "vohrad"         : {"level": self.log_level, "handlers": ["console", "file"], "propagate": False},
+                    "vohrad.audit"   : {"level": "INFO", "handlers": ["audit_file"], "propagate": False},
+                    "vohrad.security": {"level": "INFO", "handlers": ["security_file"], "propagate": False},
+                    "uvicorn.error"  : {"level": "INFO", "handlers": ["console", "file"], "propagate": False},
+                    "uvicorn.access" : {"level": "WARNING", "handlers": ["file"], "propagate": False},
                 },
             }
         )
@@ -93,62 +118,62 @@ class LoggingConfig:
             {
                 "handlers": {
                     "console": {
-                        "class": "logging.StreamHandler",
-                        "level": "WARNING",
+                        "class"    : "logging.StreamHandler",
+                        "level"    : "WARNING",
                         "formatter": "json",
-                        "stream": "ext://sys.stdout",
-                        "filters": ["smart_filter"],
+                        "stream"   : "ext://sys.stdout",
+                        "filters"  : ["smart_filter"],
                     },
                     "file": {
-                        "class": "logging.handlers.RotatingFileHandler",
-                        "level": "INFO",
-                        "formatter": "json",
-                        "filename": str(self.log_dir / "app.log"),
-                        "maxBytes": 52428800,
+                        "class"      : "logging.handlers.RotatingFileHandler",
+                        "level"      : "INFO",
+                        "formatter"  : "json",
+                        "filename"   : str(self.log_dir / "app.log"),
+                        "maxBytes"   : 52428800,
                         "backupCount": 20,
-                        "encoding": "utf8",
-                        "filters": ["smart_filter_for_files"],
+                        "encoding"   : "utf8",
+                        "filters"    : ["smart_filter_for_files"],
                     },
                     "error_file": {
-                        "class": "logging.handlers.RotatingFileHandler",
-                        "level": "ERROR",
-                        "formatter": "json",
-                        "filename": str(self.log_dir / "error.log"),
-                        "maxBytes": 26214400,
+                        "class"      : "logging.handlers.RotatingFileHandler",
+                        "level"      : "ERROR",
+                        "formatter"  : "json",
+                        "filename"   : str(self.log_dir / "error.log"),
+                        "maxBytes"   : 26214400,
                         "backupCount": 10,
-                        "encoding": "utf8",
+                        "encoding"   : "utf8",
                     },
                     "audit_file": {
-                        "class": "logging.handlers.RotatingFileHandler",
-                        "level": "INFO",
-                        "formatter": "json",
-                        "filename": str(self.log_dir / "audit.log"),
-                        "maxBytes": 52428800,
+                        "class"      : "logging.handlers.RotatingFileHandler",
+                        "level"      : "INFO",
+                        "formatter"  : "json",
+                        "filename"   : str(self.log_dir / "audit.log"),
+                        "maxBytes"   : 52428800,
                         "backupCount": 30,
-                        "encoding": "utf8",
-                        "filters": ["smart_filter_for_files"],
+                        "encoding"   : "utf8",
+                        "filters"    : ["smart_filter_for_files"],
                     },
                     "security_file": {
-                        "class": "logging.handlers.RotatingFileHandler",
-                        "level": "INFO",
-                        "formatter": "json",
-                        "filename": str(self.log_dir / "security.log"),
-                        "maxBytes": 52428800,
+                        "class"      : "logging.handlers.RotatingFileHandler",
+                        "level"      : "INFO",
+                        "formatter"  : "json",
+                        "filename"   : str(self.log_dir / "security.log"),
+                        "maxBytes"   : 52428800,
                         "backupCount": 25,
-                        "encoding": "utf8",
+                        "encoding"   : "utf8",
                     },
                 },
                 "loggers": {
-                    "root": {"level": "WARNING", "handlers": ["console"]},
+                    "root"  : {"level": "WARNING", "handlers": ["console"]},
                     "vohrad": {
-                        "level": self.log_level,
-                        "handlers": ["console", "file", "error_file"],
+                        "level"    : self.log_level,
+                        "handlers" : ["console", "file", "error_file"],
                         "propagate": False,
                     },
-                    "vohrad.audit": {"level": "INFO", "handlers": ["audit_file"], "propagate": False},
+                    "vohrad.audit"   : {"level": "INFO", "handlers": ["audit_file"], "propagate": False},
                     "vohrad.security": {"level": "INFO", "handlers": ["security_file"], "propagate": False},
-                    "uvicorn.error": {"level": "INFO", "handlers": ["console", "file"], "propagate": False},
-                    "uvicorn.access": {"level": "WARNING", "handlers": ["file"], "propagate": False},
+                    "uvicorn.error"  : {"level": "INFO", "handlers": ["console", "file"], "propagate": False},
+                    "uvicorn.access" : {"level": "WARNING", "handlers": ["file"], "propagate": False},
                 },
             }
         )
@@ -163,15 +188,15 @@ class LoggingConfig:
             {
                 "handlers": {
                     "console": {
-                        "class": "logging.StreamHandler",
-                        "level": "ERROR",
+                        "class"    : "logging.StreamHandler",
+                        "level"    : "ERROR",
                         "formatter": "simple",
-                        "stream": "ext://sys.stdout",
+                        "stream"   : "ext://sys.stdout",
                     }
                 },
                 "loggers": {
-                    "root": {"level": "ERROR", "handlers": ["console"]},
-                    "vohrad": {"level": "WARNING", "handlers": ["console"], "propagate": False},
+                    "root"  : {"level" : "ERROR", "handlers" : ["console"]},
+                    "vohrad": {"level" : "WARNING", "handlers" : ["console"], "propagate": False},
                 },
             }
         )
@@ -181,13 +206,19 @@ class LoggingConfig:
     def _apply_smart_filters(self):
         """Apply smart filters to reduce noise across all relevant loggers."""
         smart_filter = SmartFilter()
+        root_logger  = logging.getLogger()
 
-        root_logger = logging.getLogger()
         for handler in root_logger.handlers:
             handler.addFilter(smart_filter)
 
-        logger_names = ["vohrad", "uvicorn", "uvicorn.error"]
+        logger_names = [
+            "vohrad",
+            "uvicorn",
+            "uvicorn.error",
+        ]
+
         for logger_name in logger_names:
             logger = logging.getLogger(logger_name)
+
             for handler in logger.handlers:
                 handler.addFilter(smart_filter)

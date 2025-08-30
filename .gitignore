@@ -41,3 +41,5 @@ htmlcov/
 /.claude
 /.guide
 /tests
+/.dev_keys
+/docs

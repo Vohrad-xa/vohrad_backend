@@ -8,12 +8,14 @@ from typing import Optional
 
 __all__ = ["get_default_db_session", "get_tenant_db_session", "with_default_db", "with_tenant_db"]
 
+
 def get_sub_domain_from_request(req: Request) -> str:
     """Get the subdomain from the request"""
     subdomain = SubdomainExtractor.from_request(req)
     if not subdomain:
         return req.headers.get("host", "localhost").split(":", 1)[0]
     return subdomain
+
 
 @asynccontextmanager
 async def with_default_db():
@@ -24,6 +26,7 @@ async def with_default_db():
         yield db
     finally:
         await db.close()
+
 
 @asynccontextmanager
 async def with_tenant_db(tenant_schema: Optional[str]):
@@ -36,20 +39,20 @@ async def with_tenant_db(tenant_schema: Optional[str]):
     finally:
         await db.close()
 
+
 async def get_default_db_session():
     """Dependency for default database session."""
     async with with_default_db() as session:
         yield session
 
+
 async def get_tenant_db_session(tenant_schema_name=Depends(get_sub_domain_from_request)):
-    """FastAPI dependency for tenant-specific database session.
-    Uses modular tenant service for clean schema resolution.
-    """
+    """FastAPI dependency for tenant-specific database session."""
     from services.tenant_service import get_tenant_schema_service
 
     # Resolve tenant schema using service layer
     tenant_service = get_tenant_schema_service()
-    tenant_schema = await tenant_service.resolve_tenant_schema(tenant_schema_name)
+    tenant_schema  = await tenant_service.resolve_tenant_schema(tenant_schema_name)
 
     # Single session with proper schema translation
     async with with_tenant_db(tenant_schema=tenant_schema) as session:

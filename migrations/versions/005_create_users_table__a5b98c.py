@@ -18,6 +18,7 @@ down_revision: Union[str, None] = "ead5e1c6d28f"
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
 
+
 @for_each_tenant_schema
 def upgrade(schema: str) -> None:
     """Create users table in each tenant schema"""
@@ -50,6 +51,7 @@ def upgrade(schema: str) -> None:
     # Create indexes
     op.create_index("idx_users_tenant_id", "users", ["tenant_id"], schema=schema)
     op.create_index("idx_users_tenant_id_id", "users", ["tenant_id", "id"], schema=schema)
+
 
 @for_each_tenant_schema
 def downgrade(schema: str) -> None:

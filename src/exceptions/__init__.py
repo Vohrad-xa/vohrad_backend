@@ -16,6 +16,8 @@ Usage:
 # Core components
 # Base classes needed for type checking
 from .application import ApplicationException
+from .application import AuthenticationException
+from .application import AuthorizationException
 from .base import BaseAppException
 from .domain import DomainException
 from .factory import ExceptionFactory
@@ -26,12 +28,19 @@ from .factory import tenant_not_found
 from .factory import user_not_found
 from .infrastructure import InfrastructureException
 from .integration import IntegrationException
+from .jwt_exceptions import JWTException
+from .jwt_exceptions import TokenExpiredException
+from .jwt_exceptions import TokenInvalidException
+from .jwt_exceptions import TokenMissingException
+from .jwt_exceptions import TokenRevokedException
 from .registry import ErrorDefinition
 from .registry import ErrorRegistry
 
 __all__ = [
     # Base classes for type checking
     "ApplicationException",
+    "AuthenticationException",
+    "AuthorizationException",
     # Core system
     "BaseAppException",
     "DomainException",
@@ -40,6 +49,12 @@ __all__ = [
     "ExceptionFactory",
     "InfrastructureException",
     "IntegrationException",
+    # JWT exceptions
+    "JWTException",
+    "TokenExpiredException",
+    "TokenInvalidException",
+    "TokenMissingException",
+    "TokenRevokedException",
     "duplicate_email",
     "duplicate_subdomain",
     "invalid_credentials",

@@ -14,11 +14,12 @@ indent-width = 4
 preview = true
 select = [
     "F",   # Pyflakes (F) - logic errors, unused imports, etc.
+    "E",   # pycodestyle errors
+    "W",   # pycodestyle warnings
+    "I",   # isort - import sorting
     "B",   # flake8-bugbear (B) - bug-prone patterns
-    # Remove I (isort) - let precision formatter handle imports
     "D",   # pydocstyle (D) - docstring style
     "RUF", # Ruff (RUF) - ruff-specific rules
-    # Exclude all formatting-related E/W/I rules - let precision formatter handle everything
 ]
 # ignore  starts one of the select codes
 ignore = [
@@ -31,20 +32,23 @@ ignore = [
     "D415", # First line should end with a period, question mark, or exclamation point
     "B008", # Do not perform function calls in argument defaults.
     "D209", #  Multi-line docstring closing quotes should be on a separate line
-    "D205", # 1 blank line required between summary line and description
+    # Ignore formatting rules that conflict with asymmetric alignment
+    "E221", # Multiple spaces before operator
+    "E241", # Multiple spaces after comma
+    "E251", # Unexpected spaces around keyword / parameter equals
+    "E203", # Whitespace before ':'
 ]
-# Only fix logical/import issues, not formatting
 fixable = [
-    "I001", # isort (I001) - import sorting
-    "F401", # unused imports
-    "RUF022", # __all__ is not sorted
-    "F841", # local variable assigned but never used
-    "RUF012", # mutable class attributes should use ClassVar
-    "RUF013", # implicit Optional should be explicit
-    "B904", # exception handling with raise ... from
+    "F",   # All Pyflakes rules
+    "E",   # All pycodestyle error rules
+    "W",   # All pycodestyle warning rules
+    "I",   # All isort rules
+    "B",   # All flake8-bugbear rules
+    "RUF", # All Ruff rules
 ]
 extend-select = [
     "E501", # `line-too-long`
+    "E302", # Expected 2 blank lines, found N
 ]
 
 # extend-select  starts one of the select codes
@@ -52,8 +56,6 @@ extend-select = [
 convention = "google"
 
 [lint.isort]
-lines-between-types = 0
-lines-after-imports = 2
 force-single-line = true
 no-sections = true
 

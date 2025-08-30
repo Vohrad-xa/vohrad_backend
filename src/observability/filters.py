@@ -4,6 +4,7 @@ import logging
 from typing import ClassVar
 from typing import List
 
+
 class SmartFilter(logging.Filter):
     """Smart filter to reduce noise from infrastructure and development logs."""
 
@@ -75,6 +76,7 @@ class SmartFilter(logging.Filter):
 
         return True
 
+
 class LevelFilter(logging.Filter):
     """Filter that only allows specific log levels."""
 
@@ -86,6 +88,7 @@ class LevelFilter(logging.Filter):
     def filter(self, record: logging.LogRecord) -> bool:
         """Filter based on log level range."""
         return self.min_level <= record.levelno <= self.max_level
+
 
 class ModuleFilter(logging.Filter):
     """Filter that allows or blocks specific modules."""

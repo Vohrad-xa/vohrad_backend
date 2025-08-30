@@ -17,6 +17,7 @@ down_revision: Union[str, None] = "4647208018d3"
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
 
+
 def upgrade() -> None:
     op.add_column("tenants", sa.Column("email", sa.String(), nullable=True), schema="shared")
     op.add_column("tenants", sa.Column("telephone", sa.String(), nullable=True), schema="shared")
@@ -46,7 +47,23 @@ def upgrade() -> None:
     op.execute("UPDATE shared.tenants SET status = current_status::text")
     op.drop_column("tenants", "current_status", schema="shared")
 
+    op.create_index("idx_tenants_sub_domain", "tenants", ["sub_domain"], unique=True, schema="shared")
+    op.create_index("idx_tenants_status", "tenants", ["status"], schema="shared")
+    op.create_index("idx_tenants_email", "tenants", ["email"], schema="shared")
+    op.create_index("idx_tenants_created_at", "tenants", ["created_at"], schema="shared")
+    op.create_index("idx_tenants_created_by", "tenants", ["created_by"], schema="shared")
+    op.create_index("idx_tenants_deleted_at", "tenants", ["deleted_at"], schema="shared")
+    op.create_index("idx_tenants_status_deleted", "tenants", ["status", "deleted_at"], schema="shared")
+
+
 def downgrade() -> None:
+    op.drop_index("idx_tenants_status_deleted", table_name="tenants", schema="shared")
+    op.drop_index("idx_tenants_deleted_at", table_name="tenants", schema="shared")
+    op.drop_index("idx_tenants_created_by", table_name="tenants", schema="shared")
+    op.drop_index("idx_tenants_created_at", table_name="tenants", schema="shared")
+    op.drop_index("idx_tenants_email", table_name="tenants", schema="shared")
+    op.drop_index("idx_tenants_status", table_name="tenants", schema="shared")
+    op.drop_index("idx_tenants_sub_domain", table_name="tenants", schema="shared")
     op.add_column(
         "tenants",
         sa.Column(
