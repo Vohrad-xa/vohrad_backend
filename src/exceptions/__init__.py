@@ -10,7 +10,6 @@ Usage:
     # Using convenience functions (most common patterns)
     raise tenant_not_found(tenant_id)
     raise user_not_found(user_id)
-    raise duplicate_email(email)
 """
 
 # Core components
@@ -21,11 +20,7 @@ from .application import AuthorizationException
 from .base import BaseAppException
 from .domain import DomainException
 from .factory import ExceptionFactory
-from .factory import duplicate_email
-from .factory import duplicate_role_name
-from .factory import duplicate_subdomain
 from .factory import invalid_credentials
-from .factory import role_not_found
 from .factory import tenant_not_found
 from .factory import user_not_found
 from .infrastructure import InfrastructureException
@@ -57,12 +52,8 @@ __all__ = [
     "TokenInvalidException",
     "TokenMissingException",
     "TokenRevokedException",
-    "duplicate_email",
-    "duplicate_role_name",
-    "duplicate_subdomain",
     "invalid_credentials",
     # Convenience functions (recommended)
-    "role_not_found",
     "tenant_not_found",
     "user_not_found",
 ]

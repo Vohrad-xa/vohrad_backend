@@ -18,11 +18,15 @@ class ExceptionFactory:
       details            : Optional[Dict[str, Any]] = None,
       context            : Optional[str] = None,
       correlation_id     : Optional[str] = None,
+      use_context_as_message: bool = False,
     ) -> BaseAppException:
         """Create standardized exception from error definition."""
-        message = error_def.message
-        if context:
-            message = f"{message}: {context}"
+        if use_context_as_message and context:
+            message = context
+        else:
+            message = error_def.message
+            if context:
+                message = f"{message}: {context}"
 
         return BaseAppException(
             message        = message,
@@ -35,11 +39,11 @@ class ExceptionFactory:
     @staticmethod
     def not_found(entity_type: str, identifier: Any = None) -> BaseAppException:
         """Create entity not found exception."""
-        f"{entity_type}" + (f" with ID {identifier}" if identifier else "")
         return ExceptionFactory.create(
             ErrorRegistry.ENTITY_NOT_FOUND,
             details = {"entity_type": entity_type, "identifier": str(identifier) if identifier else None},
-            context = f"{entity_type} not found" + (f": {identifier}" if identifier else ""),
+            context = f"{entity_type} not found",
+            use_context_as_message = True,
         )
 
     @staticmethod
@@ -129,26 +133,6 @@ def user_not_found(identifier: Any = None) -> BaseAppException:
     return ExceptionFactory.not_found("User", identifier)
 
 
-def duplicate_email(email: str) -> BaseAppException:
-    """Shorthand for duplicate email."""
-    return ExceptionFactory.already_exists("User", "email", email)
-
-
-def duplicate_subdomain(subdomain: str) -> BaseAppException:
-    """Shorthand for duplicate subdomain."""
-    return ExceptionFactory.already_exists("Tenant", "subdomain", subdomain)
-
-
 def invalid_credentials() -> BaseAppException:
     """Shorthand for invalid credentials."""
     return ExceptionFactory.authentication_failed("Invalid credentials")
-
-
-def role_not_found(identifier: Any = None) -> BaseAppException:
-    """Shorthand for role not found."""
-    return ExceptionFactory.not_found("Role", identifier)
-
-
-def duplicate_role_name(role_name: str) -> BaseAppException:
-    """Shorthand for duplicate role name."""
-    return ExceptionFactory.already_exists("Role", "name", role_name)
