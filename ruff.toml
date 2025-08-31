@@ -1,73 +1,21 @@
 target-version = "py313"
-exclude = [
-    ".venv",   #
-    ".git",
-    ".github",
-    "tests",
-]
-
 line-length = 120
-indent-width = 4
 
-# Specifies which linting codes to enable, disable, or ignore, or which ones are fixable.
 [lint]
 preview = true
-select = [
-    "F",   # Pyflakes (F) - logic errors, unused imports, etc.
-    "E",   # pycodestyle errors
-    "W",   # pycodestyle warnings
-    "I",   # isort - import sorting
-    "B",   # flake8-bugbear (B) - bug-prone patterns
-    "D",   # pydocstyle (D) - docstring style
-    "RUF", # Ruff (RUF) - ruff-specific rules
-]
-# ignore  starts one of the select codes
+select = ["F", "E", "W", "I", "B", "D", "RUF"]
 ignore = [
-    "D100", # ignore missing docs
-    "D101", # ignore missing docstring in public class
-    "D104", # ignore missing docstring in public function
-    "D103", # ignore missing docstring in public function
-    "D102", # ignore missing docstring in public function
-    "D107", # ignore missing docstring in __init__
-    "D415", # First line should end with a period, question mark, or exclamation point
-    "B008", # Do not perform function calls in argument defaults.
-    "D209", #  Multi-line docstring closing quotes should be on a separate line
-    # Ignore formatting rules that conflict with asymmetric alignment
-    "E221", # Multiple spaces before operator
-    "E241", # Multiple spaces after comma
-    "E251", # Unexpected spaces around keyword / parameter equals
-    "E203", # Whitespace before ':'
-]
-fixable = [
-    "F",   # All Pyflakes rules
-    "E",   # All pycodestyle error rules
-    "W",   # All pycodestyle warning rules
-    "I",   # All isort rules
-    "B",   # All flake8-bugbear rules
-    "RUF", # All Ruff rules
-]
-extend-select = [
-    "E501", # `line-too-long`
-    "E302", # Expected 2 blank lines, found N
+    # Documentation pragmatism 
+    "D100", "D101", "D102", "D103", "D104", "D107", "D209", "D212", "D415",
+    # Code quality exceptions
+    "B008",
+    # Asymmetric alignment preservation
+    "E203", "E221", "E241", "E251",
 ]
 
-# extend-select  starts one of the select codes
 [lint.pydocstyle]
 convention = "google"
 
 [lint.isort]
 force-single-line = true
 no-sections = true
-
-# Formatting configuration
-[format]
-quote-style = "double"
-indent-style = "space"
-skip-magic-trailing-comma = false
-line-ending = "auto"
-docstring-code-format = true
-docstring-code-line-length = "dynamic"
-
-# Blank line configuration
-[lint.pycodestyle]
-max-line-length = 120
