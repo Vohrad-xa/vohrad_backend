@@ -1,6 +1,7 @@
 import sqlalchemy as sa
 from database import Base
 from sqlalchemy.dialects.postgresql import UUID as PostgresUUID
+from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 from uuid import uuid4
 
@@ -48,3 +49,11 @@ class User(Base):
                             server_default=func.now(),
                             onupdate=func.now()
                         )
+
+    # Big Tech Pattern: ORM Relationships
+    roles = relationship(
+        "Role",
+        secondary="assignments",
+        back_populates="users",
+        lazy="selectin"  # Prevents N+1 queries - enterprise optimization
+    )

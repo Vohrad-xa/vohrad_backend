@@ -1,14 +1,19 @@
+from api.assignment.models import Assignment
+from api.role.models import Role
 from api.tenant.models import Tenant
 from api.user.models import User
 from api.user.schema import UserCreate
 from api.user.schema import UserPasswordUpdate
 from api.user.schema import UserUpdate
 from database.constraint_handler import constraint_handler
+from exceptions import ExceptionFactory
 from exceptions import invalid_credentials
 from middleware import hash_password
 from middleware import verify_password
 from services import BaseService
+from sqlalchemy import and_
 from sqlalchemy import func
+from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 from typing import Any
@@ -95,6 +100,51 @@ class UserService(BaseService[User, UserCreate, UserUpdate]):
         """Search users using the generic search method."""
         tenant_id = tenant.tenant_id if tenant else None
         return await self.search(db, search_term, page, size, tenant_id)
+
+    async def get_user_roles(self, db: AsyncSession, user_id: UUID, tenant: Tenant) -> list[Role]:
+        """Get all roles assigned to user."""
+        user = await self.get_by_id(db, user_id, tenant.tenant_id)
+        # Clean, enterprise-grade: use ORM relationships
+        return user.roles
+
+    async def assign_role_to_user(
+        self, db: AsyncSession, user_id: UUID, role_id: UUID, assigned_by: UUID, tenant: Tenant
+    ) -> Assignment:
+        """Assign role to user with proper constraint handling."""
+        try:
+            assignment = Assignment(
+                user_id=user_id,
+                role_id=role_id,
+                assigned_by=assigned_by
+            )
+            db.add(assignment)
+            await db.commit()
+            await db.refresh(assignment)
+            return assignment
+
+        except IntegrityError as e:
+            await db.rollback()
+            await self._handle_integrity_error(
+                e, {
+                    "operation": "assign_role_to_user",
+                    "user_id": user_id,
+                    "role_id": role_id,
+                }
+            )
+
+    async def revoke_role_from_user(self, db: AsyncSession, user_id: UUID, role_id: UUID, tenant: Tenant) -> None:
+        """Revoke role from user - follows established deletion patterns."""
+        query = select(Assignment).where(
+            and_(Assignment.user_id == user_id, Assignment.role_id == role_id)
+        )
+        result = await db.execute(query)
+        assignment = result.scalar_one_or_none()
+
+        if not assignment:
+            raise ExceptionFactory.not_found("Assignment", f"user {user_id} role {role_id}")
+
+        await db.delete(assignment)
+        await db.commit()
 
     async def _handle_integrity_error(self, error: IntegrityError, operation_context: dict[str, Any]) -> None:
         """Enterprise-grade constraint handling - centralized, modular, DRY."""

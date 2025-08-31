@@ -1,5 +1,6 @@
 import sqlalchemy as sa
 from database import Base
+from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 from uuid import uuid4
 
@@ -19,3 +20,12 @@ class Role(Base):
     is_active   = sa.Column(sa.Boolean, nullable=False, server_default=sa.text("true"))
     created_at  = sa.Column(sa.DateTime(timezone=True), nullable=False, server_default=func.now())
     updated_at  = sa.Column(sa.DateTime(timezone=True), nullable=False, server_default=func.now())
+
+    """ORM Relationships."""
+    users = relationship(
+        "User",
+        secondary      = "assignments",
+        back_populates = "roles",
+        lazy           = "selectin"
+    )
+    permissions = relationship("Permission", back_populates="role", lazy="selectin")

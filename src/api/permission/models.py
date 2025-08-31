@@ -1,5 +1,6 @@
 import sqlalchemy as sa
 from database import Base
+from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 from uuid import uuid4
 
@@ -20,3 +21,6 @@ class Permission(Base):
     resource   = sa.Column(sa.String(50), nullable=False)
     action     = sa.Column(sa.String(50), nullable=False)
     created_at = sa.Column(sa.DateTime(timezone=True), nullable=False, server_default=func.now())
+
+    # Big Tech Pattern: ORM Relationship
+    role = relationship("Role", back_populates="permissions", lazy="selectin")

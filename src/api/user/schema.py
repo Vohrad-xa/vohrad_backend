@@ -129,3 +129,8 @@ class UserResponse(BaseResponseSchema):
     postal_code      : Optional[str]      = None
     country          : Optional[str]      = None
     phone_number     : Optional[str]      = None
+
+
+class UserRoleAssignRequest(BaseModel):
+    """Schema for role assignment request - following established patterns."""
+    role_id: UUID

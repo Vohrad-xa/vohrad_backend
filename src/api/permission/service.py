@@ -83,9 +83,9 @@ class PermissionService(BaseService[Permission, PermissionCreate, PermissionUpda
 
     async def get_role_permissions(self, db: AsyncSession, role_id: UUID) -> list[Permission]:
         """Retrieves all permissions associated with role."""
-        query  = select(Permission).where(Permission.role_id == role_id)
-        result = await db.execute(query)
-        return result.scalars().all()
+        from api.role.service import role_service
+        role = await role_service.get_role_by_id(db, role_id)
+        return role.permissions
 
     async def get_permissions_for_roles(self, db: AsyncSession, role_ids: list[UUID]) -> list[Permission]:
         """Batch retrieval of permissions for multiple roles."""

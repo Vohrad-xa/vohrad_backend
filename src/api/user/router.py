@@ -1,8 +1,10 @@
 from api.common import get_tenant_context
 from api.common.base_router import BaseRouterMixin
+from api.role.schema import RoleResponse
 from api.user.schema import UserCreate
 from api.user.schema import UserPasswordUpdate
 from api.user.schema import UserResponse
+from api.user.schema import UserRoleAssignRequest
 from api.user.schema import UserUpdate
 from api.user.service import user_service
 from fastapi import APIRouter
@@ -125,3 +127,44 @@ async def delete_user(
     _, tenant, db = context
     await user_service.delete_user(db, user_id, tenant)
     return DeletedResponse()
+
+
+# User Role Management - Enterprise Pattern
+@routes.get("/{user_id}/roles")
+async def get_user_roles(
+    user_id: UUID,
+    context=Depends(get_tenant_context),
+):
+    """Get roles assigned to user"""
+    _, tenant, db = context
+    roles = await user_service.get_user_roles(db, user_id, tenant)
+    return ResponseFactory.transform_and_respond(roles, RoleResponse)
+
+
+@routes.post("/{user_id}/roles", status_code=status.HTTP_201_CREATED)
+async def assign_role_to_user(
+    user_id: UUID,
+    request: UserRoleAssignRequest,
+    context=Depends(get_tenant_context),
+):
+    """Assign role to user"""
+    current_user, tenant, db = context
+    assignment = await user_service.assign_role_to_user(
+        db, user_id, request.role_id, current_user.user_id, tenant
+    )
+    return ResponseFactory.success(
+        data={"user_id": str(assignment.user_id), "role_id": str(assignment.role_id)},
+        message="Role assigned successfully"
+    )
+
+
+@routes.delete("/{user_id}/roles/{role_id}", response_model=DeletedResponse)
+async def revoke_role_from_user(
+    user_id: UUID,
+    role_id: UUID,
+    context=Depends(get_tenant_context),
+):
+    """Revoke role from user"""
+    _, tenant, db = context
+    await user_service.revoke_role_from_user(db, user_id, role_id, tenant)
+    return ResponseFactory.deleted("Role revoked successfully")
