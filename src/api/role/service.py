@@ -3,7 +3,7 @@
 from api.role.models import Role
 from api.role.schema import RoleCreate
 from api.role.schema import RoleUpdate
-from exceptions import duplicate_role_name
+from database.constraint_handler import constraint_handler
 from services import BaseService
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -95,15 +95,10 @@ class RoleService(BaseService[Role, RoleCreate, RoleUpdate]):
         await db.refresh(role)
         return role
 
-    async def _handle_integrity_error(self, error: IntegrityError, operation_context: dict[str, Any],) -> None:
-        """Handle role-specific constraint violations - enterprise pattern."""
-        constraint_name = self._extract_constraint_name(error)
-
-        if constraint_name == "idx_roles_name" or "name" in str(error):
-            role_name = operation_context.get("name") or "unknown"
-            raise duplicate_role_name(role_name)
-
-        raise error
+    async def _handle_integrity_error(self, error: IntegrityError, operation_context: dict[str, Any]) -> None:
+        """Enterprise-grade constraint handling - centralized, modular, DRY."""
+        exception = constraint_handler.handle_violation(error, operation_context)
+        raise exception
 
 
 role_service = RoleService()

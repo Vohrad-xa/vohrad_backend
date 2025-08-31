@@ -3,7 +3,7 @@ from api.user.models import User
 from api.user.schema import UserCreate
 from api.user.schema import UserPasswordUpdate
 from api.user.schema import UserUpdate
-from exceptions import duplicate_email
+from database.constraint_handler import constraint_handler
 from exceptions import invalid_credentials
 from middleware import hash_password
 from middleware import verify_password
@@ -97,14 +97,9 @@ class UserService(BaseService[User, UserCreate, UserUpdate]):
         return await self.search(db, search_term, page, size, tenant_id)
 
     async def _handle_integrity_error(self, error: IntegrityError, operation_context: dict[str, Any]) -> None:
-        """Handle user-specific constraint violations - enterprise pattern."""
-        constraint_name = self._extract_constraint_name(error)
-
-        if constraint_name == "idx_users_email" or "email" in str(error):
-            email = operation_context.get("email") or "unknown"
-            raise duplicate_email(email)
-
-        raise error
+        """Enterprise-grade constraint handling - centralized, modular, DRY."""
+        exception = constraint_handler.handle_violation(error, operation_context)
+        raise exception
 
 
 user_service = UserService()

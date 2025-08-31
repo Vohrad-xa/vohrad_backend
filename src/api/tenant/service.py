@@ -1,8 +1,7 @@
 from api.tenant.models import Tenant
 from api.tenant.schema import TenantCreate
 from api.tenant.schema import TenantUpdate
-from exceptions import ExceptionFactory
-from exceptions import duplicate_subdomain
+from database.constraint_handler import constraint_handler
 from exceptions import tenant_not_found
 from services import BaseService
 from sqlalchemy import select
@@ -127,19 +126,9 @@ class TenantService(BaseService[Tenant, TenantCreate, TenantUpdate]):
         await db.commit()
 
     async def _handle_integrity_error(self, error: IntegrityError, operation_context: dict[str, Any]) -> None:
-        """Handle tenant-specific constraint violations - enterprise pattern."""
-        constraint_name = self._extract_constraint_name(error)
-
-        if constraint_name == "idx_tenants_sub_domain" or "sub_domain" in str(error):
-            subdomain = operation_context.get("subdomain") or operation_context.get("new_subdomain")
-            raise duplicate_subdomain(subdomain)
-
-        elif constraint_name == "idx_tenants_tenant_schema_name" or "tenant_schema_name" in str(error):
-            schema_name = operation_context.get("subdomain") or operation_context.get("new_subdomain")
-            raise ExceptionFactory.already_exists("Tenant", "schema_name", schema_name)
-
-        # Re-raise unknown constraint violations
-        raise error
+        """Enterprise-grade constraint handling - centralized, modular, DRY."""
+        exception = constraint_handler.handle_violation(error, operation_context)
+        raise exception
 
 
 tenant_service = TenantService()

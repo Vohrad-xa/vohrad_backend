@@ -64,9 +64,9 @@ async def get_role_by_name(
     _, _tenant, db = context
     role = await role_service.get_role_by_name(db, name)
     if not role:
-        from exceptions import role_not_found
+        from exceptions import ExceptionFactory
 
-        raise role_not_found(name)
+        raise ExceptionFactory.not_found("Role", name)
     return ResponseFactory.transform_and_respond(role, RoleResponse)
 
 
