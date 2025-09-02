@@ -3,6 +3,8 @@
 from api.common import BaseCreateSchema
 from api.common import BaseResponseSchema
 from api.common import BaseUpdateSchema
+from constants.enums import RoleScope
+from constants.enums import RoleType
 from pydantic import BaseModel
 from pydantic import field_validator
 from typing import Optional
@@ -53,11 +55,17 @@ class RoleUpdate(BaseUpdateSchema):
 class RoleResponse(BaseResponseSchema):
     """Schema for role response - follows project patterns."""
 
-    id         : UUID
-    name       : str
-    description: Optional[str] = None
-    is_active  : bool
-    tenant_id  : Optional[UUID] = None
+    id                 : UUID
+    name               : str
+    description        : Optional[str] = None
+    is_active          : bool
+    role_type          : RoleType
+    role_scope         : RoleScope
+    is_mutable         : bool
+    permissions_mutable: bool
+    managed_by         : Optional[str] = None
+    is_deletable       : bool
+    tenant_id          : Optional[UUID] = None
 
 
 class RoleListMeta(BaseModel):

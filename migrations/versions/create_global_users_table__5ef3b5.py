@@ -33,7 +33,7 @@ def upgrade() -> None:
         sa.Column("updated_at", sa.DateTime(timezone=True), nullable=False, server_default=sa.func.now()),
         sa.PrimaryKeyConstraint("id"),
         sa.UniqueConstraint("email"),
-        sa.CheckConstraint("role IN ('super_admin', 'admin', 'support')", name="check_global_user_role"),
+        sa.CheckConstraint("role IN ('super_admin', 'admin')", name="check_global_user_role"),
         schema="shared",
     )
 

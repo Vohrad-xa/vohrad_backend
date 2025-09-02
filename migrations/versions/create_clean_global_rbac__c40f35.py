@@ -35,6 +35,14 @@ def create_auth_tables_for_schema(schema_name: str, user_table_name: str):
         sa.Column("name", sa.String(length=50), nullable=False),
         sa.Column("description", sa.Text(), nullable=True),
         sa.Column("is_active", sa.Boolean(), nullable=False, server_default=sa.text("true")),
+        sa.Column("role_type", sa.Enum(
+            "basic", "predefined", name="role_type_enum"), nullable=False, server_default="predefined"),
+        sa.Column("role_scope", sa.Enum(
+            "global", "tenant", name="role_scope_enum"), nullable=False, server_default="tenant"),
+        sa.Column("is_mutable", sa.Boolean(), nullable=False, server_default=sa.text("false")),
+        sa.Column("permissions_mutable", sa.Boolean(), nullable=False, server_default=sa.text("false")),
+        sa.Column("managed_by", sa.String(length=50), nullable=True),
+        sa.Column("is_deletable", sa.Boolean(), nullable=False, server_default=sa.text("false")),
         sa.Column("created_at", sa.DateTime(timezone=True), nullable=False, server_default=sa.func.now()),
         sa.Column("updated_at", sa.DateTime(timezone=True), nullable=False, server_default=sa.func.now()),
         sa.PrimaryKeyConstraint("id"),

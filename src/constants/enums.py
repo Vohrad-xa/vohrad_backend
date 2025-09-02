@@ -3,6 +3,20 @@
 from enum import Enum
 
 
+class RoleType(Enum):
+    """Role type enumeration."""
+
+    BASIC      = "basic"
+    PREDEFINED = "predefined"
+
+
+class RoleScope(Enum):
+    """Role scope enumeration."""
+
+    GLOBAL = "global"
+    TENANT = "tenant"
+
+
 class UserRoles(Enum):
     """Enumeration of user roles."""
 
