@@ -1,4 +1,7 @@
 import sqlalchemy as sa
+
+# Import Assignment to ensure table is available for secondary relationship
+from api.assignment.models import Assignment
 from database import Base
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
@@ -24,7 +27,7 @@ class Role(Base):
     """ORM Relationships."""
     users = relationship(
         "User",
-        secondary      = "assignments",
+        secondary      = Assignment.__table__,
         back_populates = "roles",
         lazy           = "selectin"
     )

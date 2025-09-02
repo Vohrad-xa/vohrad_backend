@@ -1,4 +1,5 @@
 import sqlalchemy as sa
+from api.assignment.models import Assignment
 from database import Base
 from sqlalchemy.dialects.postgresql import UUID as PostgresUUID
 from sqlalchemy.orm import relationship
@@ -50,10 +51,10 @@ class User(Base):
                             onupdate=func.now()
                         )
 
-    # Big Tech Pattern: ORM Relationships
+    # ORM Relationships
     roles = relationship(
         "Role",
-        secondary="assignments",
+        secondary=Assignment.__table__,
         back_populates="users",
-        lazy="selectin"  # Prevents N+1 queries - enterprise optimization
+        lazy="selectin"  # Prevents N+1 queries
     )

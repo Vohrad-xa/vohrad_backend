@@ -32,14 +32,11 @@ class AccessTokenPayload(BaseModel):
     nbf: int                    # Not before
     jti: str                    # JWT ID
 
-    # Custom claims for RBAC
-    email      : str
-    tenant_id  : Optional[str] = None
-    user_type  : str = Field(..., pattern="^(user|admin)$")
-    roles      : list[str] = Field(default_factory=list)
-    permissions: list[str] = Field(default_factory=list)
-    scope      : list[str] = Field(default_factory=list)
-    token_type : str = "access"
+    # Custom claims
+    email     : str
+    tenant_id : Optional[str] = None
+    user_type : str = Field(..., pattern="^(user|admin)$")
+    token_type: str = "access"
 
     @field_validator("sub")
     @classmethod
@@ -157,25 +154,10 @@ class TokenPair(BaseModel):
 
 class AuthenticatedUser(BaseModel):
     """Authenticated user context from token."""
-    user_id    : UUID
-    email      : str
-    tenant_id  : Optional[UUID] = None
-    user_type  : str
-    roles      : list[str] = Field(default_factory=list)
-    permissions: list[str] = Field(default_factory=list)
-    scope      : list[str] = Field(default_factory=list)
-
-    def has_permission(self, permission: str) -> bool:
-        """Check if user has specific permission."""
-        return permission in self.permissions or "*" in self.permissions
-
-    def has_role(self, role: str) -> bool:
-        """Check if user has specific role."""
-        return role in self.roles
-
-    def has_scope(self, scope: str) -> bool:
-        """Check if user has specific scope."""
-        return scope in self.scope
+    user_id  : UUID
+    email    : str
+    tenant_id: Optional[UUID] = None
+    user_type: str
 
     def is_admin(self) -> bool:
         """Check if user is global admin."""
@@ -189,12 +171,9 @@ class AuthenticatedUser(BaseModel):
 
 
 def create_user_access_payload(
-    user_id    : UUID,
-    email      : str,
-    tenant_id  : UUID,
-    roles      : list[str] | None = None,
-    permissions: list[str] | None = None,
-    scope      : list[str] | None = None
+    user_id  : UUID,
+    email    : str,
+    tenant_id: UUID
 ) -> dict[str, Any]:
     """Create access token payload for tenant user."""
     from uuid import uuid4
@@ -203,29 +182,23 @@ def create_user_access_payload(
     expires = now + timedelta(minutes=jwt_config.access_token_expire_minutes)
 
     return {
-        "sub"        : str(user_id),
-        "iss"        : jwt_config.issuer,
-        "aud"        : jwt_config.audience,
-        "exp"        : int(expires.timestamp()),
-        "iat"        : int(now.timestamp()),
-        "nbf"        : int(now.timestamp()),
-        "jti"        : str(uuid4()),
-        "email"      : email,
-        "tenant_id"  : str(tenant_id),
-        "user_type"  : "user",
-        "roles"      : roles or [],
-        "permissions": permissions or [],
-        "scope"      : scope or ["read", "write"],
-        "token_type" : "access"
+        "sub"       : str(user_id),
+        "iss"       : jwt_config.issuer,
+        "aud"       : jwt_config.audience,
+        "exp"       : int(expires.timestamp()),
+        "iat"       : int(now.timestamp()),
+        "nbf"       : int(now.timestamp()),
+        "jti"       : str(uuid4()),
+        "email"     : email,
+        "tenant_id" : str(tenant_id),
+        "user_type" : "user",
+        "token_type": "access"
     }
 
 
 def create_admin_access_payload(
-    admin_id   : UUID,
-    email      : str,
-    roles      : list[str] | None = None,
-    permissions: list[str] | None = None,
-    scope      : list[str] | None = None
+    admin_id: UUID,
+    email   : str
 ) -> dict[str, Any]:
     """Create access token payload for global admin."""
     from uuid import uuid4
@@ -234,20 +207,17 @@ def create_admin_access_payload(
     expires = now + timedelta(minutes=jwt_config.access_token_expire_minutes)
 
     return {
-        "sub"        : str(admin_id),
-        "iss"        : jwt_config.issuer,
-        "aud"        : jwt_config.audience,
-        "exp"        : int(expires.timestamp()),
-        "iat"        : int(now.timestamp()),
-        "nbf"        : int(now.timestamp()),
-        "jti"        : str(uuid4()),
-        "email"      : email,
-        "tenant_id"  : None,
-        "user_type"  : "admin",
-        "roles"      : roles or [],
-        "permissions": permissions or ["*"],     # Admins get all permissions by default
-        "scope"      : scope or ["admin"],
-        "token_type" : "access"
+        "sub"       : str(admin_id),
+        "iss"       : jwt_config.issuer,
+        "aud"       : jwt_config.audience,
+        "exp"       : int(expires.timestamp()),
+        "iat"       : int(now.timestamp()),
+        "nbf"       : int(now.timestamp()),
+        "jti"       : str(uuid4()),
+        "email"     : email,
+        "tenant_id" : None,
+        "user_type" : "admin",
+        "token_type": "access"
     }
 
 

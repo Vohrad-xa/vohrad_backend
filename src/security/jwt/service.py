@@ -86,12 +86,9 @@ class AuthJWTService:
     async def create_user_tokens(self, user: "User") -> TokenPair:
         """Create tokens for user."""
         access_payload = create_user_access_payload(
-            user_id     = user.id,
-            email       = user.email,
-            tenant_id   = user.tenant_id,
-            roles       = [],
-            permissions = [],
-            scope       = ["read", "write"]
+            user_id   = user.id,
+            email     = user.email,
+            tenant_id = user.tenant_id
         )
 
         access_token_str = self.jwt_engine.encode_token(access_payload)
@@ -130,11 +127,8 @@ class AuthJWTService:
     async def create_admin_tokens(self, admin) -> TokenPair:
         """Create tokens for admin."""
         access_payload = create_admin_access_payload(
-            admin_id    = admin.id,
-            email       = admin.email,
-            roles       = [admin.role],
-            permissions = ["*"],
-            scope       = ["admin"]
+            admin_id = admin.id,
+            email    = admin.email
         )
 
         access_token_str = self.jwt_engine.encode_token(access_payload)
@@ -213,13 +207,10 @@ class AuthJWTService:
                 raise TokenInvalidException(f"Tenant validation failed: {e!s}") from e
 
         return AuthenticatedUser(
-            user_id     = UUID(payload["sub"]),
-            email       = payload["email"],
-            tenant_id   = UUID(payload["tenant_id"]) if payload.get("tenant_id") else None,
-            user_type   = payload["user_type"],
-            roles       = payload.get("roles", []),
-            permissions = payload.get("permissions", []),
-            scope       = payload.get("scope", [])
+            user_id   = UUID(payload["sub"]),
+            email     = payload["email"],
+            tenant_id = UUID(payload["tenant_id"]) if payload.get("tenant_id") else None,
+            user_type = payload["user_type"]
         )
 
     async def refresh_access_token(self, refresh_token: str) -> TokenPair:
