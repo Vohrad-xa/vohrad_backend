@@ -125,10 +125,7 @@ class AuthMiddleware(BaseHTTPMiddleware):
                     "user_id"    : str(authenticated_user.user_id),
                     "email"      : authenticated_user.email,
                     "tenant_id"  : str(authenticated_user.tenant_id) if authenticated_user.tenant_id else None,
-                    "user_type"  : authenticated_user.user_type,
-                    "roles"      : authenticated_user.roles,
-                    "permissions": authenticated_user.permissions,
-                    "scope"      : authenticated_user.scope
+                    "user_type"  : authenticated_user.user_type
                 }
 
             except (TokenInvalidException, TokenExpiredException) as e:

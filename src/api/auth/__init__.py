@@ -6,8 +6,6 @@ from .dependencies import get_current_tenant_and_user
 from .dependencies import get_current_tenant_user
 from .dependencies import get_current_user
 from .dependencies import get_optional_user
-from .dependencies import require_permission
-from .dependencies import require_role
 from .middleware import AuthMiddleware
 from .middleware import create_permissive_auth_middleware
 from .middleware import create_strict_auth_middleware
@@ -44,8 +42,6 @@ __all__ = [
     # Dependencies
     "get_current_user",
     "get_optional_user",
-    "require_permission",
-    "require_role",
     # Router and middleware
     "router",
 ]

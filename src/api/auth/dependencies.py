@@ -58,32 +58,6 @@ def get_current_tenant_user(
     return current_user
 
 
-def require_permission(resource: str, action: str):
-    """Create dependency that requires specific permission."""
-    permission = f"{resource}:{action}"
-
-    def permission_dependency(
-        current_user: AuthenticatedUser = Depends(get_current_user)
-    ) -> AuthenticatedUser:
-        if not current_user.has_permission(permission):
-            raise AuthorizationException(resource, action, {"required_permission": permission})
-        return current_user
-
-    return permission_dependency
-
-
-def require_role(*roles: str):
-    """Create dependency that requires specific role(s)."""
-    def role_dependency(
-        current_user: AuthenticatedUser = Depends(get_current_user)
-    ) -> AuthenticatedUser:
-        if not any(current_user.has_role(role) for role in roles):
-            raise AuthorizationException("roles", "access", {"required_roles": list(roles)})
-        return current_user
-
-    return role_dependency
-
-
 async def get_optional_user(
     request: Request,
     credentials: Optional[HTTPAuthorizationCredentials] = Depends(security_scheme)
