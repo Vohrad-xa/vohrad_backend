@@ -1,5 +1,5 @@
-from api.common import get_tenant_context
 from api.common.base_router import BaseRouterMixin
+from api.common.context_dependencies import get_tenant_context
 from api.role.schema import RoleResponse
 from api.user.schema import UserCreate
 from api.user.schema import UserPasswordUpdate

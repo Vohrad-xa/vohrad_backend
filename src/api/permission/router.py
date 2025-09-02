@@ -1,5 +1,5 @@
-from api.common import get_tenant_context
 from api.common.base_router import BaseRouterMixin
+from api.common.context_dependencies import get_tenant_context
 from api.permission.schema import PermissionCreate
 from api.permission.schema import PermissionResponse
 from api.permission.schema import PermissionUpdate

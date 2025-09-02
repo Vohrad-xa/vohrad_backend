@@ -75,9 +75,8 @@ async def _create_tenant(schema_name: str, sub_domain: str) -> None:
     from database.engine import async_engine
 
     def create_tables_sync(sync_conn):
-        tables_to_create = [table for table in Base.metadata.tables.values() if table.schema != "shared"]
-        for table in tables_to_create:
-            table.create(bind=sync_conn, checkfirst=True)
+        tenant_metadata = get_tenant_specific_metadata()
+        tenant_metadata.create_all(bind=sync_conn, checkfirst=True)
 
     engine_with_schema = async_engine.execution_options(schema_translate_map={"tenant_default": schema_name})
     async with engine_with_schema.begin() as conn:
@@ -86,11 +85,17 @@ async def _create_tenant(schema_name: str, sub_domain: str) -> None:
 
 def get_tenant_specific_metadata():
     meta = sa.MetaData()
+
+    for table in Base.metadata.tables.values():
+        if table.schema == "shared":
+            table.tometadata(meta)
+
     for table in Base.metadata.tables.values():
         if table.schema != "shared":
             table.tometadata(
                 meta,
-                referred_schema_fn=lambda table, to_schema, constraint, **kw: constraint.referred_table.schema
-                                                                              or to_schema,
+                referred_schema_fn=lambda table, to_schema, constraint, referred_schema: (
+                    referred_schema or to_schema
+                ),
             )
     return meta
