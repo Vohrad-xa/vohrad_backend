@@ -1,41 +1,75 @@
 """Tenant creation commands."""
-import sys
-import typer
-from pathlib import Path
 
-sys.path.append(str(Path(__file__).parent.parent.parent.parent / "src"))
 import alembic
-import alembic.script
-import asyncio
-import sqlalchemy as sa
 from alembic.config import Config
 from alembic.migration import MigrationContext
-from api.admin.models import Admin  # noqa: F401
-from api.assignment.models import Assignment  # noqa: F401
-from api.permission.models import Permission  # noqa: F401
-from api.role.models import Role  # noqa: F401
+import alembic.script
 from api.tenant.models import Tenant
-from api.user.models import User  # noqa: F401
+import asyncio
+from commands import CLIStyler, MessageType
 from database import Base
 from database.sessions import with_default_db
-from typing import Annotated
+import sqlalchemy as sa
+import typer
+
+styler = CLIStyler()
 
 
-def create_tenant(
-        schema_name: Annotated[
-            str, typer.Option("--schema-name", "-s", help="The name of the schema for the tenant in the database.")
-        ],
-        sub_domain: Annotated[
-            str, typer.Option("--sub-domain", "-d", help="The subdomain for the tenant. example: tenant1.example.com")
-        ],
-):
+def create_tenant():
     """Create a new tenant in the shared schema tenants table and create the schema in the database."""
-    typer.echo("Creating a new tenant")
-    asyncio.run(_create_tenant(schema_name, sub_domain))
-    typer.echo("Tenant created successfully")
+    styler.print_clean_header("Tenant Creation")
+
+    styler.print_clean_message("Please provide the following tenant details:", MessageType.INFO)
+    styler.console.print("Schema name: Database schema identifier (lowercase, no spaces)")
+    styler.console.print("Subdomain: Tenant's subdomain (e.g., company1 for company1.example.com)")
+    styler.console.print("Email: Contact email for the tenant (required)")
+
+    schema_name = typer.prompt("\nSchema name *", type=str)
+    sub_domain  = typer.prompt("Subdomain *", type=str)
+    email       = typer.prompt("Email *", type=str)
+
+    styler.console.print("\nOptional information (press Enter to skip):")
+    telephone = typer.prompt("Telephone", default="", show_default=False)
+    website   = typer.prompt("Website", default="", show_default=False)
+    industry  = typer.prompt("Industry", default="", show_default=False)
+    city      = typer.prompt("City", default="", show_default=False)
+    country   = typer.prompt("Country", default="", show_default=False)
+
+    styler.print_clean_message("Creating tenant and database schema...", MessageType.INFO)
+
+    asyncio.run(_create_tenant(schema_name, sub_domain, email, telephone, website, industry, city, country))
+
+    table_data = {
+        "Schema Name": schema_name,
+        "Subdomain"  : sub_domain,
+        "Email"      : email,
+        "Status"     : "Active"
+    }
+    if telephone:
+        table_data["Telephone"] = telephone
+    if website:
+        table_data["Website"] = website
+    if industry:
+        table_data["Industry"] = industry
+    if city:
+        table_data["City"] = city
+    if country:
+        table_data["Country"] = country
+
+    styler.print_clean_table(table_data, "Tenant Details")
+    styler.print_clean_message("Tenant created successfully!", MessageType.SUCCESS)
 
 
-async def _create_tenant(schema_name: str, sub_domain: str) -> None:
+async def _create_tenant(
+    schema_name: str,
+    sub_domain : str,
+    email      : str,
+    telephone  : str | None = None,
+    website    : str | None = None,
+    industry   : str | None = None,
+    city       : str | None = None,
+    country    : str | None = None,
+) -> None:
     """Create a new tenant in the shared schema tenants table and create the schema in the database.
 
     1. check if the database is up-to-date with migrations.
@@ -54,6 +88,10 @@ async def _create_tenant(schema_name: str, sub_domain: str) -> None:
             head_revision = script_directory.get_current_head()
 
             if current_revision != head_revision:
+                styler.print_clean_message(
+                    f"Database is not up-to-date. Current revision: {current_revision}, "
+                    f"Head revision: {head_revision}. Please run migrations first.",
+                    MessageType.ERROR)
                 raise RuntimeError(
                     f"Database is not up-to-date. Current revision: {current_revision}, "
                     f"Head revision: {head_revision}. Please run migrations first."
@@ -62,9 +100,15 @@ async def _create_tenant(schema_name: str, sub_domain: str) -> None:
         await connection.run_sync(check_migrations_sync)
 
         tenant = Tenant(
-            sub_domain=sub_domain,
-            tenant_schema_name=schema_name,
-            status="active",
+            sub_domain         = sub_domain,
+            tenant_schema_name = schema_name,
+            email              = email,
+            status             = "active",
+            telephone          = telephone or None,
+            website            = website or None,
+            industry           = industry or None,
+            city               = city or None,
+            country            = country or None,
         )
         db.add(tenant)
         await db.commit()

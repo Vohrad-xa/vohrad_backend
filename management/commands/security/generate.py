@@ -1,17 +1,11 @@
 """Security key generation commands."""
+from commands import CLIEnvironment, CLIFileUtils, CLIStyler, MessageType
+from config.keys import KeyManager
 import os
-import sys
-import typer
 from pathlib import Path
+import typer
 
-project_root = Path(__file__).parent.parent.parent.parent
-sys.path.append(str(project_root / "src"))
-os.chdir(project_root)
-
-from .utils import console  # noqa: E402
-from .utils import get_environment  # noqa: E402
-from .utils import handle_key_output  # noqa: E402
-from config.keys import KeyManager  # noqa: E402
+styler = CLIStyler()
 
 
 def generate_secret(
@@ -20,7 +14,7 @@ def generate_secret(
 ):
     """Generate a new cryptographically secure secret key."""
     new_key = KeyManager.generate_secret_key()
-    handle_key_output("SECRET_KEY", new_key, to_file, show)
+    CLIFileUtils.handle_key_output("SECRET_KEY", new_key, to_file, show, styler=styler)
 
 
 def generate_encryption_key(
@@ -29,7 +23,7 @@ def generate_encryption_key(
 ):
     """Generate a new base64-encoded encryption key."""
     new_key = KeyManager.generate_encryption_key()
-    handle_key_output("ENCRYPTION_KEY", new_key, to_file, show)
+    CLIFileUtils.handle_key_output("ENCRYPTION_KEY", new_key, to_file, show, styler=styler)
 
 
 def generate_jwt_keys(
@@ -37,7 +31,7 @@ def generate_jwt_keys(
     show: bool = typer.Option(False, "--show", help="Display keys in console (development only)")
 ):
     """Generate RSA key pair for JWT signing with production-safe output."""
-    env = get_environment()
+    env = CLIEnvironment.get_environment()
     private_key, public_key = KeyManager.generate_rsa_key_pair()
 
     # Ensure keys directory exists
@@ -57,28 +51,30 @@ def generate_jwt_keys(
     os.chmod(private_key_path, 0o600)  # Private key: owner-only
     os.chmod(public_key_path, 0o644)   # Public key: readable
 
-    console.print("[bold green][SUCCESS] RSA key pair generated successfully[/bold green]")
-    console.print(f"[yellow]Private key: {private_key_path} (permissions: 600)[/yellow]")
-    console.print(f"[yellow]Public key: {public_key_path} (permissions: 644)[/yellow]")
-    console.print()
+    styler.print_clean_message("RSA key pair generated successfully", MessageType.SUCCESS)
+
+    # Display key file information using clean table
+    key_info = {
+        "Private Key": f"{private_key_path} (permissions: 600)",
+        "Public Key": f"{public_key_path} (permissions: 644)"
+    }
+    styler.print_clean_table(key_info, "Generated Key Files")
 
     # Environment-specific display behavior
     if show and env == "development":
-        console.print("[bold blue]Private Key (development display only):[/bold blue]")
-        console.print(f"[dim]{private_key}[/dim]")
-        console.print()
-        console.print("[bold blue]Public Key:[/bold blue]")
-        console.print(f"[dim]{public_key}[/dim]")
-        console.print()
-        console.print("[red]Warning: Clear terminal history after viewing[/red]")
+        styler.console.print("\nPrivate Key (development display only):")
+        styler.console.print(private_key)
+        styler.console.print("\nPublic Key:")
+        styler.console.print(public_key)
+        styler.print_clean_message("Clear terminal history after viewing", MessageType.WARNING)
     elif env == "production":
-        console.print("[dim]Production mode: Keys saved securely, not displayed[/dim]")
-        console.print("[dim]Use --show flag in development only[/dim]")
+        styler.print_clean_message("Production mode: Keys saved securely, not displayed", MessageType.INFO)
+        styler.console.print("Use --show flag in development only")
     else:
-        console.print("[yellow]Use --show flag to display keys (development only)[/yellow]")
+        styler.console.print("Use --show flag to display keys (development only)")
 
-    console.print()
-    console.print("[bold blue]Next steps:[/bold blue]")
-    console.print(f"  • Update JWT_PRIVATE_KEY_PATH={private_key_path}")
-    console.print(f"  • Update JWT_PUBLIC_KEY_PATH={public_key_path}")
-    console.print("  • Add these paths to your .env file")
+    # Display next steps
+    styler.print_clean_header("Next Steps")
+    styler.console.print(f"  Update JWT_PRIVATE_KEY_PATH={private_key_path}")
+    styler.console.print(f"  Update JWT_PUBLIC_KEY_PATH={public_key_path}")
+    styler.console.print("  Add these paths to your .env file")
