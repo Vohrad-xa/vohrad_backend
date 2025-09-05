@@ -1,35 +1,36 @@
 """JWT service for authentication module following modular architecture."""
 
-from typing import TYPE_CHECKING
-from typing import Optional
+from typing import TYPE_CHECKING, Optional
 from uuid import UUID
 
 if TYPE_CHECKING:
     from api.user.models import User
 
-from .revocation import get_jwt_blacklist_service
-from database.sessions import with_default_db
-from database.sessions import with_tenant_db
-from exceptions.application import AuthenticationException
-from exceptions.jwt_exceptions import TokenInvalidException
-from security.jwt.engine import JWTEngine
-from security.jwt.tokens import AccessToken
-from security.jwt.tokens import AuthenticatedUser
-from security.jwt.tokens import RefreshToken
-from security.jwt.tokens import TokenPair
-from security.jwt.tokens import create_admin_access_payload
-from security.jwt.tokens import create_refresh_payload
-from security.jwt.tokens import create_user_access_payload
+from .engine import JWTEngine
+from .revocation import get_jwt_revocation_service
+from .tokens import (
+    AccessToken,
+    AuthenticatedUser,
+    RefreshToken,
+    TokenPair,
+    create_admin_access_payload,
+    create_refresh_payload,
+    create_user_access_payload,
+)
+from api.tenant import get_tenant_schema_resolver
+from database import with_default_db, with_tenant_db
+from database.cache import UserCache
+from exceptions import AuthenticationException, TokenInvalidException
 from security.password import verify_password
-from services.tenant_service import get_tenant_schema_service
 
 
 class AuthJWTService:
     """JWT service for authentication operations."""
     def __init__(self):
         self.jwt_engine            = JWTEngine()
-        self.blacklist_service     = get_jwt_blacklist_service()
-        self.tenant_schema_service = get_tenant_schema_service()
+        self.revocation_service    = get_jwt_revocation_service()
+        self.tenant_schema_service = get_tenant_schema_resolver()
+        self.user_cache            = UserCache()
 
     async def authenticate_user(
         self,
@@ -38,7 +39,6 @@ class AuthJWTService:
       tenant_id: UUID
     ) -> tuple :
         """Authenticate tenant user using proper service patterns."""
-        # Lazy imports to avoid circular dependencies
         from api.tenant.service import TenantService
         from api.user.service import UserService
 
@@ -51,6 +51,11 @@ class AuthJWTService:
             if not tenant:
                 raise AuthenticationException("Invalid tenant")
 
+        # Check cache first for user by email
+        cached_user = await self.user_cache.get_user_by_email(email, tenant_id)
+        if cached_user and verify_password(password, cached_user.password):
+            return cached_user, tenant
+
         # Then get user from tenant schema using proper session management
         async with with_tenant_db(tenant.tenant_schema_name) as tenant_db:
             user = await user_service.get_user_by_email(tenant_db, email, tenant)
@@ -58,6 +63,8 @@ class AuthJWTService:
             if not user or not verify_password(password, user.password):
                 raise AuthenticationException("Invalid credentials")
 
+            # Cache the authenticated user
+            await self.user_cache.cache_user(user, tenant_id)
             return user, tenant
 
     async def authenticate_admin(
@@ -85,10 +92,14 @@ class AuthJWTService:
 
     async def create_user_tokens(self, user: "User") -> TokenPair:
         """Create tokens for user."""
+        # Calculate user_version from tokens_valid_after or fallback to created_at
+        user_version = user.tokens_valid_after.timestamp() if user.tokens_valid_after else user.created_at.timestamp()
+
         access_payload = create_user_access_payload(
-            user_id   = user.id,
-            email     = user.email,
-            tenant_id = user.tenant_id
+            user_id      = user.id,
+            email        = user.email,
+            tenant_id    = user.tenant_id,
+            user_version = user_version
         )
 
         access_token_str = self.jwt_engine.encode_token(access_payload)
@@ -115,10 +126,6 @@ class AuthJWTService:
             expires_at = refresh_expires
         )
 
-        # Track tokens for bulk revocation capabilities
-        await self.blacklist_service.track_user_token(user.id, access_payload["jti"])
-        await self.blacklist_service.track_user_token(user.id, refresh_payload["jti"])
-
         return TokenPair(
             access_token  = access_token,
             refresh_token = refresh_token
@@ -126,9 +133,13 @@ class AuthJWTService:
 
     async def create_admin_tokens(self, admin) -> TokenPair:
         """Create tokens for admin."""
+        # Calculate user_version from tokens_valid_after or fallback to created_at
+        user_version = admin.tokens_valid_after.timestamp() if admin.tokens_valid_after else admin.created_at.timestamp()
+
         access_payload = create_admin_access_payload(
-            admin_id = admin.id,
-            email    = admin.email
+            admin_id     = admin.id,
+            email        = admin.email,
+            user_version = user_version
         )
 
         access_token_str = self.jwt_engine.encode_token(access_payload)
@@ -155,10 +166,6 @@ class AuthJWTService:
             expires_at = refresh_expires
         )
 
-        # Track tokens for bulk revocation capabilities
-        await self.blacklist_service.track_user_token(admin.id, access_payload["jti"])
-        await self.blacklist_service.track_user_token(admin.id, refresh_payload["jti"])
-
         return TokenPair(
             access_token  = access_token,
             refresh_token = refresh_token
@@ -171,12 +178,10 @@ class AuthJWTService:
         if payload.get("token_type") != "access":
             raise TokenInvalidException("Invalid token type")
 
-        # Check if token is revoked
-        jti = payload.get("jti")
-        if jti and await self.blacklist_service.is_token_revoked(jti):
-            raise TokenInvalidException("Token has been revoked")
+        # Check if token is invalidated by user_version (Claims-Based Revocation)
+        await self._validate_user_version(payload)
 
-        # Enterprise security: Always validate tenant-subdomain match for tenant users
+        # Always validate tenant-subdomain match for tenant users
         jwt_tenant_id = payload.get("tenant_id")
         user_type = payload.get("user_type")
 
@@ -225,7 +230,6 @@ class AuthJWTService:
         tenant_id = UUID(payload["tenant_id"]) if payload.get("tenant_id") else None
 
         if user_type == "user" and tenant_id:
-            # Lazy imports to avoid circular dependencies
             from api.tenant.service import TenantService
             from api.user.service import UserService
 
@@ -238,11 +242,19 @@ class AuthJWTService:
                 if not tenant:
                     raise TokenInvalidException("Tenant not found")
 
+            # Check cache first for user by ID
+            cached_user = await self.user_cache.get_user_by_id(user_id, tenant_id)
+            if cached_user:
+                return await self.create_user_tokens(cached_user)
+
             # Get user with proper tenant context
             async with with_tenant_db(tenant.tenant_schema_name) as tenant_db:
                 user = await user_service.get_user_by_id(tenant_db, user_id, tenant)
                 if not user:
                     raise TokenInvalidException("User not found")
+
+                # Cache the user for future requests
+                await self.user_cache.cache_user(user, tenant_id)
                 return await self.create_user_tokens(user)
 
         elif user_type == "admin":
@@ -292,21 +304,59 @@ class AuthJWTService:
         return await self.refresh_access_token(refresh_token)
 
     async def logout_user(self, access_token: str) -> bool:
-        """Logout user by revoking their token."""
+        """Logout user using Claims-Based revocation."""
         try:
             payload = self.jwt_engine.decode_token(access_token)
-            jti     = payload.get("jti")
-            exp     = payload.get("exp")
+            user_id = UUID(payload.get("sub"))
 
-            if jti and exp:
-                return await self.blacklist_service.revoke_token(jti, exp, "user_logout")
-            return False
+            # Use Claims-Based revocation via updated blacklist service
+            await self.revocation_service.revoke_user_tokens(user_id, "user_logout")
+            return True
         except Exception:
             return True
 
     async def logout_user_from_all_devices(self, user_id: UUID, reason: str = "logout_all_devices") -> int:
         """Logout user from all devices by revoking all their tokens."""
-        return await self.blacklist_service.revoke_user_tokens(user_id, reason)
+        return await self.revocation_service.revoke_user_tokens(user_id, reason)
+
+    async def _validate_user_version(self, payload: dict) -> None:
+        """Validate user_version claim for Claims-Based revocation."""
+        user_version = payload.get("user_version")
+        if user_version is None:
+            return
+
+        user_id = UUID(payload["sub"])
+        user_type = payload.get("user_type")
+
+        if user_type == "admin":
+            from api.admin.models import Admin
+            from sqlalchemy import select
+
+            async with with_default_db() as shared_db:
+                result = await shared_db.execute(select(Admin).where(Admin.id == user_id))
+                admin = result.scalar_one_or_none()
+
+                if admin and admin.tokens_valid_after and user_version < admin.tokens_valid_after.timestamp():
+                    raise TokenInvalidException("Token has been revoked")
+
+        elif user_type == "user" and payload.get("tenant_id"):
+            from api.tenant.service import TenantService
+            from api.user.models import User
+            from sqlalchemy import select
+
+            tenant_service = TenantService()
+
+            async with with_default_db() as shared_db:
+                tenant = await tenant_service.get_by_id(shared_db, UUID(payload["tenant_id"]))
+                if not tenant:
+                    return
+
+            async with with_tenant_db(tenant.tenant_schema_name) as tenant_db:
+                result = await tenant_db.execute(select(User).where(User.id == user_id))
+                user = result.scalar_one_or_none()
+
+                if user and user.tokens_valid_after and user_version < user.tokens_valid_after.timestamp():
+                    raise TokenInvalidException("Token has been revoked")
 
 
 _auth_jwt_service: Optional[AuthJWTService] = None

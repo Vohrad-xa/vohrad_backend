@@ -1,14 +1,9 @@
-"""Enterprise-grade JWT token models following Google Cloud IAM patterns."""
+"""JWT token models and payloads following RFC 7519."""
 
 from config.jwt import get_jwt_config
-from datetime import datetime
-from datetime import timedelta
-from datetime import timezone
-from pydantic import BaseModel
-from pydantic import Field
-from pydantic import field_validator
-from typing import Any
-from typing import Optional
+from datetime import datetime, timedelta, timezone
+from pydantic import BaseModel, Field, field_validator
+from typing import Any, Optional
 from uuid import UUID
 
 
@@ -21,7 +16,7 @@ class TokenSubject(BaseModel):
 
 
 class AccessTokenPayload(BaseModel):
-    """Access token payload following RFC 7519 and enterprise standards."""
+    """Access token payload following RFC 7519."""
 
     # RFC 7519 registered claims
     sub: str                    # Subject (user_id)
@@ -173,7 +168,8 @@ class AuthenticatedUser(BaseModel):
 def create_user_access_payload(
     user_id  : UUID,
     email    : str,
-    tenant_id: UUID
+    tenant_id: UUID,
+    user_version: float | None = None
 ) -> dict[str, Any]:
     """Create access token payload for tenant user."""
     from uuid import uuid4
@@ -192,13 +188,15 @@ def create_user_access_payload(
         "email"     : email,
         "tenant_id" : str(tenant_id),
         "user_type" : "user",
-        "token_type": "access"
+        "token_type": "access",
+        "user_version": user_version
     }
 
 
 def create_admin_access_payload(
     admin_id: UUID,
-    email   : str
+    email   : str,
+    user_version: float | None = None
 ) -> dict[str, Any]:
     """Create access token payload for global admin."""
     from uuid import uuid4
@@ -217,7 +215,8 @@ def create_admin_access_payload(
         "email"     : email,
         "tenant_id" : None,
         "user_type" : "admin",
-        "token_type": "access"
+        "token_type": "access",
+        "user_version": user_version
     }
 
 

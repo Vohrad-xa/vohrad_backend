@@ -1,9 +1,12 @@
-"""Authentication utilities for password hashing and verification."""
+"""
+Authentication utilities for password hashing and verification.
+
+Uses bcrypt algorithm via passlib for secure password management.
+"""
 
 
 from passlib.context import CryptContext
-from typing import ClassVar
-from typing import Optional
+from typing import ClassVar, Optional
 
 
 class PasswordManager:

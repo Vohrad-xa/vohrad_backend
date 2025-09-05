@@ -1,3 +1,8 @@
 """Authorization components."""
 
-__all__: list[str] = []
+from .service import AuthorizationService, authorization_service
+
+__all__ = [
+    "AuthorizationService",
+    "authorization_service",
+]
