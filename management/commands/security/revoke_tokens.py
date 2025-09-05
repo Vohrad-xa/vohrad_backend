@@ -174,7 +174,9 @@ class TokenRevocationService:
 
 @app.command("tenant")
 def revoke_tenant_tokens(
-    tenant_id: str = typer.Argument(None, help="Tenant ID to revoke tokens for (optional - will show selection if not provided)"),
+    tenant_id: str = typer.Argument(
+        None, help="Tenant ID to revoke tokens for (optional - will show selection if not provided)"
+    ),
     force    : bool = typer.Option(False, "--force", "-f", help="Skip confirmation prompt")
 ):
     """Revoke all JWT tokens for users in a specific tenant."""
@@ -309,7 +311,9 @@ def revoke_all_tokens(
             styler.print_clean_table(system_overview, "System Overview")
 
             if not force:
-                styler.console.print("\n[bold red]DANGER:[/bold red] This will revoke ALL active JWT tokens system-wide!")
+                styler.console.print(
+                    "\n[bold red]DANGER:[/bold red] This will revoke ALL active JWT tokens system-wide!"
+                )
                 styler.console.print(
                     f"[red]This affects {total_users + len(admins)} accounts across {len(tenants)} tenants[/red]"
                 )
@@ -319,7 +323,10 @@ def revoke_all_tokens(
                     styler.print_clean_message("System-wide token revocation cancelled", MessageType.WARNING)
                     return
 
-                if not Confirm.ask("This action cannot be undone. Proceed with system-wide token revocation?", default=False):
+                if not Confirm.ask(
+                    "This action cannot be undone. Proceed with system-wide token revocation?",
+                    default=False
+                ):
                     styler.print_clean_message("System-wide token revocation cancelled", MessageType.WARNING)
                     return
 

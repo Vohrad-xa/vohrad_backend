@@ -245,7 +245,8 @@ async def _create_user_with_role(
             existing = await tenant_db.execute(select(User).where(User.email == email))
             if existing.scalar_one_or_none():
                 styler.print_clean_message(
-                    f"A user with email '{email}' already exists in '{tenant_subdomain}'. Use a different email address.",
+                    f"A user with email '{email}' already exists in '{tenant_subdomain}'. "
+                    f"Use a different email address.",
                     "ERROR"
                 )
                 return
