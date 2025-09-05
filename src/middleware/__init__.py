@@ -3,10 +3,7 @@
 from .decorators import with_database_session
 from .exception_handler import EnterpriseExceptionHandler
 from .logging_middleware import RequestLoggingMiddleware
-from security.password import PasswordManager
-from security.password import hash_password
-from security.password import password_manager
-from security.password import verify_password
+from security.password import PasswordManager, hash_password, password_manager, verify_password
 
 # JWT middleware is now in security.jwt.middleware
 # from security.jwt.middleware import JWTAuthMiddleware

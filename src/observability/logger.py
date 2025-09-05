@@ -1,11 +1,9 @@
 """Main logging interface and utility functions."""
 
-import logging
 from .config import LoggingConfig
 from .context import PerformanceTracker
-from typing import Any
-from typing import Dict
-from typing import Optional
+import logging
+from typing import Any, Dict, Optional
 
 
 def setup_logging(settings: Optional[Dict[str, Any]] = None):

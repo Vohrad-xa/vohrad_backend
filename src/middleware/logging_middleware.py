@@ -1,12 +1,9 @@
 """Request logging middleware with correlation ID tracking and performance monitoring."""
 
-import time
-from fastapi import Request
-from fastapi import Response
-from observability import PerformanceTracker
-from observability import get_logger
-from observability import get_security_logger
+from fastapi import Request, Response
+from observability import PerformanceTracker, get_logger, get_security_logger
 from starlette.middleware.base import BaseHTTPMiddleware
+import time
 from typing import Callable
 from uuid import uuid4
 

@@ -2,8 +2,7 @@
 
 from dataclasses import dataclass
 from fastapi import status
-from typing import Dict
-from typing import Final
+from typing import Dict, Final
 
 
 @dataclass(frozen=True)

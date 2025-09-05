@@ -1,11 +1,8 @@
-import math
 from constants import PaginationDefaults
 from fastapi import Query
-from pydantic import BaseModel
-from pydantic import Field
-from typing import Generic
-from typing import List
-from typing import TypeVar
+import math
+from pydantic import BaseModel, Field
+from typing import Generic, List, TypeVar
 
 T = TypeVar("T")
 

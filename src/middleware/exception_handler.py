@@ -1,20 +1,19 @@
 """Exception handlers with structured logging."""
 
-import logging
-from datetime import datetime
-from datetime import timezone
-from exceptions import ApplicationException
-from exceptions import BaseAppException
-from exceptions import DomainException
-from exceptions import InfrastructureException
-from exceptions import IntegrationException
-from fastapi import Request
-from fastapi import status
+from datetime import datetime, timezone
+from exceptions import (
+    ApplicationException,
+    BaseAppException,
+    DomainException,
+    InfrastructureException,
+    IntegrationException,
+)
+from fastapi import Request, status
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
+import logging
 from pydantic import ValidationError as PydanticValidationError
-from typing import Any
-from typing import Dict
+from typing import Any, Dict
 from uuid import uuid4
 
 logger = logging.getLogger(__name__)

@@ -2,9 +2,7 @@
 
 from .base import BaseAppException
 from fastapi import status
-from typing import Any
-from typing import Dict
-from typing import Optional
+from typing import Any, Dict, Optional
 
 
 class ApplicationException(BaseAppException):

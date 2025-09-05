@@ -1,15 +1,14 @@
 """Logging configuration and setup for different environments."""
 
+from .filters import SmartFilter
 import logging
 import logging.config
-from .filters import SmartFilter
 from pathlib import Path
-from typing import Any
-from typing import Dict
+from typing import Any, Dict
 
 
 class LoggingConfig:
-    """Clean logging configuration manager for different environments."""
+    """Logging configuration manager for different environments."""
     def __init__(self, settings: Dict[str, Any]):
         self.settings    = settings
         self.environment = settings.get("ENVIRONMENT", "development")

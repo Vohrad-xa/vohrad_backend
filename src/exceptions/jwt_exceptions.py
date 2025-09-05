@@ -1,9 +1,7 @@
 """JWT-specific exceptions following enterprise error handling patterns."""
 
 from .application import AuthenticationException
-from typing import Any
-from typing import Dict
-from typing import Optional
+from typing import Any, Dict, Optional
 
 
 class JWTException(AuthenticationException):

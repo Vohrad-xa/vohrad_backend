@@ -1,7 +1,7 @@
 """Context management for correlation tracking and performance monitoring."""
 
-import time
 from contextvars import ContextVar
+import time
 from typing import Optional
 from uuid import uuid4
 

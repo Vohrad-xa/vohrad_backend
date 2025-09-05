@@ -1,8 +1,7 @@
 """Log filters for noise reduction and smart filtering."""
 
 import logging
-from typing import ClassVar
-from typing import List
+from typing import ClassVar, List
 
 
 class SmartFilter(logging.Filter):

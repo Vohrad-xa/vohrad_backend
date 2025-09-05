@@ -2,9 +2,7 @@
 
 from abc import ABC
 from fastapi import status
-from typing import Any
-from typing import Dict
-from typing import Optional
+from typing import Any, Dict, Optional
 
 
 class BaseAppException(Exception, ABC):

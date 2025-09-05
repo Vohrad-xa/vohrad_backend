@@ -1,16 +1,12 @@
 """Log formatters for different output formats and environments."""
 
+from .context import correlation_id_var, request_start_time_var, tenant_id_var, user_id_var
+from datetime import datetime, timezone
 import json
 import logging
 import os
 import time
 import typing
-from .context import correlation_id_var
-from .context import request_start_time_var
-from .context import tenant_id_var
-from .context import user_id_var
-from datetime import datetime
-from datetime import timezone
 
 
 class ColoredConsoleFormatter(logging.Formatter):
