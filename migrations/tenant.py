@@ -1,5 +1,5 @@
-import functools
 from alembic import op
+import functools
 from sqlalchemy import text
 from typeguard import typechecked
 from typing import Callable

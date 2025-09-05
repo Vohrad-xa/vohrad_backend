@@ -6,11 +6,10 @@ Create Date: 2025-08-24 21:29:37.309705
 
 """
 
-import sqlalchemy as sa
 from alembic import op
 from migrations.tenant import for_each_tenant_schema
-from typing import Sequence
-from typing import Union
+import sqlalchemy as sa
+from typing import Sequence, Union
 
 # revision identifiers, used by Alembic.
 revision: str = "a5b98cda4300"
@@ -28,7 +27,7 @@ def upgrade(schema: str) -> None:
         sa.Column("tenant_id", sa.UUID(), nullable=True),
         sa.Column("first_name", sa.String(length=50), nullable=True),
         sa.Column("last_name", sa.String(length=50), nullable=True),
-        sa.Column("tenant_role", sa.String(length=32), nullable=True),
+        sa.Column("role", sa.String(length=32), nullable=True),
         sa.Column("email", sa.String(), nullable=False),
         sa.Column("email_verified_at", sa.DateTime(timezone=True), nullable=True),
         sa.Column("password", sa.String(), nullable=False),

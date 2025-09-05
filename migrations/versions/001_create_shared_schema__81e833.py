@@ -7,8 +7,7 @@ Create Date: 2024-04-14 18:17:01.148720
 """
 
 from alembic import op
-from typing import Sequence
-from typing import Union
+from typing import Sequence, Union
 
 # revision identifiers, used by Alembic.
 revision: str = "81e83351e712"

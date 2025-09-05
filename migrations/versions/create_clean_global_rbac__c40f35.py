@@ -5,10 +5,9 @@ Revises: 5ef3b50c709c
 Create Date: 2025-08-26 21:20:10.930235
 
 """
-import sqlalchemy as sa
 from alembic import op
-from typing import Sequence
-from typing import Union
+import sqlalchemy as sa
+from typing import Sequence, Union
 from uuid import uuid4
 
 # revision identifiers, used by Alembic.
@@ -36,13 +35,14 @@ def create_auth_tables_for_schema(schema_name: str, user_table_name: str):
         sa.Column("description", sa.Text(), nullable=True),
         sa.Column("is_active", sa.Boolean(), nullable=False, server_default=sa.text("true")),
         sa.Column("role_type", sa.Enum(
-            "basic", "predefined", name="role_type_enum"), nullable=False, server_default="predefined"),
+            "BASIC", "PREDEFINED", name="role_type_enum"), nullable=False, server_default="PREDEFINED"),
         sa.Column("role_scope", sa.Enum(
-            "global", "tenant", name="role_scope_enum"), nullable=False, server_default="tenant"),
+            "GLOBAL", "TENANT", name="role_scope_enum"), nullable=False, server_default="TENANT"),
         sa.Column("is_mutable", sa.Boolean(), nullable=False, server_default=sa.text("false")),
         sa.Column("permissions_mutable", sa.Boolean(), nullable=False, server_default=sa.text("false")),
         sa.Column("managed_by", sa.String(length=50), nullable=True),
         sa.Column("is_deletable", sa.Boolean(), nullable=False, server_default=sa.text("false")),
+        sa.Column("etag", sa.String(length=50), nullable=False, server_default="AA=="),
         sa.Column("created_at", sa.DateTime(timezone=True), nullable=False, server_default=sa.func.now()),
         sa.Column("updated_at", sa.DateTime(timezone=True), nullable=False, server_default=sa.func.now()),
         sa.PrimaryKeyConstraint("id"),
@@ -117,11 +117,11 @@ def drop_auth_tables_for_schema(schema_name: str):
 
 
 def upgrade() -> None:
-    """Create RBAC tables for both shared schema (admins) and all tenant schemas (users)"""
-    # Create auth tables for shared schema (for admins)
-    create_auth_tables_for_schema("shared", "admins")
+    """Create RBAC tables for both shared schema (users) and all tenant schemas (users)"""
+    # Create auth tables for shared schema (for global admin users)
+    create_auth_tables_for_schema("shared", "users")
 
-    # Create auth tables for all existing tenant schemas (for users)
+    # Create auth tables for all existing tenant schemas (for tenant users)
     tenant_schemas = get_tenant_schemas()
     for schema_name in tenant_schemas:
         create_auth_tables_for_schema(schema_name, "users")

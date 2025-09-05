@@ -1,13 +1,10 @@
-import logging
-import os
-import sqlalchemy as sa
 from alembic import context
 from dotenv import load_dotenv
+import logging
 from logging.config import fileConfig
-from sqlalchemy import MetaData
-from sqlalchemy import engine_from_config
-from sqlalchemy import pool
-from sqlalchemy import text
+import os
+import sqlalchemy as sa
+from sqlalchemy import MetaData, engine_from_config, pool, text
 from sqlalchemy.orm import DeclarativeBase
 
 
