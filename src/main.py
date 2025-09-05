@@ -1,3 +1,4 @@
+from api.admin.router import routes as admin_routes
 from api.auth import router as auth_routes
 from api.auth.middleware import AuthMiddleware
 from api.permission.router import routes as permission_routes
@@ -12,8 +13,7 @@ from fastapi import FastAPI
 from fastapi.exceptions import RequestValidationError
 from middleware import EnterpriseExceptionHandler
 from middleware.logging_middleware import RequestLoggingMiddleware
-from observability import get_logger
-from observability import setup_logging
+from observability import get_logger, setup_logging
 from pydantic import ValidationError as PydanticValidationError
 
 
@@ -54,9 +54,10 @@ app.add_exception_handler(RequestValidationError, EnterpriseExceptionHandler.val
 app.add_exception_handler(PydanticValidationError, EnterpriseExceptionHandler.pydantic_validation_exception_handler)
 app.add_exception_handler(Exception, EnterpriseExceptionHandler.generic_exception_handler)
 
-app.include_router(tenant_routes, prefix="/v1")
-app.include_router(user_routes, prefix="/v1")
-app.include_router(role_routes, prefix="/v1")
-app.include_router(permission_routes, prefix="/v1")
-app.include_router(auth_routes, prefix="/v1")
-app.include_router(system_routes, prefix="/v1")
+app.include_router(auth_routes, prefix = "/v1")
+app.include_router(admin_routes, prefix = "/v1")
+app.include_router(tenant_routes, prefix = "/v1")
+app.include_router(user_routes, prefix = "/v1")
+app.include_router(role_routes, prefix = "/v1")
+app.include_router(permission_routes, prefix = "/v1")
+app.include_router(system_routes, prefix = "/v1")

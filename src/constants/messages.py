@@ -27,6 +27,22 @@ class ValidationMessages:
     EMAIL_TOO_LONG: Final[str] = f"Email must be no more than {ValidationConstraints.MAX_EMAIL_LENGTH} characters long"
     EMAIL_REQUIRED: Final[str] = "Email address is required"
 
+    # Phone messages
+    PHONE_TOO_LONG: Final[str] = f"Phone number must be {ValidationConstraints.MAX_PHONE_LENGTH} characters or less"
+
+    # Role messages
+    ROLE_NAME_REQUIRED: Final[str] = "Role name cannot be empty"
+    ROLE_TOO_SHORT   : Final[str] = f"Role name must be at least {ValidationConstraints.MIN_ROLE_LENGTH} characters"
+    ROLE_TOO_LONG    : Final[str] = f"Role name cannot exceed {ValidationConstraints.MAX_ROLE_LENGTH} characters"
+
+    # Permission messages
+    RESOURCE_REQUIRED: Final[str] = "Resource cannot be empty"
+    ACTION_REQUIRED  : Final[str] = "Action cannot be empty"
+
+    # Password strength messages
+    PASSWORD_MISSING_UPPERCASE: Final[str] = "Password must contain at least one uppercase letter"
+    PASSWORD_MISSING_SPECIAL  : Final[str] = "Password must contain at least one special character"
+
     # Tenant messages
     SUBDOMAIN_INVALID  : Final[str] = "Subdomain can only contain letters, numbers, and hyphens"
     SUBDOMAIN_TOO_SHORT: Final[str] = (
@@ -35,7 +51,9 @@ class ValidationMessages:
     SUBDOMAIN_TOO_LONG: Final[str] = (
         f"Subdomain must be no more than {TenantDefaults.MAX_SUBDOMAIN_LENGTH} characters long"
     )
-    TENANT_NAME_REQUIRED: Final[str] = "Tenant name is required"
+    TENANT_NAME_REQUIRED    : Final[str] = "Tenant name is required"
+    SUBDOMAIN_REQUIRED      : Final[str] = "sub_domain cannot be empty"
+    TENANT_SCHEMA_REQUIRED  : Final[str] = "tenant_schema_name cannot be empty"
 
 
 class HTTPStatusMessages:

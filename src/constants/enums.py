@@ -6,15 +6,16 @@ from enum import Enum
 class RoleType(Enum):
     """Role type enumeration."""
 
-    BASIC      = "basic"
-    PREDEFINED = "predefined"
+    BASIC      = "BASIC"
+    PREDEFINED = "PREDEFINED"
+    CUSTOM     = "CUSTOM"
 
 
 class RoleScope(Enum):
     """Role scope enumeration."""
 
-    GLOBAL = "global"
-    TENANT = "tenant"
+    GLOBAL = "GLOBAL"  # Database value: "GLOBAL"
+    TENANT = "TENANT"  # Database value: "TENANT"
 
 
 class UserRoles(Enum):

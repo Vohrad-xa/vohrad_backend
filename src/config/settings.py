@@ -1,11 +1,8 @@
-import os
 from observability.logger import get_logger
-from pydantic import Field
-from pydantic import field_validator
-from pydantic_settings import BaseSettings
-from pydantic_settings import SettingsConfigDict
-from typing import ClassVar
-from typing import Optional
+import os
+from pydantic import Field, field_validator
+from pydantic_settings import BaseSettings, SettingsConfigDict
+from typing import ClassVar, Optional
 
 logger = get_logger()
 

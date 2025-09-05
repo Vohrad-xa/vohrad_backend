@@ -1,5 +1,6 @@
 """Centralized subdomain extraction utilities."""
 
+from constants import TenantDefaults, ValidationConstraints
 from fastapi import Request
 from typing import Optional
 
@@ -9,19 +10,7 @@ class SubdomainExtractor:
 
     @staticmethod
     def from_request(request: Request) -> Optional[str]:
-        """Extract subdomain from FastAPI request.
-
-        Args:
-            request: FastAPI Request object
-
-        Returns:
-            Subdomain string or None if extraction fails
-
-        Examples:
-            - "company1.example.com" -> "company1"
-            - "api.example.com:8000" -> "api"
-            - "localhost:8000" -> None (no subdomain)
-        """
+        """Extract subdomain from FastAPI request."""
         try:
             host = request.headers.get("host", "")
             if not host:
@@ -41,14 +30,7 @@ class SubdomainExtractor:
 
     @staticmethod
     def from_host_string(host: str) -> Optional[str]:
-        """Extract subdomain from the host string.
-
-        Args:
-            host: Host string (e.g., "company1.example.com:8000")
-
-        Returns:
-            Subdomain string or None if extraction fails
-        """
+        """Extract subdomain from the host string."""
         try:
             if not host:
                 return None
@@ -67,14 +49,7 @@ class SubdomainExtractor:
 
     @staticmethod
     def is_valid_subdomain(subdomain: str) -> bool:
-        """Validate if the subdomain is valid, according to RFC standards.
-
-        Args:
-            subdomain: Subdomain string to validate
-
-        Returns:
-            True if valid, False otherwise
-        """
+        """Validate if the subdomain is valid, according to RFC standards."""
         if not subdomain:
             return False
 
@@ -84,7 +59,7 @@ class SubdomainExtractor:
         if subdomain.startswith("-") or subdomain.endswith("-"):
             return False
 
-        if len(subdomain) > 63 or len(subdomain) < 1:
+        if len(subdomain) > TenantDefaults.MAX_SUBDOMAIN_LENGTH or len(subdomain) < ValidationConstraints.MIN_SUBDOMAIN_LENGTH:
             return False
 
         return True
