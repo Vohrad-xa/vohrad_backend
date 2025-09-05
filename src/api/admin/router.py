@@ -1,0 +1,69 @@
+"""Admin routes with tenant context switching."""
+
+from .dependencies import get_admin_params
+from .service import admin_service
+from api.permission import PermissionResponse, permission_service
+from api.role import RoleResponse, role_service
+from api.tenant import TenantResponse, tenant_service
+from api.user.schema import UserResponse
+from api.user.service import user_service
+from fastapi import APIRouter, Depends, Query
+from typing import Optional
+from uuid import UUID
+from web import ResponseFactory
+
+routes = APIRouter(
+    tags=["admin"],
+    prefix="/admin",
+)
+
+
+@routes.get("/tenants")
+async def list_all_tenants(params=Depends(get_admin_params)):
+    """List all tenants."""
+    pagination, context = params
+    return await admin_service.paginated_call(context, tenant_service.get_multi, pagination, TenantResponse)
+
+
+@routes.get("/users")
+async def list_users(params=Depends(get_admin_params), scope: Optional[str] = Query(None)):
+    """List global users or tenant users."""
+    pagination, context = params
+    return await admin_service.paginated_call(
+        context,
+        user_service.get_multi,
+        pagination,
+        UserResponse,
+        tenant_id = context.tenant_id,
+        scope     = scope
+        )
+
+
+@routes.get("/roles")
+async def list_all_roles(params=Depends(get_admin_params), scope: Optional[str] = Query(None)):
+    """List all roles."""
+    pagination, context = params
+    return await admin_service.paginated_call(context, role_service.get_multi, pagination, RoleResponse, scope=scope)
+
+
+@routes.get("/permissions")
+async def list_all_permissions(params=Depends(get_admin_params), scope: Optional[str] = Query(None)):
+    """List all permissions."""
+    pagination, context = params
+    return await admin_service.paginated_call(context, permission_service.get_multi, pagination, PermissionResponse, scope=scope)
+
+
+@routes.delete("/tenants/{tenant_id}")
+async def delete_tenant(tenant_id: UUID, params=Depends(get_admin_params)):
+    """Delete tenant."""
+    _, context = params
+    await tenant_service.delete_tenant_by_id(context.db_session, tenant_id)
+    return ResponseFactory.success("Tenant deleted")
+
+
+@routes.get("/tenant-context")
+async def get_current_tenant_context(params=Depends(get_admin_params)):
+    """Get current tenant context."""
+    _, context = params
+    context_info = await admin_service.get_admin_context_info(context)
+    return ResponseFactory.success(context_info)
