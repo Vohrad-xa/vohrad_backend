@@ -1,19 +1,12 @@
 """Global role seeds for shared schema."""
 
 import asyncio
-import sqlalchemy as sa
-import sys
+from config.settings import get_settings
 from datetime import datetime
-from pathlib import Path
+import sqlalchemy as sa
+from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
+from sqlalchemy.orm import sessionmaker
 from uuid import uuid4
-
-project_root = Path(__file__).parent.parent.parent
-sys.path.insert(0, str(project_root))
-
-from config.settings import get_settings  # noqa: E402
-from sqlalchemy.ext.asyncio import AsyncSession  # noqa: E402
-from sqlalchemy.ext.asyncio import create_async_engine  # noqa: E402
-from sqlalchemy.orm import sessionmaker  # noqa: E402
 
 
 def get_database_url():
@@ -31,15 +24,15 @@ GLOBAL_ROLES = [
     {
         "name": "super_admin",
         "description": "Complete system access across all tenants",
-        "role_type": "basic",
-        "role_scope": "global",
+        "role_type": "BASIC",
+        "role_scope": "GLOBAL",
         "permissions": [("*", "*")]
     },
     {
         "name": "admin",
         "description": "Administrative access with tenant management",
-        "role_type": "basic",
-        "role_scope": "global",
+        "role_type": "BASIC",
+        "role_scope": "GLOBAL",
         "permissions": [("tenant", "*"), ("user", "*"), ("system", "read")]
     }
 ]

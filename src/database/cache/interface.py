@@ -1,10 +1,7 @@
 """Cache interface defining the contract for all cache implementations."""
 
-from abc import ABC
-from abc import abstractmethod
-from typing import Any
-from typing import Dict
-from typing import Optional
+from abc import ABC, abstractmethod
+from typing import Any, Dict, Optional
 
 
 class CacheInterface(ABC):

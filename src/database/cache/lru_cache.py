@@ -1,13 +1,10 @@
 """LRU Cache implementation with TTL support."""
 
-import asyncio
-import time
 from .interface import CacheInterface
+import asyncio
 from collections import OrderedDict
-from typing import Any
-from typing import Dict
-from typing import Optional
-from typing import Tuple
+import time
+from typing import Any, Dict, Optional, Tuple
 
 
 class LRUCache(CacheInterface):

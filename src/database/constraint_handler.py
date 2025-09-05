@@ -1,11 +1,9 @@
 """Database constraint violation handler."""
 
-import re
 from exceptions import ExceptionFactory
+import re
 from sqlalchemy.exc import IntegrityError
-from typing import Any
-from typing import Dict
-from typing import Optional
+from typing import Any, Dict, Optional
 
 
 class ConstraintViolationHandler:

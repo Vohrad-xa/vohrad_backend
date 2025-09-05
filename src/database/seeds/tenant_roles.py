@@ -1,21 +1,13 @@
 """Tenant role seeds for tenant schemas."""
 
 import asyncio
-import sqlalchemy as sa
-import sys
+from config.settings import get_settings
+from constants.enums import RoleScope, RoleType
 from datetime import datetime
-from pathlib import Path
+import sqlalchemy as sa
+from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
+from sqlalchemy.orm import sessionmaker
 from uuid import uuid4
-
-project_root = Path(__file__).parent.parent.parent
-sys.path.insert(0, str(project_root))
-
-from config.settings import get_settings  # noqa: E402
-from constants.enums import RoleScope  # noqa: E402
-from constants.enums import RoleType  # noqa: E402
-from sqlalchemy.ext.asyncio import AsyncSession  # noqa: E402
-from sqlalchemy.ext.asyncio import create_async_engine  # noqa: E402
-from sqlalchemy.orm import sessionmaker  # noqa: E402
 
 
 def get_database_url():
@@ -98,10 +90,10 @@ async def create_tenant_roles_for_schema(schema_name: str):
                     sa.text(f"""
                         INSERT INTO {schema_name}.roles (id, name, description, role_type, role_scope,
                                                       is_mutable, permissions_mutable, is_deletable,
-                                                      managed_by, is_active, created_at, updated_at)
+                                                      managed_by, is_active, etag, created_at, updated_at)
                         VALUES (:id, :name, :description, :role_type, :role_scope,
                                :is_mutable, :permissions_mutable, :is_deletable,
-                               :managed_by, :is_active, :created_at, :updated_at)
+                               :managed_by, :is_active, :etag, :created_at, :updated_at)
                     """),
                     {
                         "id": role_id,
@@ -114,6 +106,7 @@ async def create_tenant_roles_for_schema(schema_name: str):
                         "is_deletable": False,
                         "managed_by": role_config.get("managed_by"),
                         "is_active": True,
+                        "etag": str(uuid4())[:8],  # Required field for role integrity
                         "created_at": datetime.now(),
                         "updated_at": datetime.now()
                     }
