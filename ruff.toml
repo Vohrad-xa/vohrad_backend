@@ -1,5 +1,5 @@
 target-version = "py313"
-line-length = 120
+line-length = 130
 
 [lint]
 preview = true
@@ -17,5 +17,9 @@ ignore = [
 convention = "google"
 
 [lint.isort]
-force-single-line = true
+force-single-line = false
+combine-as-imports = true
 no-sections = true
+split-on-trailing-comma = true
+force-sort-within-sections = true
+no-lines-before = ["future", "standard-library", "third-party", "first-party", "local-folder"]

@@ -12,7 +12,6 @@ dependencies = [
     "uvicorn>=0.29.0",          # for ASGI server
     "pydantic[email]>=2.11.7",  # for data validation
     "psycopg2-binary>=2.9.9",   # for PostgreSQL (sync fallback)
-    "asyncpg>=0.30.0",          # for async PostgreSQL
     "SQLAlchemy>=2.0.28",       # for ORM
     "alembic>=1.13.1",          # for database migrations
     "typeguard>=4.1.5",         # for type checking
@@ -27,6 +26,10 @@ dependencies = [
     "PyJWT>=2.10.1",
     "passlib[bcrypt]>=1.7.4",
     "bcrypt<4.1.0,>=4.0.1",
+    "rich>=14.1.0",
+    "inquirer>=3.4.1",
+    "annotated-types>=0.7.0",
+    "asyncpg>=0.30.0",
 ]
 
 [dependency-groups]
@@ -45,7 +48,7 @@ ignore = ["E302", "E305"]
 aggressive = 2
 
 [tool.pdm]
-distribution = false
+distribution = true
 package-dir = "src"
 
 [[tool.pdm.source]]
@@ -63,7 +66,14 @@ validate-keys = "python management/manage.py security validate-keys"
 generate-secret = "python management/manage.py security generate-secret"
 generate-encryption-key = "python management/manage.py security generate-encryption-key"
 generate-jwt-keys = "python management/manage.py security generate-jwt-keys"
+seed-global-roles = "python management/manage.py security seed-global-roles"
+seed-tenant-roles = "python management/manage.py security seed-tenant-roles"
 # Tenant commands  
-addtenant = "python management/manage.py tenant create_tenant"
+create-tenant = "python management/manage.py tenant create_tenant"
 # User commands
-adduser = "python management/manage.py user create-user"
+create-user = "python management/manage.py user create-with-role"
+# Token commands
+create-token = "python management/manage.py security token generate"
+revoke-all-tokens = "python management/manage.py security revoke-tokens all"
+revoke-tenant-tokens = "python management/manage.py security revoke-tokens tenant"
+list-tenants = "python management/manage.py security revoke-tokens list-tenants"
