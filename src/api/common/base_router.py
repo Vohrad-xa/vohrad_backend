@@ -1,24 +1,13 @@
 """Base router class with common patterns and utilities."""
 
-from api.common.context_dependencies import get_shared_context
-from api.common.context_dependencies import get_tenant_context
-from fastapi import APIRouter
-from fastapi import Depends
-from fastapi import Query
-from fastapi import status
+from api.common.context_dependencies import get_shared_context, get_tenant_context
+from fastapi import APIRouter, Depends, Query, status
 from pydantic import BaseModel
 from security.jwt import AuthenticatedUser
 from sqlalchemy.ext.asyncio import AsyncSession
-from typing import Any
-from typing import List
-from typing import Optional
-from typing import Type
-from typing import TypeVar
+from typing import Any, List, Optional, Type, TypeVar
 from uuid import UUID
-from web import PaginationParams
-from web import PaginationUtil
-from web import ResponseFactory
-from web import pagination_params
+from web import PaginationParams, PaginationUtil, ResponseFactory, pagination_params
 
 T = TypeVar("T", bound=BaseModel)
 CreateSchemaType = TypeVar("CreateSchemaType", bound=BaseModel)

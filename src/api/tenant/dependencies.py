@@ -1,10 +1,8 @@
 """Tenant-specific dependencies."""
 
 from api.tenant.models import Tenant
-from database.sessions import get_default_db_session
-from database.sessions import get_sub_domain_from_request
-from fastapi import Depends
-from fastapi import Request
+from database.sessions import get_default_db_session, get_sub_domain_from_request
+from fastapi import Depends, Request
 from sqlalchemy.ext.asyncio import AsyncSession
 
 

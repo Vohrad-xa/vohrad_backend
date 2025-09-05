@@ -1,18 +1,10 @@
 from api.common.base_router import BaseRouterMixin
-from api.common.context_dependencies import get_authenticated_context
-from api.common.context_dependencies import get_shared_context
-from api.tenant.schema import TenantCreate
-from api.tenant.schema import TenantResponse
-from api.tenant.schema import TenantUpdate
+from api.common.context_dependencies import get_authenticated_context, get_shared_context
+from api.tenant.schema import TenantCreate, TenantResponse, TenantUpdate
 from api.tenant.service import tenant_service
-from fastapi import APIRouter
-from fastapi import Depends
-from fastapi import Query
-from fastapi import status
+from fastapi import APIRouter, Depends, Query, status
 from uuid import UUID
-from web import PaginationParams
-from web import ResponseFactory
-from web import pagination_params
+from web import PaginationParams, ResponseFactory, pagination_params
 
 routes = APIRouter(
     tags   = ["tenant"],
@@ -37,7 +29,7 @@ async def search_tenants(
         pagination: PaginationParams = Depends(pagination_params),
         context=Depends(get_shared_context),
 ):
-    """Search tenants by subdomain, email, city, or industry (admin access only)"""
+    """Search tenants by email, city, or industry (admin access only)"""
     _current_user, _current_tenant, db = context
     tenants, total = await tenant_service.search(db, q, pagination.page, pagination.size)
     return BaseRouterMixin.create_paginated_response(tenants, total, pagination, TenantResponse)
@@ -72,17 +64,6 @@ async def get_tenant_by_id(
     return ResponseFactory.transform_and_respond(tenant, TenantResponse)
 
 
-@routes.get("/subdomain/{subdomain}")
-async def get_tenant_by_subdomain(
-        subdomain: str,
-        context=Depends(get_shared_context),
-):
-    """Get tenant by subdomain (admin access only)"""
-    _current_user, _current_tenant, db = context
-    tenant = await tenant_service.get_tenant_by_subdomain(db, subdomain)
-    return ResponseFactory.transform_and_respond(tenant, TenantResponse)
-
-
 @routes.put("/")
 async def update_tenant(
         tenant_data: TenantUpdate,
@@ -106,18 +87,6 @@ async def update_tenant_by_id(
     return ResponseFactory.transform_and_respond(updated_tenant, TenantResponse)
 
 
-@routes.put("/subdomain/{subdomain}")
-async def update_tenant_by_subdomain(
-        subdomain  : str,
-        tenant_data: TenantUpdate,
-        context=Depends(get_shared_context),
-):
-    """Update tenant by subdomain (admin access only)"""
-    _current_user, _current_tenant, db = context
-    updated_tenant = await tenant_service.update_tenant_by_subdomain(db, subdomain, tenant_data)
-    return ResponseFactory.transform_and_respond(updated_tenant, TenantResponse)
-
-
 @routes.delete("/")
 async def delete_tenant(context=Depends(get_shared_context)):
     """Delete tenant"""
@@ -134,15 +103,4 @@ async def delete_tenant_by_id(
     """Delete tenant by ID (admin access only)"""
     _current_user, _current_tenant, db = context
     await tenant_service.delete_tenant_by_id(db, tenant_id)
-    return ResponseFactory.deleted()
-
-
-@routes.delete("/subdomain/{subdomain}")
-async def delete_tenant_by_subdomain(
-        subdomain: str,
-        context=Depends(get_shared_context),
-):
-    """Delete tenant by subdomain (admin access only)"""
-    _current_user, _current_tenant, db = context
-    await tenant_service.delete_tenant_by_subdomain(db, subdomain)
     return ResponseFactory.deleted()

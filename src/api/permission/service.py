@@ -5,11 +5,10 @@ Manages permission CRUD operations, role associations, and access queries
 with dynamic constraint handling and efficient batch operations.
 """
 
+from api.common import BaseService
 from api.permission.models import Permission
-from api.permission.schema import PermissionCreate
-from api.permission.schema import PermissionUpdate
+from api.permission.schema import PermissionCreate, PermissionUpdate
 from database.constraint_handler import constraint_handler
-from services import BaseService
 from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession

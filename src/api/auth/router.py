@@ -1,22 +1,20 @@
 """Authentication API router following enterprise patterns."""
 
 from .dependencies import get_current_user
-from .schema import AdminLoginRequest
-from .schema import AuthStatusResponse
-from .schema import RefreshTokenRequest
-from .schema import SecurityStatusResponse
-from .schema import TokenResponse
-from .schema import UserLoginRequest
+from .schema import (
+    AdminLoginRequest,
+    AuthStatusResponse,
+    RefreshTokenRequest,
+    SecurityStatusResponse,
+    TokenResponse,
+    UserLoginRequest,
+)
 from api.tenant.dependencies import get_current_tenant
 from api.tenant.models import Tenant
-from fastapi import APIRouter
-from fastapi import Depends
-from fastapi.security import HTTPAuthorizationCredentials
-from fastapi.security import HTTPBearer
-from security.jwt import AuthenticatedUser
-from security.jwt import get_auth_jwt_service
-from web import ResponseFactory
-from web import SuccessResponse
+from fastapi import APIRouter, Depends
+from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
+from security.jwt import AuthenticatedUser, get_auth_jwt_service
+from web import ResponseFactory, SuccessResponse
 
 router = APIRouter(
     prefix = "/auth",

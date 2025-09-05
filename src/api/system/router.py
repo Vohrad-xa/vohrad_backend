@@ -1,8 +1,8 @@
 """System monitoring and health check endpoints."""
 
+from api.tenant import get_tenant_schema_resolver
 from config.keys import get_key_manager
 from fastapi import APIRouter
-from services import get_tenant_schema_service
 
 routes = APIRouter(tags=["system"], prefix="/system")
 
@@ -16,7 +16,7 @@ async def health_check():
 @routes.get("/cache/stats")
 async def cache_statistics():
     """Get tenant cache performance statistics."""
-    tenant_service = get_tenant_schema_service()
+    tenant_service = get_tenant_schema_resolver()
     stats          = await tenant_service.get_cache_performance()
     return {"cache_type": "tenant_schema", "statistics": stats}
 
@@ -24,7 +24,7 @@ async def cache_statistics():
 @routes.post("/cache/clear")
 async def clear_cache():
     """Clear tenant schema cache (admin operation)."""
-    tenant_service = get_tenant_schema_service()
+    tenant_service = get_tenant_schema_resolver()
     await tenant_service.clear_cache()
     return {"message": "Tenant cache cleared successfully"}
 

@@ -1,5 +1,6 @@
-import sqlalchemy as sa
+from constants import ValidationConstraints
 from database import Base
+import sqlalchemy as sa
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 from uuid import uuid4
@@ -18,9 +19,9 @@ class Permission(Base):
 
     id         = sa.Column(sa.UUID, primary_key=True, default=uuid4, nullable=False)
     role_id    = sa.Column(sa.UUID, sa.ForeignKey("roles.id", ondelete="CASCADE"), nullable=False)
-    resource   = sa.Column(sa.String(50), nullable=False)
-    action     = sa.Column(sa.String(50), nullable=False)
+    resource   = sa.Column(sa.String(ValidationConstraints.MAX_RESOURCE_LENGTH), nullable=False)
+    action     = sa.Column(sa.String(ValidationConstraints.MAX_ACTION_LENGTH), nullable=False)
     created_at = sa.Column(sa.DateTime(timezone=True), nullable=False, server_default=func.now())
 
-    # Big Tech Pattern: ORM Relationship
+    # ORM Relationship
     role = relationship("Role", back_populates="permissions", lazy="selectin")

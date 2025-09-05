@@ -1,23 +1,17 @@
 from api.assignment.models import Assignment
+from api.common import BaseService
 from api.role.models import Role
 from api.tenant.models import Tenant
 from api.user.models import User
-from api.user.schema import UserCreate
-from api.user.schema import UserPasswordUpdate
-from api.user.schema import UserUpdate
+from api.user.schema import UserCreate, UserPasswordUpdate, UserUpdate
+from database.cache import UserCache
 from database.constraint_handler import constraint_handler
-from exceptions import ExceptionFactory
-from exceptions import invalid_credentials
-from middleware import hash_password
-from middleware import verify_password
-from services import BaseService
-from sqlalchemy import and_
-from sqlalchemy import func
-from sqlalchemy import select
+from exceptions import ExceptionFactory, invalid_credentials
+from middleware import hash_password, verify_password
+from sqlalchemy import and_, func, select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
-from typing import Any
-from typing import Optional
+from typing import Any, Optional
 from uuid import UUID
 
 
@@ -26,6 +20,7 @@ class UserService(BaseService[User, UserCreate, UserUpdate]):
 
     def __init__(self):
         super().__init__(User)
+        self.user_cache = UserCache()
 
     def get_search_fields(self) -> list[str]:
         """Return searchable fields for user."""
@@ -52,12 +47,26 @@ class UserService(BaseService[User, UserCreate, UserUpdate]):
             )
 
     async def get_user_by_id(self, db: AsyncSession, user_id: UUID, tenant: Tenant) -> User:
-        """Get user by ID."""
-        return await self.get_by_id(db, user_id, tenant.tenant_id)
+        """Get user by ID with caching."""
+        cached_user = await self.user_cache.get_user_by_id(user_id, tenant.tenant_id)
+        if cached_user:
+            return cached_user
+
+        user = await self.get_by_id(db, user_id, tenant.tenant_id)
+        if user:
+            await self.user_cache.cache_user(user, tenant.tenant_id)
+        return user
 
     async def get_user_by_email(self, db: AsyncSession, email: str, tenant: Tenant) -> Optional[User]:
-        """Get user by email."""
-        return await self.get_by_field(db, "email", email, tenant.tenant_id)
+        """Get user by email with caching."""
+        cached_user = await self.user_cache.get_user_by_email(email, tenant.tenant_id)
+        if cached_user:
+            return cached_user
+
+        user = await self.get_by_field(db, "email", email, tenant.tenant_id)
+        if user:
+            await self.user_cache.cache_user(user, tenant.tenant_id)
+        return user
 
     async def get_users_paginated(
         self, db: AsyncSession, page: int = 1, size: int = 20, tenant: Tenant = None
@@ -67,24 +76,49 @@ class UserService(BaseService[User, UserCreate, UserUpdate]):
         return await self.get_multi(db, page, size, tenant_id)
 
     async def update_user(self, db: AsyncSession, user_id: UUID, user_data: UserUpdate, tenant: Tenant) -> User:
-        """Update user - enterprise pattern with inherited constraint protection."""
-        return await self.update(db, user_id, user_data, tenant.tenant_id)
+        """Update user with cache invalidation."""
+        # Get old user data for cache invalidation
+        old_user = await self.get_by_id(db, user_id, tenant.tenant_id)
+        old_email = old_user.email if old_user else None
+
+        # Update user
+        updated_user = await self.update(db, user_id, user_data, tenant.tenant_id)
+
+        # Invalidate old cache entries and cache updated user
+        if old_email:
+            await self.user_cache.invalidate_user(user_id, tenant.tenant_id, old_email)
+        await self.user_cache.cache_user(updated_user, tenant.tenant_id)
+
+        return updated_user
 
     async def update_user_password(
         self, db: AsyncSession, user_id: UUID, password_data: UserPasswordUpdate, tenant: Tenant
     ) -> User:
-        """Update user password with current password verification"""
+        """Update user password with cache invalidation."""
         user = await self.get_user_by_id(db, user_id, tenant)
         if not verify_password(password_data.current_password, user.password):
             raise invalid_credentials()
         user.password = hash_password(password_data.new_password)
         await db.commit()
         await db.refresh(user)
+
+        # Invalidate and re-cache with updated password
+        await self.user_cache.invalidate_user(user_id, tenant.tenant_id, user.email)
+        await self.user_cache.cache_user(user, tenant.tenant_id)
+
         return user
 
     async def delete_user(self, db: AsyncSession, user_id: UUID, tenant: Tenant) -> None:
-        """Delete user - accepts tenant as parameter"""
+        """Delete user with cache invalidation."""
+        # Get user email for cache invalidation
+        user = await self.get_by_id(db, user_id, tenant.tenant_id)
+        user_email = user.email if user else None
+
         await self.delete(db, user_id, tenant.tenant_id)
+
+        # Invalidate cache entries
+        if user_email:
+            await self.user_cache.invalidate_user(user_id, tenant.tenant_id, user_email)
 
     async def verify_user_email(self, db: AsyncSession, user_id: UUID, tenant: Tenant) -> User:
         """Mark user email as verified"""

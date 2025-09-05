@@ -1,8 +1,7 @@
 """Reusable base schema classes for consistent model patterns."""
 
 from datetime import datetime
-from pydantic import BaseModel
-from pydantic import ConfigDict
+from pydantic import BaseModel, ConfigDict
 from typing import Optional
 from uuid import UUID
 

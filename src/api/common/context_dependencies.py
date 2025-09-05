@@ -1,8 +1,7 @@
 """Context dependencies for authenticated requests."""
 
-from api.auth.dependencies import get_current_tenant_and_user
-from database.sessions import get_default_db_session
-from database.sessions import get_tenant_db_session
+from api.auth import get_current_tenant_and_user
+from database.sessions import get_default_db_session, get_tenant_db_session
 from fastapi import Depends
 from security.jwt import AuthenticatedUser
 from sqlalchemy.ext.asyncio import AsyncSession

@@ -1,18 +1,22 @@
 """Authentication dependencies for FastAPI integration."""
 
-from exceptions import AuthenticationException
-from exceptions import AuthorizationException
-from exceptions import TokenMissingException
-from fastapi import Depends
-from fastapi import Request
-from fastapi.security import HTTPAuthorizationCredentials
-from fastapi.security import HTTPBearer
-from security.jwt import AuthenticatedUser
-from security.jwt import get_auth_jwt_service
-from typing import Any
-from typing import Optional
+from exceptions import AuthenticationException, AuthorizationException, TokenMissingException
+from fastapi import Depends, Request
+from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
+from security.jwt import AuthenticatedUser, get_auth_jwt_service
+from typing import Any, Optional
 
 security_scheme = HTTPBearer(auto_error=False, description="JWT Bearer token authentication")
+
+
+async def _validate_token_with_subdomain(token: str, request: Request) -> AuthenticatedUser:
+    """Extract subdomain and validate token - DRY utility."""
+    auth_service = get_auth_jwt_service()
+
+    from domain.subdomain import SubdomainExtractor
+    subdomain = SubdomainExtractor.from_request(request)
+
+    return await auth_service.validate_access_token(token, subdomain)
 
 
 async def get_current_user(
@@ -24,13 +28,7 @@ async def get_current_user(
         raise TokenMissingException("Authentication token required")
 
     try:
-        auth_service = get_auth_jwt_service()
-
-        # Extract subdomain from request for tenant-subdomain validation
-        from domain.subdomain import SubdomainExtractor
-        subdomain = SubdomainExtractor.from_request(request)
-
-        return await auth_service.validate_access_token(credentials.credentials, subdomain)
+        return await _validate_token_with_subdomain(credentials.credentials, request)
     except Exception as e:
         # Let JWT exceptions bubble up naturally, convert others to AuthenticationException
         if hasattr(e, 'error_code'):  # It's already a structured exception
@@ -67,13 +65,7 @@ async def get_optional_user(
         return None
 
     try:
-        auth_service = get_auth_jwt_service()
-
-        # Extract subdomain for validation
-        from domain.subdomain import SubdomainExtractor
-        subdomain = SubdomainExtractor.from_request(request)
-
-        return await auth_service.validate_access_token(credentials.credentials, subdomain)
+        return await _validate_token_with_subdomain(credentials.credentials, request)
     except Exception:
         return None
 

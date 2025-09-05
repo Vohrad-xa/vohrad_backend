@@ -1,24 +1,17 @@
 """Authentication module following enterprise patterns."""
 
 # JWT components from security
-from .dependencies import get_current_admin
-from .dependencies import get_current_tenant_and_user
-from .dependencies import get_current_tenant_user
-from .dependencies import get_current_user
-from .dependencies import get_optional_user
-from .middleware import AuthMiddleware
-from .middleware import create_permissive_auth_middleware
-from .middleware import create_strict_auth_middleware
+from .dependencies import (
+    get_current_admin,
+    get_current_tenant_and_user,
+    get_current_tenant_user,
+    get_current_user,
+    get_optional_user,
+)
+from .middleware import AuthMiddleware, create_permissive_auth_middleware, create_strict_auth_middleware
 from .router import router
-from .schema import AdminLoginRequest
-from .schema import AuthStatusResponse
-from .schema import RefreshTokenRequest
-from .schema import TokenResponse
-from .schema import UserLoginRequest
-from security.jwt import AccessToken
-from security.jwt import AuthenticatedUser
-from security.jwt import RefreshToken
-from security.jwt import TokenPair
+from .schema import AdminLoginRequest, AuthStatusResponse, RefreshTokenRequest, TokenResponse, UserLoginRequest
+from security.jwt import AccessToken, AuthenticatedUser, RefreshToken, TokenPair
 
 __all__ = [
 

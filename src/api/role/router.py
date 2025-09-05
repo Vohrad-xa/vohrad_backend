@@ -1,29 +1,23 @@
 from api.common.base_router import BaseRouterMixin
 from api.common.context_dependencies import get_tenant_context
-from api.role.schema import RoleCreate
-from api.role.schema import RoleResponse
-from api.role.schema import RoleUpdate
+from api.permission.dependencies import RequireRoleManagement
+from api.role.schema import RoleCreate, RoleResponse, RoleUpdate
 from api.role.service import role_service
-from fastapi import APIRouter
-from fastapi import Depends
-from fastapi import Query
-from fastapi import status
+from fastapi import APIRouter, Depends, Query, status
 from uuid import UUID
-from web import DeletedResponse
-from web import PaginationParams
-from web import ResponseFactory
-from web import pagination_params
+from web import DeletedResponse, PaginationParams, ResponseFactory, pagination_params
 
 routes = APIRouter(
-    tags=["roles"],
-    prefix="/roles",
+    tags   = ["roles"],
+    prefix = "/roles",
 )
 
 
 @routes.post("/", status_code=status.HTTP_201_CREATED)
 async def create_role(
     role_data: RoleCreate,
-    context=Depends(get_tenant_context),
+    context      = Depends(get_tenant_context),
+    _authorized  = Depends(RequireRoleManagement)
 ):
     """Create new role"""
     _, _tenant, db = context
@@ -33,9 +27,9 @@ async def create_role(
 
 @routes.get("/search")
 async def search_roles(
-    q: str = Query(..., min_length=2, description="Search term"),
+    q         : str              = Query(..., min_length=2, description="Search term"),
     pagination: PaginationParams = Depends(pagination_params),
-    context=Depends(get_tenant_context),
+               context           = Depends(get_tenant_context),
 ):
     """Search roles by name or description"""
     _, _tenant, db = context
@@ -50,7 +44,7 @@ async def get_active_roles(
     """Get all active roles"""
     _, _tenant, db = context
     roles = await role_service.get_active_roles(db)
-    # Transform each role individually for lists
+
     role_responses = [RoleResponse.model_validate(role) for role in roles]
     return ResponseFactory.success(data=role_responses)
 
@@ -96,7 +90,8 @@ async def get_roles(
 async def update_role(
     role_id  : UUID,
     role_data: RoleUpdate,
-    context=Depends(get_tenant_context),
+    context     = Depends(get_tenant_context),
+    _authorized = Depends(RequireRoleManagement)
 ):
     """Update role"""
     _, _tenant, db = context
@@ -118,7 +113,7 @@ async def activate_role(
 @routes.put("/{role_id}/deactivate")
 async def deactivate_role(
     role_id: UUID,
-    context=Depends(get_tenant_context),
+    context = Depends(get_tenant_context),
 ):
     """Deactivate role"""
     _, _tenant, db = context
@@ -129,7 +124,8 @@ async def deactivate_role(
 @routes.delete("/{role_id}", response_model=DeletedResponse)
 async def delete_role(
     role_id: UUID,
-    context=Depends(get_tenant_context),
+    context = Depends(get_tenant_context),
+    _authorized: bool = Depends(RequireRoleManagement)
 ):
     """Remove role"""
     _, _tenant, db = context

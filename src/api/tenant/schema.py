@@ -1,8 +1,6 @@
-from api.common import BaseResponseSchema
-from constants import TenantDefaults
-from pydantic import BaseModel
-from pydantic import EmailStr
-from pydantic import field_validator
+from api.common.schemas import BaseResponseSchema
+from constants import TenantDefaults, ValidationMessages
+from pydantic import BaseModel, EmailStr, field_validator
 from typing import Optional
 from uuid import UUID
 
@@ -33,14 +31,14 @@ class TenantCreate(BaseModel):
     @classmethod
     def validate_sub_domain(cls, v):
         if not v or not v.strip():
-            raise ValueError("sub_domain cannot be empty")
+            raise ValueError(ValidationMessages.SUBDOMAIN_REQUIRED)
         return v.strip().lower()
 
     @field_validator("tenant_schema_name")
     @classmethod
     def validate_tenant_schema_name(cls, v):
         if not v or not v.strip():
-            raise ValueError("tenant_schema_name cannot be empty")
+            raise ValueError(ValidationMessages.TENANT_SCHEMA_REQUIRED)
         return v.strip().lower()
 
 

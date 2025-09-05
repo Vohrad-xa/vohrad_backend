@@ -1,10 +1,7 @@
-from api.common import BaseResponseSchema
-from api.common import CommonValidators
-from datetime import date
-from datetime import datetime
-from pydantic import BaseModel
-from pydantic import EmailStr
-from pydantic import field_validator
+from api.common.schemas import BaseResponseSchema
+from api.common.validators import CommonValidators
+from datetime import date, datetime
+from pydantic import BaseModel, EmailStr, field_validator
 from typing import Optional
 from uuid import UUID
 
@@ -14,7 +11,7 @@ class UserBase(BaseModel):
 
     first_name   : Optional[str] = None
     last_name    : Optional[str] = None
-    tenant_role  : Optional[str] = None
+    role         : Optional[str] = None
     email        : EmailStr
     date_of_birth: Optional[date] = None
     address      : Optional[str] = None
@@ -34,9 +31,9 @@ class UserBase(BaseModel):
     def validate_last_name(cls, v):
         return CommonValidators.validate_name_field(v, "Last name")
 
-    @field_validator("tenant_role")
+    @field_validator("role")
     @classmethod
-    def validate_tenant_role_length(cls, v):
+    def validate_role_length(cls, v):
         return CommonValidators.validate_role_field(v, 32)
 
     @field_validator("phone_number")
@@ -61,7 +58,7 @@ class UserUpdate(BaseModel):
 
     first_name    : Optional[str]      = None
     last_name     : Optional[str]      = None
-    tenant_role   : Optional[str]      = None
+    role          : Optional[str]      = None
     email         : Optional[EmailStr] = None
     date_of_birth : Optional[date]     = None
     address       : Optional[str]      = None
@@ -81,9 +78,9 @@ class UserUpdate(BaseModel):
     def validate_last_name(cls, v):
         return CommonValidators.validate_name_field(v, "Last name")
 
-    @field_validator("tenant_role")
+    @field_validator("role")
     @classmethod
-    def validate_tenant_role_length(cls, v):
+    def validate_role_length(cls, v):
         return CommonValidators.validate_role_field(v, 32)
 
     @field_validator("phone_number")
@@ -116,10 +113,10 @@ class UserResponse(BaseResponseSchema):
     """Schema for user response"""
 
     id               : UUID
-    tenant_id        : UUID
+    tenant_id        : Optional[UUID]
     first_name       : Optional[str] = None
     last_name        : Optional[str] = None
-    tenant_role      : Optional[str] = None
+    role             : Optional[str] = None
     email            : str
     email_verified_at: Optional[datetime] = None
     date_of_birth    : Optional[date]     = None

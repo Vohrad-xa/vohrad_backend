@@ -1,14 +1,12 @@
 """Role service following enterprise patterns with multi-tenant support."""
 
+from api.common import BaseService
 from api.role.models import Role
-from api.role.schema import RoleCreate
-from api.role.schema import RoleUpdate
+from api.role.schema import RoleCreate, RoleUpdate
 from database.constraint_handler import constraint_handler
-from services import BaseService
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
-from typing import Any
-from typing import Optional
+from typing import Any, Optional
 from uuid import UUID
 
 
@@ -23,7 +21,7 @@ class RoleService(BaseService[Role, RoleCreate, RoleUpdate]):
         return ["name", "description"]
 
     async def create_role(self, db: AsyncSession, role_data: RoleCreate) -> Role:
-        """Create new role - tenant context handled by database schema routing."""
+        """Create new role - business rules validated at API layer."""
         try:
             role_dict = role_data.model_dump()
             role = Role(**role_dict)
@@ -60,7 +58,7 @@ class RoleService(BaseService[Role, RoleCreate, RoleUpdate]):
         return await self.update(db, role_id, role_data)
 
     async def delete_role(self, db: AsyncSession, role_id: UUID) -> None:
-        """Delete role"""
+        """Delete role - business rules validated at API layer."""
         await self.delete(db, role_id)
 
     async def search_roles(

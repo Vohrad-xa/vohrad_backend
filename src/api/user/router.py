@@ -1,21 +1,11 @@
 from api.common.base_router import BaseRouterMixin
 from api.common.context_dependencies import get_tenant_context
 from api.role.schema import RoleResponse
-from api.user.schema import UserCreate
-from api.user.schema import UserPasswordUpdate
-from api.user.schema import UserResponse
-from api.user.schema import UserRoleAssignRequest
-from api.user.schema import UserUpdate
+from api.user.schema import UserCreate, UserPasswordUpdate, UserResponse, UserRoleAssignRequest, UserUpdate
 from api.user.service import user_service
-from fastapi import APIRouter
-from fastapi import Depends
-from fastapi import Query
-from fastapi import status
+from fastapi import APIRouter, Depends, Query, status
 from uuid import UUID
-from web import DeletedResponse
-from web import PaginationParams
-from web import ResponseFactory
-from web import pagination_params
+from web import DeletedResponse, PaginationParams, ResponseFactory, pagination_params
 
 routes = APIRouter(
     tags=["users"],

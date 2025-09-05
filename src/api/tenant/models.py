@@ -1,5 +1,5 @@
-import sqlalchemy as sa
 from database import Base
+import sqlalchemy as sa
 from sqlalchemy.sql import func
 from uuid import uuid4
 

@@ -1,7 +1,6 @@
 """Common validation functions reusable across all models."""
 
-from constants import ValidationConstraints
-from constants import ValidationMessages
+from constants import ValidationConstraints, ValidationMessages
 from typing import Optional
 
 
@@ -25,17 +24,24 @@ class CommonValidators:
             raise ValueError(ValidationMessages.PASSWORD_TOO_SHORT)
         elif len(v) > ValidationConstraints.MAX_PASSWORD_LENGTH:
             raise ValueError(ValidationMessages.PASSWORD_TOO_LONG)
+
+        if not any(c.isupper() for c in v):
+            raise ValueError(ValidationMessages.PASSWORD_MISSING_UPPERCASE)
+
+        if not any(c in ValidationConstraints.SPECIAL_CHARS for c in v):
+            raise ValueError(ValidationMessages.PASSWORD_MISSING_SPECIAL)
+
         return v
 
     @staticmethod
     def validate_phone_number(v: Optional[str]) -> Optional[str]:
         """Validate phone number format and length."""
-        if v is not None and len(v) > 20:
-            raise ValueError("Phone number must be 20 characters or less")
+        if v is not None and len(v) > ValidationConstraints.MAX_PHONE_LENGTH:
+            raise ValueError(ValidationMessages.PHONE_TOO_LONG)
         return v
 
     @staticmethod
-    def validate_role_field(v: Optional[str], max_length: int = 32) -> Optional[str]:
+    def validate_role_field(v: Optional[str], max_length: int = ValidationConstraints.DEFAULT_ROLE_LENGTH) -> Optional[str]:
         """Validate role fields with configurable max length."""
         if v is not None and len(v) > max_length:
             raise ValueError(f"Role must be {max_length} characters or less")

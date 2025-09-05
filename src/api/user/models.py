@@ -1,6 +1,7 @@
-import sqlalchemy as sa
 from api.assignment.models import Assignment
+from constants import ValidationConstraints
 from database import Base
+import sqlalchemy as sa
 from sqlalchemy.dialects.postgresql import UUID as PostgresUUID
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
@@ -25,9 +26,9 @@ class User(Base):
         nullable=True,
         index=True
     )
-    first_name        = sa.Column(sa.String(50), nullable=True)
-    last_name         = sa.Column(sa.String(50), nullable=True)
-    tenant_role       = sa.Column(sa.String(32), nullable=True)
+    first_name        = sa.Column(sa.String(ValidationConstraints.MAX_NAME_LENGTH), nullable=True)
+    last_name         = sa.Column(sa.String(ValidationConstraints.MAX_NAME_LENGTH), nullable=True)
+    role              = sa.Column(sa.String(ValidationConstraints.DEFAULT_ROLE_LENGTH), nullable=True)
     email             = sa.Column(sa.String, nullable=False, unique=True)
     email_verified_at = sa.Column(sa.DateTime(timezone=True), nullable=True)
     password          = sa.Column(sa.String, nullable=False)
@@ -37,7 +38,7 @@ class User(Base):
     province          = sa.Column(sa.String, nullable=True)
     postal_code       = sa.Column(sa.String, nullable=True)
     country           = sa.Column(sa.String, nullable=True)
-    phone_number      = sa.Column(sa.String(20), nullable=True)
+    phone_number      = sa.Column(sa.String(ValidationConstraints.MAX_PHONE_LENGTH), nullable=True)
     remember_token    = sa.Column(sa.String, nullable=True)
     created_at        = sa.Column(
                             sa.DateTime(timezone=True),
@@ -50,11 +51,17 @@ class User(Base):
                             server_default=func.now(),
                             onupdate=func.now()
                         )
+    tokens_valid_after = sa.Column(
+                            sa.DateTime(timezone=True),
+                            nullable=True,
+                            comment="All tokens issued before this timestamp are invalid"
+                        )
 
-    # ORM Relationships
     roles = relationship(
         "Role",
         secondary=Assignment.__table__,
-        back_populates="users",
-        lazy="selectin"  # Prevents N+1 queries
+        primaryjoin="User.id == foreign(Assignment.user_id)",
+        secondaryjoin="Role.id == foreign(Assignment.role_id)",
+        overlaps="roles,admins",
+        lazy="selectin"
     )

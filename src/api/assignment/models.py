@@ -1,13 +1,10 @@
-import sqlalchemy as sa
 from database import Base
+import sqlalchemy as sa
 from sqlalchemy.sql import func
 
 
 class Assignment(Base):
-    """Reusable assignment model for both global (shared schema) and tenant schemas.
-
-    Schema is determined by SQLAlchemy's schema translation at runtime.
-    """
+    """Schema is determined by SQLAlchemy's schema translation at runtime."""
     __tablename__  = "assignments"
     __table_args__ = (
         sa.Index("idx_assignments_user_id", "user_id"),

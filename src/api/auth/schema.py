@@ -1,8 +1,6 @@
 """Authentication request and response schemas following enterprise patterns."""
 
-from pydantic import BaseModel
-from pydantic import EmailStr
-from pydantic import Field
+from pydantic import BaseModel, EmailStr, Field
 from typing import Optional
 from uuid import UUID
 

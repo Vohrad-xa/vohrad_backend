@@ -1,12 +1,9 @@
 """Role management schemas following project patterns."""
 
-from api.common import BaseCreateSchema
-from api.common import BaseResponseSchema
-from api.common import BaseUpdateSchema
-from constants.enums import RoleScope
-from constants.enums import RoleType
-from pydantic import BaseModel
-from pydantic import field_validator
+from api.common import BaseCreateSchema, BaseResponseSchema, BaseUpdateSchema
+from constants import ValidationConstraints, ValidationMessages
+from constants.enums import RoleScope, RoleType, UserRoles
+from pydantic import BaseModel, field_validator
 from typing import Optional
 from uuid import UUID
 
@@ -16,18 +13,45 @@ class RoleCreate(BaseCreateSchema):
 
     name       : str
     description: Optional[str] = None
+    role_type  : Optional[RoleType] = RoleType.PREDEFINED
+    role_scope : Optional[RoleScope] = RoleScope.TENANT
 
     @field_validator("name")
     @classmethod
     def validate_name(cls, v):
         """Validate role name."""
         if not v or not v.strip():
-            raise ValueError("name cannot be empty")
-        if len(v.strip()) < 2:
-            raise ValueError("name must be at least 2 characters")
-        if len(v.strip()) > 50:
-            raise ValueError("name cannot exceed 50 characters")
+            raise ValueError(ValidationMessages.ROLE_NAME_REQUIRED)
+        if len(v.strip()) < ValidationConstraints.MIN_ROLE_LENGTH:
+            raise ValueError(ValidationMessages.ROLE_TOO_SHORT)
+        if len(v.strip()) > ValidationConstraints.MAX_ROLE_LENGTH:
+            raise ValueError(ValidationMessages.ROLE_TOO_LONG)
+
+        # Reserved names for system roles
+        reserved_names = [role.value for role in UserRoles]
+        if v.strip().lower() in reserved_names:
+            raise ValueError(f"Role name '{v}' is reserved for system roles")
+
         return v.strip().lower()
+
+    @field_validator("role_type")
+    @classmethod
+    def validate_role_type(cls, v):
+        """Only PREDEFINED roles can be created via API."""
+        if v == RoleType.BASIC:
+            raise ValueError("Basic roles can only be created by system administrators")
+        return v
+
+    @field_validator("role_scope")
+    @classmethod
+    def validate_role_scope(cls, v, info):
+        """Basic roles must be global scope only."""
+        role_type = info.data.get('role_type') if hasattr(info, 'data') and info.data else None
+
+        if role_type == RoleType.BASIC and v != RoleScope.GLOBAL:
+            raise ValueError("Basic roles can only have global scope")
+
+        return v
 
 
 class RoleUpdate(BaseUpdateSchema):
@@ -43,11 +67,11 @@ class RoleUpdate(BaseUpdateSchema):
         """Validate role name if provided - consistent validation."""
         if v is not None:
             if not v or not v.strip():
-                raise ValueError("name cannot be empty")
-            if len(v.strip()) < 2:
-                raise ValueError("name must be at least 2 characters")
-            if len(v.strip()) > 50:
-                raise ValueError("name cannot exceed 50 characters")
+                raise ValueError(ValidationMessages.ROLE_NAME_REQUIRED)
+            if len(v.strip()) < ValidationConstraints.MIN_ROLE_LENGTH:
+                raise ValueError(ValidationMessages.ROLE_TOO_SHORT)
+            if len(v.strip()) > ValidationConstraints.MAX_ROLE_LENGTH:
+                raise ValueError(ValidationMessages.ROLE_TOO_LONG)
             return v.strip().lower()
         return v
 

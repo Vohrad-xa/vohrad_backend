@@ -1,18 +1,17 @@
+"""Permission router with CRUD operations and search functionality."""
+
 from api.common.base_router import BaseRouterMixin
 from api.common.context_dependencies import get_tenant_context
-from api.permission.schema import PermissionCreate
-from api.permission.schema import PermissionResponse
-from api.permission.schema import PermissionUpdate
+from api.permission.schema import PermissionCreate, PermissionResponse, PermissionUpdate
 from api.permission.service import permission_service
-from fastapi import APIRouter
-from fastapi import Depends
-from fastapi import Query
-from fastapi import status
+from fastapi import APIRouter, Depends, Query, status
 from uuid import UUID
-from web import DeletedResponse
-from web import PaginationParams
-from web import ResponseFactory
-from web import pagination_params
+from web import (
+    DeletedResponse,
+    PaginationParams,
+    ResponseFactory,
+    pagination_params,
+)
 
 routes = APIRouter(
     tags=["permissions"],

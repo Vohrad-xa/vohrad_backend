@@ -1,17 +1,12 @@
 """Authentication middleware for enterprise security."""
 
+from exceptions.jwt_exceptions import JWTException, TokenExpiredException, TokenInvalidException
+from fastapi import Request, Response
 import re
-from exceptions.jwt_exceptions import JWTException
-from exceptions.jwt_exceptions import TokenExpiredException
-from exceptions.jwt_exceptions import TokenInvalidException
-from fastapi import Request
-from fastapi import Response
 from security.jwt import get_auth_jwt_service
 from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.responses import JSONResponse
-from typing import List
-from typing import Optional
-from typing import Set
+from typing import List, Optional, Set
 
 
 class AuthMiddleware(BaseHTTPMiddleware):
@@ -22,7 +17,7 @@ class AuthMiddleware(BaseHTTPMiddleware):
     excluded_paths   : Optional[Set[str]] = None,
     excluded_patterns: Optional[List[str]] = None,
     auto_error       : bool = False
-    )                :
+    ):
         super().__init__(app)
         self.auth_service = get_auth_jwt_service()
 

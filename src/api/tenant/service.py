@@ -1,9 +1,8 @@
+from api.common import BaseService
 from api.tenant.models import Tenant
-from api.tenant.schema import TenantCreate
-from api.tenant.schema import TenantUpdate
+from api.tenant.schema import TenantCreate, TenantUpdate
 from database.constraint_handler import constraint_handler
 from exceptions import tenant_not_found
-from services import BaseService
 from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -46,7 +45,7 @@ class TenantService(BaseService[Tenant, TenantCreate, TenantUpdate]):
         return tenant
 
     async def get_tenant_by_subdomain(self, db: AsyncSession, subdomain: str) -> Tenant:
-        """Get tenant by subdomain"""
+        """Get tenant by subdomain - used only for authentication, not exposed as API endpoint"""
         result = await db.execute(select(Tenant).where(Tenant.sub_domain == subdomain))
         tenant = result.scalar_one_or_none()
         if not tenant:
@@ -72,34 +71,9 @@ class TenantService(BaseService[Tenant, TenantCreate, TenantUpdate]):
                 e, {"operation": "update_tenant", "tenant_id": tenant_id, "subdomain": tenant_data.sub_domain}
             )
 
-    async def update_tenant_by_subdomain(self, db: AsyncSession, subdomain: str, tenant_data: TenantUpdate) -> Tenant:
-        """Update tenant by subdomain - enterprise pattern."""
-        tenant = await self.get_tenant_by_subdomain(db, subdomain)
-
-        try:
-            update_data = tenant_data.model_dump(exclude_unset=True)
-            for field, value in update_data.items():
-                setattr(tenant, field, value)
-
-            await db.commit()
-            await db.refresh(tenant)
-            return tenant
-
-        except IntegrityError as e:
-            await db.rollback()
-            await self._handle_integrity_error(
-                e, {"operation": "update_tenant", "subdomain": subdomain, "new_subdomain": tenant_data.sub_domain}
-            )
-
     async def delete_tenant_by_id(self, db: AsyncSession, tenant_id: UUID) -> None:
         """Delete tenant by ID"""
         tenant = await self.get_tenant_by_id(db, tenant_id)
-        await db.delete(tenant)
-        await db.commit()
-
-    async def delete_tenant_by_subdomain(self, db: AsyncSession, subdomain: str) -> None:
-        """Delete tenant by subdomain"""
-        tenant = await self.get_tenant_by_subdomain(db, subdomain)
         await db.delete(tenant)
         await db.commit()
 
