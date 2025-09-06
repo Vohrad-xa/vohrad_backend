@@ -39,7 +39,9 @@ htmlcov/
 /management/scripts
 /CLAUDE.md
 /.claude
+AGENTS.md
 /.guide
 /tests
 /.dev_keys
 /docs
+/keys

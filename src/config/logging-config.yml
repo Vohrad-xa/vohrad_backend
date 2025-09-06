@@ -9,11 +9,16 @@ formatters:
     format: '[%(asctime)s] [%(name)s] %(levelname)-8s [%(filename)s:%(lineno)d] %(funcName)s() - %(message)s'
     datefmt: '%Y-%m-%dT%H:%M:%S%z'
   json:
-    (): observability.logger.EnterpriseJSONFormatter
+    (): observability.formatters.EnterpriseJSONFormatter
 
 filters:
   smart_filter:
-    (): observability.logger.SmartFilter
+    (): observability.filters.SmartFilter
+  smart_filter_for_files:
+    (): observability.filters.SmartFilter
+    filter_for_files: true
+  redact_filter:
+    (): observability.filters.SensitiveDataFilter
 
 handlers:
   stdout:
@@ -21,50 +26,53 @@ handlers:
     level: INFO
     formatter: simple
     stream: ext://sys.stdout
-    filters: [smart_filter]
+    filters: [redact_filter, smart_filter]
 
   file:
     class: logging.handlers.RotatingFileHandler
     level: INFO
     formatter: detailed
     filename: logs/app.log
-    maxBytes: 52428800  # 50MB
+    maxBytes: 52428800 # 50MB
     backupCount: 10
     encoding: utf8
-    filters: [smart_filter]
+    filters: [redact_filter, smart_filter_for_files]
 
   error_file:
     class: logging.handlers.RotatingFileHandler
     level: ERROR
     formatter: detailed
     filename: logs/error.log
-    maxBytes: 26214400   # 25MB
+    maxBytes: 26214400 # 25MB
     backupCount: 5
     encoding: utf8
+    filters: [redact_filter]
 
   audit_file:
     class: logging.handlers.RotatingFileHandler
     level: INFO
     formatter: json
     filename: logs/audit.log
-    maxBytes: 52428800  # 50MB
+    maxBytes: 52428800 # 50MB
     backupCount: 20
     encoding: utf8
+    filters: [redact_filter, smart_filter_for_files]
 
   security_file:
     class: logging.handlers.RotatingFileHandler
     level: INFO
     formatter: json
     filename: logs/security.log
-    maxBytes: 52428800  # 50MB
+    maxBytes: 52428800 # 50MB
     backupCount: 15
     encoding: utf8
+    filters: [redact_filter, smart_filter_for_files]
+
+root:
+  level: WARNING
+  handlers: [stdout]
 
 loggers:
-  root:
-    level: WARNING
-    handlers: [stdout]
-
   vohrad:
     level: INFO
     handlers: [stdout, file, error_file]
@@ -106,24 +114,29 @@ loggers:
     level: INFO
     handlers: [stdout, file]
     propagate: false
+    filters: [redact_filter]
 
   uvicorn.access:
     level: WARNING
     handlers: [file]
     propagate: false
+    filters: [redact_filter]
 
   uvicorn.error:
     level: INFO
     handlers: [stdout, file, error_file]
     propagate: false
+    filters: [redact_filter]
 
   # HTTP clients
   httpx:
     level: WARNING
     handlers: [file]
     propagate: false
+    filters: [redact_filter]
 
   urllib3:
     level: WARNING
     handlers: [file]
     propagate: false
+    filters: [redact_filter]
