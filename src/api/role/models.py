@@ -38,7 +38,12 @@ class Role(Base):
     permissions_mutable = sa.Column(sa.Boolean, nullable=False, default=False)
     managed_by          = sa.Column(sa.String(ValidationConstraints.MAX_ROLE_LENGTH), nullable=True)
     is_deletable        = sa.Column(sa.Boolean, nullable=False, default=False)
-    etag                = sa.Column(sa.String(50), nullable=False, default=lambda: str(uuid4())[:8])
+    etag                = sa.Column(
+        sa.String(50),
+        nullable=False,
+        default=lambda: str(uuid4())[:8],
+        server_default=sa.text("'AA=='")
+    )
     created_at          = sa.Column(sa.DateTime(timezone=True), nullable=False, server_default=func.now())
     updated_at          = sa.Column(sa.DateTime(timezone=True), nullable=False, server_default=func.now())
 

@@ -45,5 +45,5 @@ def upgrade() -> None:
 
 
 def downgrade() -> None:
-    op.drop_index(op.f("ix_tenants_name"), table_name="tenants", schema="shared")
-    # op.drop_table("tenants", schema="shared")
+    op.drop_index(op.f("ix_tenants_tenant_schema_name"), table_name="tenants", schema="shared")
+    op.drop_table("tenants", schema="shared")

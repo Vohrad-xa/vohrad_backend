@@ -21,6 +21,12 @@ class Permission(Base):
     role_id    = sa.Column(sa.UUID, sa.ForeignKey("roles.id", ondelete="CASCADE"), nullable=False)
     resource   = sa.Column(sa.String(ValidationConstraints.MAX_RESOURCE_LENGTH), nullable=False)
     action     = sa.Column(sa.String(ValidationConstraints.MAX_ACTION_LENGTH), nullable=False)
+    etag       = sa.Column(
+        sa.String(50),
+        nullable=False,
+        default=lambda: str(uuid4())[:8],
+        server_default=sa.text("'AA=='")
+    )
     created_at = sa.Column(sa.DateTime(timezone=True), nullable=False, server_default=func.now())
 
     # ORM Relationship
