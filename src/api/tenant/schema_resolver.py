@@ -3,6 +3,7 @@
 from database.cache import TenantCache
 from exceptions import tenant_not_found
 from typing import Optional
+from uuid import UUID
 
 
 class TenantSchemaResolver:
@@ -27,6 +28,20 @@ class TenantSchemaResolver:
 
         return schema_name
 
+    async def resolve_tenant_schema_by_id(self, tenant_id: UUID) -> str:
+        """Resolve tenant schema by tenant_id with cache-first strategy."""
+        # Try cache by ID first
+        cached_schema = await self._cache.get_tenant_schema_by_id(tenant_id)
+        if cached_schema:
+            return cached_schema
+
+        # Cache miss - query database by ID
+        schema_name = await self._query_tenant_schema_by_id(tenant_id)
+
+        # Cache both id and, if needed, subdomain mapping can be added by caller
+        await self._cache.cache_tenant_schema_by_id(tenant_id, schema_name)
+        return schema_name
+
     async def _query_tenant_from_database(self, subdomain: str) -> str:
         """Query tenant schema from a database."""
         from api.tenant.models import Tenant
@@ -39,6 +54,21 @@ class TenantSchemaResolver:
 
         if schema_name is None:
             raise tenant_not_found(subdomain)
+
+        return schema_name
+
+    async def _query_tenant_schema_by_id(self, tenant_id: UUID) -> str:
+        """Query tenant schema by tenant_id from the database."""
+        from api.tenant.models import Tenant
+        from database.sessions import with_default_db
+        from sqlalchemy import select
+
+        async with with_default_db() as db:
+            result = await db.execute(select(Tenant.tenant_schema_name).filter(Tenant.tenant_id == tenant_id))
+            schema_name = result.scalar_one_or_none()
+
+        if schema_name is None:
+            raise tenant_not_found(tenant_id)
 
         return schema_name
 

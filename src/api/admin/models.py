@@ -11,8 +11,7 @@ class Admin(Base):
         sa.Index("idx_users_email", "email", unique=True),
         sa.Index("idx_users_role", "role"),
         sa.Index("idx_users_active", "is_active"),
-        sa.Index("idx_users_role_active", "role", "is_active"),
-        sa.CheckConstraint("role IN ('super_admin', 'admin', 'support')", name="check_global_user_role"),
+        sa.CheckConstraint("role IN ('super_admin', 'admin')", name="check_global_user_role"),
         {"schema": "shared", "extend_existing": True},
     )
 
