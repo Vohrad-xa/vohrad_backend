@@ -1,6 +1,7 @@
 from .models import Admin
 from api.common.base_service import BaseService
 from database.sessions import with_default_db, with_tenant_db
+from sqlalchemy.exc import OperationalError, ProgrammingError
 from typing import Any
 
 
@@ -51,14 +52,23 @@ class AdminService(BaseService[Admin, Any, Any]):
         total_tenant_items = 0
 
         for tenant in tenants:
-            async with with_tenant_db(tenant.tenant_schema_name) as tenant_db:
-                _, tenant_count = await service_method(tenant_db, **service_kwargs)
+            try:
+                async with with_tenant_db(tenant.tenant_schema_name) as tenant_db:
+                    _, tenant_count = await service_method(tenant_db, **service_kwargs)
+                    tenant_summary.append({
+                        "tenant_id": str(tenant.tenant_id),
+                        "tenant_name": tenant.tenant_schema_name,
+                        "count": tenant_count
+                    })
+                    total_tenant_items += tenant_count
+            except (ProgrammingError, OperationalError, Exception):
+                # Gracefully handle tenants with missing schema/tables or misconfiguration
                 tenant_summary.append({
                     "tenant_id": str(tenant.tenant_id),
                     "tenant_name": tenant.tenant_schema_name,
-                    "count": tenant_count
+                    "count": 0,
+                    "error": "schema_or_table_missing"
                 })
-                total_tenant_items += tenant_count
 
         return {
             "global_count": global_count,

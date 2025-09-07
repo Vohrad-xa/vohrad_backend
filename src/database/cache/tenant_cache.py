@@ -2,6 +2,7 @@
 
 from .lru_cache import LRUCache
 from typing import Optional
+from uuid import UUID
 
 
 class TenantCache:
@@ -41,3 +42,15 @@ class TenantCache:
         stats = await self._cache.get_stats()
         stats["cache_purpose"] = "tenant_schema_lookup"
         return stats
+
+    async def get_tenant_schema_by_id(self, tenant_id: UUID) -> Optional[str]:
+        """Get tenant schema by tenant_id."""
+        return await self._cache.get(f"tenant_id:{tenant_id}")
+
+    async def cache_tenant_schema_by_id(self, tenant_id: UUID, schema_name: str) -> None:
+        """Cache tenant_id to schema mapping."""
+        await self._cache.set(f"tenant_id:{tenant_id}", schema_name)
+
+    async def invalidate_tenant_by_id(self, tenant_id: UUID) -> bool:
+        """Invalidate tenant_id-based cache entry."""
+        return await self._cache.delete(f"tenant_id:{tenant_id}")

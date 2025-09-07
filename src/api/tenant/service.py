@@ -1,3 +1,5 @@
+"""Tenant business logic service with multi-tenant isolation."""
+
 from api.common import BaseService
 from api.tenant.models import Tenant
 from api.tenant.schema import TenantCreate, TenantUpdate
@@ -11,7 +13,6 @@ from uuid import UUID
 
 
 class TenantService(BaseService[Tenant, TenantCreate, TenantUpdate]):
-    """Service class for tenant business logic"""
 
     def __init__(self):
         super().__init__(Tenant)
@@ -21,7 +22,7 @@ class TenantService(BaseService[Tenant, TenantCreate, TenantUpdate]):
         return ["sub_domain", "email", "city", "industry"]
 
     async def create_tenant(self, db: AsyncSession, tenant_data: TenantCreate) -> Tenant:
-        """Create new tenant - enterprise pattern with database-first approach."""
+        """Create tenant with schema name mapping."""
         try:
             tenant_dict = tenant_data.model_dump()
             tenant_dict["tenant_schema_name"] = tenant_data.sub_domain
@@ -37,7 +38,7 @@ class TenantService(BaseService[Tenant, TenantCreate, TenantUpdate]):
             await self._handle_integrity_error(e, {"operation": "create_tenant", "subdomain": tenant_data.sub_domain})
 
     async def get_tenant_by_id(self, db: AsyncSession, tenant_id: UUID) -> Tenant:
-        """Get tenant by ID"""
+        """Get tenant by ID."""
         result = await db.execute(select(Tenant).where(Tenant.tenant_id == tenant_id))
         tenant = result.scalar_one_or_none()
         if not tenant:
@@ -45,7 +46,7 @@ class TenantService(BaseService[Tenant, TenantCreate, TenantUpdate]):
         return tenant
 
     async def get_tenant_by_subdomain(self, db: AsyncSession, subdomain: str) -> Tenant:
-        """Get tenant by subdomain - used only for authentication, not exposed as API endpoint"""
+        """Authentication-only lookup by subdomain."""
         result = await db.execute(select(Tenant).where(Tenant.sub_domain == subdomain))
         tenant = result.scalar_one_or_none()
         if not tenant:
@@ -53,7 +54,7 @@ class TenantService(BaseService[Tenant, TenantCreate, TenantUpdate]):
         return tenant
 
     async def update_tenant_by_id(self, db: AsyncSession, tenant_id: UUID, tenant_data: TenantUpdate) -> Tenant:
-        """Update tenant by ID - enterprise pattern."""
+        """Update with constraint protection."""
         tenant = await self.get_tenant_by_id(db, tenant_id)
 
         try:
@@ -72,13 +73,11 @@ class TenantService(BaseService[Tenant, TenantCreate, TenantUpdate]):
             )
 
     async def delete_tenant_by_id(self, db: AsyncSession, tenant_id: UUID) -> None:
-        """Delete tenant by ID"""
         tenant = await self.get_tenant_by_id(db, tenant_id)
         await db.delete(tenant)
         await db.commit()
 
     async def update_tenant(self, db: AsyncSession, tenant: Tenant, tenant_data: TenantUpdate) -> Tenant:
-        """Update tenant - enterprise pattern with existing tenant object."""
         try:
             update_data = tenant_data.model_dump(exclude_unset=True)
             for field, value in update_data.items():
@@ -95,12 +94,12 @@ class TenantService(BaseService[Tenant, TenantCreate, TenantUpdate]):
             )
 
     async def delete_tenant(self, db: AsyncSession, tenant: Tenant) -> None:
-        """Delete tenant - accepts tenant object to avoid repeated queries."""
+        """Delete using existing tenant object."""
         await db.delete(tenant)
         await db.commit()
 
     async def _handle_integrity_error(self, error: IntegrityError, operation_context: dict[str, Any]) -> None:
-        """Enterprise-grade constraint handling - centralized, modular, DRY."""
+        """Map database constraints to domain exceptions."""
         exception = constraint_handler.handle_violation(error, operation_context)
         raise exception
 

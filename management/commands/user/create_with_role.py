@@ -150,9 +150,16 @@ async def _create_admin_with_role(
                 )
                 return
 
-            # Show available global roles
-            roles_result = await db.execute(select(Role).where(Role.role_scope == RoleScope.GLOBAL))
-            global_roles = roles_result.scalars().all()
+            # Show available global roles (restricted to system roles)
+            roles_result = await db.execute(
+                select(Role).where(
+                    Role.role_scope == RoleScope.GLOBAL,
+                    Role.is_active
+                )
+            )
+            # Only allow core system global roles
+            global_roles_all = roles_result.scalars().all()
+            global_roles = [r for r in global_roles_all if r.name in ("super_admin", "admin")]
 
             if not global_roles:
                 styler.print_clean_message(
@@ -251,8 +258,17 @@ async def _create_user_with_role(
                 )
                 return
 
-            roles_result = await tenant_db.execute(select(Role).where(Role.role_scope == RoleScope.TENANT))
-            tenant_roles = roles_result.scalars().all()
+            roles_result = await tenant_db.execute(
+                select(Role).where(
+                    Role.role_scope == RoleScope.TENANT,
+                    Role.is_active
+                )
+            )
+            tenant_roles_all = roles_result.scalars().all()
+
+            # Safety: forbid global admin role names in tenant context
+            forbidden_in_tenant = {"admin", "super_admin"}
+            tenant_roles = [r for r in tenant_roles_all if r.name not in forbidden_in_tenant]
 
             if not tenant_roles:
                 styler.print_clean_message(

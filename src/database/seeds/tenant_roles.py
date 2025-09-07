@@ -24,20 +24,26 @@ def get_database_url():
 TENANT_ROLES = [
     {
         "name": "manager",
-        "description": "Manager with team and project control",
+        "description": "Tenant manager with delegated administration",
         "role_type": RoleType.PREDEFINED.name,
         "role_scope": RoleScope.TENANT.name,
         "permissions_mutable": False,
-        "permissions": [("team", "*"), ("project", "*"), ("employee", "manage"), ("reports", "*")]
+        "permissions": [
+            ("role", "manage"),
+            ("permission", "manage"),
+            ("user", "create"),
+            ("user", "read"),
+            ("user", "update"),
+        ]
     },
     {
         "name": "employee",
-        "description": "Employee with manager-controlled permissions",
+        "description": "Employee (basic tenant user)",
         "role_type": RoleType.PREDEFINED.name,
         "role_scope": RoleScope.TENANT.name,
         "permissions_mutable": True,
         "managed_by": "manager",
-        "permissions": [("project", "read"), ("task", "*"), ("report", "own")]
+        "permissions": []
     }
 ]
 
@@ -73,9 +79,10 @@ async def create_tenant_roles_for_schema(schema_name: str):
             created_count = 0
 
             for role_config in TENANT_ROLES:
-                # Check if role already exists
+                quoted_schema = session.bind.dialect.identifier_preparer.quote_identifier(schema_name)
+                # nosec B608
                 result = await session.execute(
-                    sa.text(f"SELECT COUNT(*) FROM {schema_name}.roles WHERE name = :name"),
+                    sa.text(f"SELECT COUNT(*) FROM {quoted_schema}.roles WHERE name = :name"),
                     {"name": role_config["name"]}
                 )
                 exists = result.scalar() > 0
@@ -84,11 +91,11 @@ async def create_tenant_roles_for_schema(schema_name: str):
                     print(f"Role '{role_config['name']}' already exists in {schema_name}, skipping...")
                     continue
 
-                # Create role
                 role_id = str(uuid4())
+                # nosec B608
                 await session.execute(
                     sa.text(f"""
-                        INSERT INTO {schema_name}.roles (id, name, description, role_type, role_scope,
+                        INSERT INTO {quoted_schema}.roles (id, name, description, role_type, role_scope,
                                                       is_mutable, permissions_mutable, is_deletable,
                                                       managed_by, is_active, etag, created_at, updated_at)
                         VALUES (:id, :name, :description, :role_type, :role_scope,
@@ -106,17 +113,17 @@ async def create_tenant_roles_for_schema(schema_name: str):
                         "is_deletable": False,
                         "managed_by": role_config.get("managed_by"),
                         "is_active": True,
-                        "etag": str(uuid4())[:8],  # Required field for role integrity
+                        "etag": "AA==",
                         "created_at": datetime.now(),
                         "updated_at": datetime.now()
                     }
                 )
 
-                # Create permissions
                 for resource, action in role_config["permissions"]:
+                    # nosec B608
                     await session.execute(
                         sa.text(f"""
-                            INSERT INTO {schema_name}.permissions (id, role_id, resource, action, created_at)
+                            INSERT INTO {quoted_schema}.permissions (id, role_id, resource, action, created_at)
                             VALUES (:id, :role_id, :resource, :action, :created_at)
                         """),
                         {

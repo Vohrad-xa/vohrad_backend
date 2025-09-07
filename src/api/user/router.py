@@ -1,5 +1,6 @@
 from api.common.base_router import BaseRouterMixin
 from api.common.context_dependencies import get_tenant_context
+from api.permission.dependencies import RequireRoleManagement, require_permission
 from api.role.schema import RoleResponse
 from api.user.schema import UserCreate, UserPasswordUpdate, UserResponse, UserRoleAssignRequest, UserUpdate
 from api.user.service import user_service
@@ -17,6 +18,7 @@ routes = APIRouter(
 async def create_user(
     user_data: UserCreate,
     context=Depends(get_tenant_context),
+    _authorized: bool = Depends(require_permission('user', 'create')),
 ):
     """Create new user"""
     _, tenant, db = context
@@ -78,6 +80,7 @@ async def update_user(
     user_id  : UUID,
     user_data: UserUpdate,
     context=Depends(get_tenant_context),
+    _authorized: bool = Depends(require_permission('user', 'update')),
 ):
     """Update user"""
     _, tenant, db = context
@@ -90,6 +93,7 @@ async def update_user_password(
     user_id      : UUID,
     password_data: UserPasswordUpdate,
     context=Depends(get_tenant_context),
+    _authorized: bool = Depends(require_permission('user', 'update')),
 ):
     """Update user password"""
     _, tenant, db = context
@@ -101,6 +105,7 @@ async def update_user_password(
 async def verify_user_email(
     user_id: UUID,
     context=Depends(get_tenant_context),
+    _authorized: bool = Depends(require_permission('user', 'update')),
 ):
     """Mark user email as verified"""
     _, tenant, db = context
@@ -112,6 +117,7 @@ async def verify_user_email(
 async def delete_user(
     user_id: UUID,
     context=Depends(get_tenant_context),
+    _authorized: bool = Depends(require_permission('user', 'delete')),
 ):
     """Remove user"""
     _, tenant, db = context
@@ -136,6 +142,7 @@ async def assign_role_to_user(
     user_id: UUID,
     request: UserRoleAssignRequest,
     context=Depends(get_tenant_context),
+    _authorized: bool = Depends(RequireRoleManagement),
 ):
     """Assign role to user"""
     current_user, tenant, db = context
@@ -153,6 +160,7 @@ async def revoke_role_from_user(
     user_id: UUID,
     role_id: UUID,
     context=Depends(get_tenant_context),
+    _authorized: bool = Depends(RequireRoleManagement),
 ):
     """Revoke role from user"""
     _, tenant, db = context

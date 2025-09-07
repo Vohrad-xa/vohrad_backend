@@ -1,3 +1,5 @@
+"""User business logic service with caching and multi-tenant isolation."""
+
 from api.assignment.models import Assignment
 from api.common import BaseService
 from api.role.models import Role
@@ -16,7 +18,6 @@ from uuid import UUID
 
 
 class UserService(BaseService[User, UserCreate, UserUpdate]):
-    """Service class for user business logic"""
 
     def __init__(self):
         super().__init__(User)
@@ -27,7 +28,7 @@ class UserService(BaseService[User, UserCreate, UserUpdate]):
         return ["email", "first_name", "last_name", "city"]
 
     async def create_user(self, db: AsyncSession, user_data: UserCreate, tenant: Tenant) -> User:
-        """Create new user - enterprise pattern with database-first approach."""
+        """Create user with password hashing and tenant association."""
         try:
             hashed_password = hash_password(user_data.password)
             user_dict = user_data.model_dump(exclude={"password"})
@@ -71,7 +72,7 @@ class UserService(BaseService[User, UserCreate, UserUpdate]):
     async def get_users_paginated(
         self, db: AsyncSession, page: int = 1, size: int = 20, tenant: Tenant = None
     ) -> tuple[list[User], int]:
-        """Get paginated list of users"""
+        """Returns (users, total_count)."""
         tenant_id = tenant.tenant_id if tenant else None
         return await self.get_multi(db, page, size, tenant_id)
 
@@ -121,7 +122,7 @@ class UserService(BaseService[User, UserCreate, UserUpdate]):
             await self.user_cache.invalidate_user(user_id, tenant.tenant_id, user_email)
 
     async def verify_user_email(self, db: AsyncSession, user_id: UUID, tenant: Tenant) -> User:
-        """Mark user email as verified"""
+        """Mark user email as verified."""
         user = await self.get_user_by_id(db, user_id, tenant)
         user.email_verified_at = func.now()
         await db.commit()
@@ -131,7 +132,7 @@ class UserService(BaseService[User, UserCreate, UserUpdate]):
     async def search_users(
         self, db: AsyncSession, search_term: str, page: int = 1, size: int = 20, tenant: Tenant = None
     ) -> tuple[list[User], int]:
-        """Search users using the generic search method."""
+        """Search email/name fields. Returns (users, total_count)."""
         tenant_id = tenant.tenant_id if tenant else None
         return await self.search(db, search_term, page, size, tenant_id)
 
@@ -167,7 +168,7 @@ class UserService(BaseService[User, UserCreate, UserUpdate]):
             )
 
     async def revoke_role_from_user(self, db: AsyncSession, user_id: UUID, role_id: UUID, tenant: Tenant) -> None:
-        """Revoke role from user - follows established deletion patterns."""
+        """Revoke role assignment from user."""
         query = select(Assignment).where(
             and_(Assignment.user_id == user_id, Assignment.role_id == role_id)
         )
@@ -181,7 +182,7 @@ class UserService(BaseService[User, UserCreate, UserUpdate]):
         await db.commit()
 
     async def _handle_integrity_error(self, error: IntegrityError, operation_context: dict[str, Any]) -> None:
-        """Enterprise-grade constraint handling - centralized, modular, DRY."""
+        """Map database constraints to domain exceptions."""
         exception = constraint_handler.handle_violation(error, operation_context)
         raise exception
 
