@@ -26,9 +26,8 @@ class RoleCreate(BaseCreateSchema):
             raise ValueError(ValidationMessages.ROLE_TOO_SHORT)
         if len(v.strip()) > ValidationConstraints.MAX_ROLE_LENGTH:
             raise ValueError(ValidationMessages.ROLE_TOO_LONG)
-
-        # Reserved names for system roles
         reserved_names = [role.value for role in UserRoles]
+        reserved_names.extend(["super_admin", "employee"])
         if v.strip().lower() in reserved_names:
             raise ValueError(f"Role name '{v}' is reserved for system roles")
 
@@ -60,6 +59,7 @@ class RoleUpdate(BaseUpdateSchema):
     name       : Optional[str] = None
     description: Optional[str] = None
     is_active  : Optional[bool] = None
+    etag       : Optional[str] = None
 
     @field_validator("name")
     @classmethod
@@ -90,6 +90,7 @@ class RoleResponse(BaseResponseSchema):
     managed_by         : Optional[str] = None
     is_deletable       : bool
     tenant_id          : Optional[UUID] = None
+    etag               : str
 
 
 class RoleListMeta(BaseModel):

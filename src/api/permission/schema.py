@@ -33,6 +33,7 @@ class PermissionUpdate(BaseUpdateSchema):
     role_id : Optional[UUID] = None
     resource: Optional[str]  = None
     action  : Optional[str]  = None
+    etag    : Optional[str]  = None
 
     @field_validator("resource")
     @classmethod
@@ -58,6 +59,7 @@ class PermissionResponse(BaseResponseSchema):
     role_id : UUID
     resource: str
     action  : str
+    etag    : str
 
 
 class PermissionListMeta(BaseModel):

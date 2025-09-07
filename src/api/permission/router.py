@@ -2,6 +2,7 @@
 
 from api.common.base_router import BaseRouterMixin
 from api.common.context_dependencies import get_tenant_context
+from api.permission.dependencies import RequireRoleManagement
 from api.permission.schema import PermissionCreate, PermissionResponse, PermissionUpdate
 from api.permission.service import permission_service
 from fastapi import APIRouter, Depends, Query, status
@@ -10,12 +11,13 @@ from web import (
     DeletedResponse,
     PaginationParams,
     ResponseFactory,
+    get_if_match_header,
     pagination_params,
 )
 
 routes = APIRouter(
-    tags=["permissions"],
-    prefix="/permissions",
+    tags   = ["permissions"],
+    prefix = "/permissions",
 )
 
 
@@ -23,6 +25,7 @@ routes = APIRouter(
 async def create_permission(
     permission_data: PermissionCreate,
     context=Depends(get_tenant_context),
+    _authorized: bool = Depends(RequireRoleManagement),
 ):
     """Create new permission"""
     _, _tenant, db = context
@@ -93,6 +96,7 @@ async def update_permission(
     permission_id: UUID,
     permission_data: PermissionUpdate,
     context=Depends(get_tenant_context),
+    _authorized: bool = Depends(RequireRoleManagement),
 ):
     """Update permission"""
     _, _tenant, db = context
@@ -104,8 +108,10 @@ async def update_permission(
 async def delete_permission(
     permission_id: UUID,
     context=Depends(get_tenant_context),
+    _authorized: bool = Depends(RequireRoleManagement),
+    if_match: str | None = Depends(get_if_match_header),
 ):
     """Remove permission"""
     _, _tenant, db = context
-    await permission_service.delete_permission(db, permission_id)
+    await permission_service.delete_permission(db, permission_id, etag=if_match)
     return DeletedResponse()

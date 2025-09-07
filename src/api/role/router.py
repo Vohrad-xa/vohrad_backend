@@ -6,6 +6,7 @@ from api.role.service import role_service
 from fastapi import APIRouter, Depends, Query, status
 from uuid import UUID
 from web import DeletedResponse, PaginationParams, ResponseFactory, pagination_params
+from web.headers import get_if_match_header
 
 routes = APIRouter(
     tags   = ["roles"],
@@ -125,9 +126,10 @@ async def deactivate_role(
 async def delete_role(
     role_id: UUID,
     context = Depends(get_tenant_context),
-    _authorized: bool = Depends(RequireRoleManagement)
+    _authorized: bool = Depends(RequireRoleManagement),
+    if_match: str | None = Depends(get_if_match_header),
 ):
     """Remove role"""
     _, _tenant, db = context
-    await role_service.delete_role(db, role_id)
+    await role_service.delete_role(db, role_id, etag=if_match)
     return DeletedResponse()
