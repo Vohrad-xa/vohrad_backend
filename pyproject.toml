@@ -41,6 +41,7 @@ dev = [
     "pre-commit>=4.3.0",
     "autopep8>=2.3.2",
     "bandit[toml]>=1.8.6",
+    "pip-audit>=2.9.0",
 ]
 
 [tool.autopep8]
@@ -62,6 +63,7 @@ start = "uvicorn main:app --reload --app-dir ./src"
 manage = "python ./management/manage.py"
 format = "python management/commands/format.py directory src"
 format-check = "python management/commands/format.py directory src --check"
+
 # Security commands
 validate-keys = "python management/manage.py security validate-keys"
 generate-secret = "python management/manage.py security generate-secret"
@@ -69,12 +71,25 @@ generate-encryption-key = "python management/manage.py security generate-encrypt
 generate-jwt-keys = "python management/manage.py security generate-jwt-keys"
 seed-global-roles = "python management/manage.py security seed-global-roles"
 seed-tenant-roles = "python management/manage.py security seed-tenant-roles"
+
 # Tenant commands  
 create-tenant = "python management/manage.py tenant create_tenant"
+
 # User commands
 create-user = "python management/manage.py user create-with-role"
+
 # Token commands
 create-token = "python management/manage.py security token generate"
 revoke-all-tokens = "python management/manage.py security revoke-tokens all"
 revoke-tenant-tokens = "python management/manage.py security revoke-tokens tenant"
 list-tenants = "python management/manage.py security revoke-tokens list-tenants"
+
+# Security scanning commands
+security-scan = "bandit -r src/ -ll"
+audit-dependencies = "pip-audit"
+
+[tool.bandit]
+exclude_dirs = ["tests", "migrations"]
+skips = ["B101", "B601"]
+confidence = "medium"
+severity = "medium"
