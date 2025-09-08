@@ -6,6 +6,7 @@ from api.role.schema import RoleCreate, RoleUpdate
 from constants.enums import RoleType
 from database.constraint_handler import constraint_handler
 from exceptions import ExceptionFactory
+from security.policy import is_reserved_role
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 from typing import Any, Optional
@@ -87,12 +88,11 @@ class RoleService(BaseService[Role, RoleCreate, RoleUpdate]):
 
         if "name" in update_data:
             new_name = (update_data["name"] or "").strip().lower()
-            reserved = {"admin", "super_admin", "manager", "employee", "user", "viewer"}
-            if new_name in reserved:
-                raise ExceptionFactory.business_rule("Role name is reserved and cannot be used", {
-                    "role_id": str(role_id),
-                    "new_name": new_name,
-                })
+            if is_reserved_role(new_name):
+                raise ExceptionFactory.business_rule(
+                    "Role name is reserved and cannot be used",
+                    {"role_id": str(role_id), "new_name": new_name},
+                )
 
         # Apply updates and refresh ETag for CUSTOM roles
         try:
