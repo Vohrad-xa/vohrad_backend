@@ -60,6 +60,13 @@ class ErrorRegistry:
         category    = "auth",
     )
 
+    RESTRICTED_PERMISSION: Final[ErrorDefinition] = ErrorDefinition(
+        code        = "RESTRICTED_PERMISSION",
+        message     = "Restricted permission by policy",
+        status_code = status.HTTP_403_FORBIDDEN,
+        category    = "auth",
+    )
+
     VALIDATION_ERROR: Final[ErrorDefinition] = ErrorDefinition(
         code        = "VALIDATION_ERROR",
         message     = "Validation failed",

@@ -1,7 +1,7 @@
 """Authentication dependencies for FastAPI integration."""
 
 from domain.subdomain import SubdomainExtractor
-from exceptions import AuthenticationException, AuthorizationException, TokenMissingException
+from exceptions import AuthenticationException, ExceptionFactory, TokenMissingException
 from fastapi import Depends, Request
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from security.jwt import AuthenticatedUser, get_auth_jwt_service
@@ -39,7 +39,7 @@ async def get_current_user(
 def get_current_admin(current_user: AuthenticatedUser = Depends(get_current_user)) -> AuthenticatedUser:
     """Get current authenticated admin user."""
     if not current_user.is_admin():
-        raise AuthorizationException("admin", "access")
+        raise ExceptionFactory.authorization_failed("admin", "access")
 
     return current_user
 
@@ -47,7 +47,7 @@ def get_current_admin(current_user: AuthenticatedUser = Depends(get_current_user
 def get_current_tenant_user(current_user: AuthenticatedUser = Depends(get_current_user)) -> AuthenticatedUser:
     """Get current authenticated tenant user."""
     if not current_user.is_tenant_user():
-        raise AuthorizationException("tenant", "access")
+        raise ExceptionFactory.authorization_failed("tenant", "access")
 
     return current_user
 
@@ -71,7 +71,7 @@ async def get_current_tenant_and_user(
 ) -> tuple[AuthenticatedUser, Any]:
     """Get current tenant and user objects with proper isolation."""
     if not current_user.tenant_id:
-        raise AuthorizationException("tenant", "access")
+        raise ExceptionFactory.authorization_failed("tenant", "access")
 
     # Lazy imports to avoid circular dependencies
     from api.tenant.service import tenant_service

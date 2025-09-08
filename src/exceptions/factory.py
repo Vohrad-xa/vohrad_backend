@@ -81,6 +81,15 @@ class ExceptionFactory:
         )
 
     @staticmethod
+    def restricted_permission(resource: str, action: str) -> BaseAppException:
+        """Create restricted-permission exception (policy-enforced 403)."""
+        return ExceptionFactory.create(
+            ErrorRegistry.RESTRICTED_PERMISSION,
+            details = {"resource": resource, "action": action},
+            context = f"Restricted by policy: cannot {action} {resource}",
+        )
+
+    @staticmethod
     def validation_failed(field: str, reason: str) -> BaseAppException:
         """Create validation error exception."""
         return ExceptionFactory.create(

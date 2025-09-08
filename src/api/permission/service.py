@@ -27,6 +27,15 @@ class PermissionService(BaseService[Permission, PermissionCreate, PermissionUpda
         super().__init__(Permission)
 
 
+    def _assert_not_restricted(self, resource: str, action: str) -> None:
+        """Raise authorization failure if (resource, action) is restricted.
+
+        Centralizes restricted-permission policy enforcement.
+        """
+        if is_restricted_perm(resource, action):
+            raise ExceptionFactory.restricted_permission(resource, action)
+
+
     def get_search_fields(self) -> list[str]:
         return ["resource", "action"]
 
@@ -44,8 +53,7 @@ class PermissionService(BaseService[Permission, PermissionCreate, PermissionUpda
                 )
 
             # Enforce restricted permission patterns
-            if is_restricted_perm(permission_data.resource, permission_data.action):
-                raise ExceptionFactory.authorization_failed("permission", "restricted")
+            self._assert_not_restricted(permission_data.resource, permission_data.action)
 
             permission_dict = permission_data.model_dump()
             permission = Permission(**permission_dict)
@@ -116,8 +124,7 @@ class PermissionService(BaseService[Permission, PermissionCreate, PermissionUpda
         # Enforce restricted patterns (evaluate intended new state)
         new_resource = update_data.get("resource", existing.resource)
         new_action = update_data.get("action", existing.action)
-        if is_restricted_perm(new_resource, new_action):
-            raise ExceptionFactory.authorization_failed("permission", "restricted")
+        self._assert_not_restricted(new_resource, new_action)
 
         try:  # Apply updates and refresh ETag
             for field, value in update_data.items():
@@ -158,8 +165,7 @@ class PermissionService(BaseService[Permission, PermissionCreate, PermissionUpda
             )
 
         # Disallow deleting sensitive permissions
-        if is_restricted_perm(existing.resource, existing.action):
-            raise ExceptionFactory.authorization_failed("permission", "restricted")
+        self._assert_not_restricted(existing.resource, existing.action)
         await self.delete(db, permission_id)
 
 

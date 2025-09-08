@@ -3,7 +3,7 @@
 from .context import AdminContext
 from api.auth import get_current_admin
 from database.sessions import get_admin_db_session
-from exceptions import AuthorizationException
+from exceptions import ExceptionFactory
 from fastapi import Depends
 from security.authorization.service import AuthorizationService
 from security.jwt import AuthenticatedUser
@@ -24,7 +24,7 @@ async def get_admin_context(
     has_tenant_permission = await authorization_service.user_has_permission(current_user.user_id, "tenant", "*")
 
     if not has_tenant_permission:
-        raise AuthorizationException("tenant", "access")
+        raise ExceptionFactory.authorization_failed("tenant", "access")
 
     return AdminContext(
         user          = current_user,
