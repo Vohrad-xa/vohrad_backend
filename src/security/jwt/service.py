@@ -18,6 +18,7 @@ from .tokens import (
     create_user_access_payload,
 )
 from api.tenant import get_tenant_schema_resolver
+from config.jwt import get_jwt_config
 from database import with_default_db, with_tenant_db
 from database.cache import UserCache
 from exceptions import AuthenticationException, TokenInvalidException
@@ -32,6 +33,7 @@ class AuthJWTService:
         self.revocation_service = get_jwt_revocation_service()
         self.tenant_schema_service = get_tenant_schema_resolver()
         self.user_cache = UserCache()
+        self.jwt_config = get_jwt_config()
 
     async def authenticate_user(self, email: str, password: str, tenant_id: UUID) -> tuple:
         """Authenticate tenant user using proper service patterns."""
@@ -130,6 +132,14 @@ class AuthJWTService:
         """Validate token and return user context with enterprise tenant-subdomain validation."""
         payload = self.jwt_engine.decode_token(token)
 
+        # Defense-in-depth: assert issuer and audience explicitly
+        expected_iss = self.jwt_config.issuer
+        expected_aud = self.jwt_config.audience
+        if payload.get("iss") != expected_iss:
+            raise TokenInvalidException("Invalid token issuer")
+        if payload.get("aud") != expected_aud:
+            raise TokenInvalidException("Invalid token audience")
+
         if payload.get("token_type") != "access":
             raise TokenInvalidException("Invalid token type")
 
@@ -177,6 +187,14 @@ class AuthJWTService:
     async def refresh_access_token(self, refresh_token: str) -> TokenPair:
         """Refresh access token."""
         payload = self.jwt_engine.decode_token(refresh_token)
+
+        # Defense-in-depth: assert issuer and audience explicitly
+        expected_iss = self.jwt_config.issuer
+        expected_aud = self.jwt_config.audience
+        if payload.get("iss") != expected_iss:
+            raise TokenInvalidException("Invalid token issuer")
+        if payload.get("aud") != expected_aud:
+            raise TokenInvalidException("Invalid token audience")
 
         if payload.get("token_type") != "refresh":
             raise TokenInvalidException("Invalid refresh token type")

@@ -10,12 +10,14 @@ from api.tenant import get_tenant_schema_resolver
 from constants.enums import RoleScope
 from database import with_default_db, with_tenant_db
 from database.constraint_handler import constraint_handler
+from datetime import datetime, timezone
 from exceptions import ExceptionFactory
 from security.policy import apply_conditional_access, merge_permissions_with_precedence
 from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
 from typing import Optional
 from uuid import UUID
+from zoneinfo import ZoneInfo
 
 
 class AuthorizationService:
@@ -50,11 +52,49 @@ class AuthorizationService:
     ) -> bool:
         """Return True if user has permission."""
         permissions = await self._get_user_permissions(user_id, tenant_id)
-        permissions = apply_conditional_access(permissions, resource)
+        # Apply conditional access using tenant-aware timezone and working hours if available
+        current_hour, bh_start, bh_end = await self._get_time_policy_params(tenant_id)
+        permissions = apply_conditional_access(
+            permissions,
+            resource,
+            current_hour=current_hour,
+            business_hour_start=bh_start,
+            business_hour_end=bh_end,
+        )
 
         required_patterns = ["*.*", f"{resource}.*", f"{resource}.{action}"]
 
         return any(pattern in permissions for pattern in required_patterns)
+
+    async def _get_time_policy_params(self, tenant_id: Optional[UUID]) -> tuple[int, int | None, int | None]:
+        """Return current hour in tenant TZ and tenant-specific business hours if set.
+
+        Fallbacks:
+        - Timezone: UTC if missing/invalid.
+        - Business hours: (None, None) if not set (policy will use SecurityDefaults).
+        """
+        tz_name : Optional[str] = None
+        bh_start: int | None = None
+        bh_end  : int | None = None
+        if tenant_id:
+            try:
+                from api.tenant.service import tenant_service
+                async with with_default_db() as shared_db:
+                    tenant = await tenant_service.get_tenant_by_id(shared_db, tenant_id)
+                    tz_name = getattr(tenant, "timezone", None)
+                    bh_start = getattr(tenant, "business_hour_start", None)
+                    bh_end = getattr(tenant, "business_hour_end", None)
+            except Exception:
+                tz_name  = None
+                bh_start = None
+                bh_end   = None
+
+        try:
+            tzinfo = ZoneInfo(tz_name) if tz_name else timezone.utc
+        except Exception:
+            tzinfo = timezone.utc
+
+        return datetime.now(tzinfo).hour, bh_start, bh_end
 
     async def require_permission(
         self,
@@ -141,8 +181,8 @@ class AuthorizationService:
             raise constraint_handler.handle_violation(e, context) from e
         except Exception as e:
             raise ExceptionFactory.database_error(
-                operation="check_tenant_role",
-                details={"user_id": str(user_id), "role_name": role_name, "tenant_id": str(tenant_id), "error": str(e)},
+                operation = "check_tenant_role",
+                details   = {"user_id": str(user_id), "role_name": role_name, "tenant_id": str(tenant_id), "error": str(e)},
             ) from e
 
     async def _get_permissions_from_db(

@@ -35,18 +35,32 @@ def is_restricted_perm(resource: str, action: str) -> bool:
     return ((resource or "").strip(), (action or "").strip()) in RESTRICTED_TENANT_PERMS
 
 
-def apply_conditional_access(permissions: set[str], resource: str) -> set[str]:
+def apply_conditional_access(
+    permissions        : set[str],
+    resource           : str,
+    current_hour       : int | None = None,
+    business_hour_start: int | None = None,
+    business_hour_end  : int | None = None,
+) -> set[str]:
     """Apply conditional access checks to permissions.
 
     - Outside business hours, delete actions are removed.
     - If a resource is specified, permissions are filtered to those matching it.
     """
-    current_hour = datetime.now().hour
-    if not (
-        SecurityDefaults.BUSINESS_HOUR_START
-        <= current_hour
-        <= SecurityDefaults.BUSINESS_HOUR_END
-    ):
+    if current_hour is None:
+        current_hour = datetime.now().hour
+    start = (
+        business_hour_start
+        if business_hour_start is not None
+        else SecurityDefaults.BUSINESS_HOUR_START
+    )
+    end = (
+        business_hour_end
+        if business_hour_end is not None
+        else SecurityDefaults.BUSINESS_HOUR_END
+    )
+
+    if not (start <= current_hour <= end):
         permissions = {p for p in permissions if not p.endswith(".delete")}
 
     if resource:

@@ -17,9 +17,9 @@ class PasswordManager:
         if cls._instance is None:
             cls._instance    = super().__new__(cls)
             cls._pwd_context = CryptContext(
-                schemes=["bcrypt"],
-                deprecated="auto",
-                bcrypt__min_rounds=SecurityDefaults.BCRYPT_MIN_ROUNDS,
+                schemes            = ["bcrypt"],
+                deprecated         = "auto",
+                bcrypt__min_rounds = SecurityDefaults.BCRYPT_MIN_ROUNDS,
             )
         return cls._instance
 

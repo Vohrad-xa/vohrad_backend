@@ -2,9 +2,9 @@
 
 from api.auth import get_current_admin
 from api.common.base_router import BaseRouterMixin
-from api.common.context_dependencies import get_authenticated_context
+from api.common.context_dependencies import get_authenticated_context, get_shared_context
 from api.permission.dependencies import require_permission
-from api.tenant.schema import TenantCreate, TenantResponse, TenantUpdate
+from api.tenant.schema import TenantCreate, TenantResponse, TenantSettingsUpdate, TenantUpdate
 from api.tenant.service import tenant_service
 from database.sessions import get_default_db_session
 from fastapi import APIRouter, Depends, Query, status
@@ -100,6 +100,23 @@ async def update_tenant_by_id(
     """Update tenant by ID (admin access only)"""
     updated_tenant = await tenant_service.update_tenant_by_id(db, tenant_id, tenant_data)
     return ResponseFactory.transform_and_respond(updated_tenant, TenantResponse)
+
+
+@routes.put("/settings", response_model=SuccessResponse[TenantResponse])
+async def update_tenant_settings(
+    settings: TenantSettingsUpdate,
+    context = Depends(get_shared_context),
+    _authorized: bool = Depends(require_permission("tenant", "manage")),
+):
+    """Allow tenant managers to update timezone and working hours for their own tenant."""
+    _current_user, tenant, db = context
+
+    # Build a TenantUpdate with only the allowed fields
+    data   = settings.model_dump(exclude_unset=True)
+    update = TenantUpdate(**data)
+
+    updated = await tenant_service.update_tenant(db, tenant, update)
+    return ResponseFactory.transform_and_respond(updated, TenantResponse)
 
 
 @routes.delete("/", response_model=DeletedResponse)
