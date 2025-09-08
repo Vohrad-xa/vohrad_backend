@@ -61,6 +61,8 @@ class Tenant(Base):
     billing_address = sa.Column(sa.String, nullable=True)
     country         = sa.Column(sa.String, nullable=True)
     timezone        = sa.Column(sa.String, nullable=True)
+    business_hour_start = sa.Column(sa.Integer, nullable=True)
+    business_hour_end   = sa.Column(sa.Integer, nullable=True)
     status          = sa.Column(sa.String, nullable=False, server_default="active")
     settings        = sa.Column(sa.JSON, nullable=True)
     created_by      = sa.Column(sa.UUID, nullable=True)
