@@ -1,9 +1,8 @@
-"""
-Authentication utilities for password hashing and verification.
+"""Authentication utilities for password hashing and verification.
 
-Uses bcrypt algorithm via passlib for secure password management.
-"""
+Uses bcrypt algorithm via passlib for secure password management."""
 
+from constants.defaults import SecurityDefaults
 from passlib.context import CryptContext
 from typing import ClassVar, Optional
 
@@ -17,7 +16,11 @@ class PasswordManager:
     def __new__(cls):
         if cls._instance is None:
             cls._instance    = super().__new__(cls)
-            cls._pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto", bcrypt__min_rounds=12)
+            cls._pwd_context = CryptContext(
+                schemes=["bcrypt"],
+                deprecated="auto",
+                bcrypt__min_rounds=SecurityDefaults.BCRYPT_MIN_ROUNDS,
+            )
         return cls._instance
 
     def hash_password(self, password: str) -> str:

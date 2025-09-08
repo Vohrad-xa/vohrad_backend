@@ -3,6 +3,7 @@
 from .interface import CacheInterface
 import asyncio
 from collections import OrderedDict
+from constants.defaults import CacheDefaults
 import time
 from typing import Any, Dict, Optional, Tuple
 
@@ -10,7 +11,11 @@ from typing import Any, Dict, Optional, Tuple
 class LRUCache(CacheInterface):
     """In-memory LRU cache with TTL support and size limits."""
 
-    def __init__(self, max_size: int = 1000, default_ttl_seconds: int = 3600):
+    def __init__(
+        self,
+        max_size: int = CacheDefaults.LRU_MAX_SIZE,
+        default_ttl_seconds: int = CacheDefaults.LRU_TTL_SECONDS,
+    ):
         """Initialize LRU cache.
 
         Args:

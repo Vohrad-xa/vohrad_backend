@@ -1,7 +1,13 @@
 """Authentication middleware for enterprise security."""
 
-from exceptions.jwt_exceptions import JWTException, TokenExpiredException, TokenInvalidException
+from constants.defaults import SecurityDefaults
+from exceptions.jwt_exceptions import (
+    JWTException,
+    TokenExpiredException,
+    TokenInvalidException,
+)
 from fastapi import Request, Response
+from http import HTTPStatus
 import re
 from security.jwt import get_auth_jwt_service
 from starlette.middleware.base import BaseHTTPMiddleware
@@ -73,7 +79,7 @@ class AuthMiddleware(BaseHTTPMiddleware):
     def _create_error_response(self, exception: JWTException) -> JSONResponse:
         """Create standardized error response."""
         return JSONResponse(
-            status_code=401,
+            status_code=HTTPStatus.UNAUTHORIZED,
             content={
                 "error": {
                     "code"   : getattr(exception, "error_code", "AUTH_ERROR"),
@@ -138,7 +144,7 @@ class AuthMiddleware(BaseHTTPMiddleware):
             "X-Content-Type-Options"           : "nosniff",
             "X-Frame-Options"                  : "DENY",
             "X-XSS-Protection"                 : "1; mode=block",
-            "Strict-Transport-Security"        : "max-age=31536000; includeSubDomains",
+            "Strict-Transport-Security"        : f"max-age={SecurityDefaults.HSTS_MAX_AGE_SECONDS}; includeSubDomains",
             "Referrer-Policy"                  : "strict-origin-when-cross-origin",
             "X-Permitted-Cross-Domain-Policies": "none",
             "Cache-Control"                    : "no-store, no-cache, must-revalidate, max-age=0",

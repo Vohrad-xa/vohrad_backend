@@ -1,6 +1,7 @@
 """Tenant-specific cache implementation for schema lookups."""
 
 from .lru_cache import LRUCache
+from constants.defaults import CacheDefaults
 from typing import Optional
 from uuid import UUID
 
@@ -8,7 +9,11 @@ from uuid import UUID
 class TenantCache:
     """High-level tenant schema cache with business logic."""
 
-    def __init__(self, max_tenants: int = 1000, ttl_seconds: int = 3600):
+    def __init__(
+        self,
+        max_tenants: int = CacheDefaults.LRU_MAX_SIZE,
+        ttl_seconds: int = CacheDefaults.LRU_TTL_SECONDS,
+    ):
         """Initialize tenant cache.
 
         Args:
