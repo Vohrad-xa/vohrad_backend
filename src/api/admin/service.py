@@ -15,9 +15,11 @@ class AdminService(BaseService[Admin, Any, Any]):
     def __init__(self):
         super().__init__(Admin)
 
+
     def get_search_fields(self) -> list[str]:
         """Return searchable fields."""
         return ["email", "first_name", "last_name", "role"]
+
 
     async def handle_global_request(self, service_method, pagination, **kwargs):
         """Handle global admin requests (list or summary)."""
@@ -30,6 +32,7 @@ class AdminService(BaseService[Admin, Any, Any]):
                     return await service_method(shared_db, pagination.page, pagination.size)
         else:
             return await self.get_tenant_summary(service_method, **kwargs)
+
 
     async def get_tenant_summary(self, service_method, **kwargs):
         """Get per-tenant count summary for a service."""
@@ -65,22 +68,23 @@ class AdminService(BaseService[Admin, Any, Any]):
                     )
                     total_tenant_items += tenant_count
             except (ProgrammingError, OperationalError, Exception):
-                # Skip tenants with missing schema/tables
+
                 tenant_summary.append(
                     {
-                        "tenant_id": str(tenant.tenant_id),
+                        "tenant_id"  : str(tenant.tenant_id),
                         "tenant_name": tenant.tenant_schema_name,
-                        "count": 0,
-                        "error": "schema_or_table_missing",
-                    }
+                        "count"      : 0,
+                        "error"      : "schema_or_table_missing",
+                    }  # Ignore errors for missing schemas/tables
                 )
 
         return {
-            "global_count": global_count,
+            "global_count"  : global_count,
             "tenant_summary": tenant_summary,
-            "total_tenants": len(tenants),
-            "total_items": global_count + total_tenant_items,
+            "total_tenants" : len(tenants),
+            "total_items"   : global_count + total_tenant_items,
         }
+
 
     async def get_admin_context_info(self, context):
         """Get admin context information with role checks."""
@@ -98,14 +102,22 @@ class AdminService(BaseService[Admin, Any, Any]):
             admin_roles.append("admin")
 
         return {
-            "admin_user_id": str(context.user_id),
-            "current_tenant_id": str(context.tenant_id) if context.tenant_id else None,
+            "admin_user_id"        : str(context.user_id),
+            "current_tenant_id"    : str(context.tenant_id) if context.tenant_id else None,
             "current_tenant_schema": context.tenant_schema,
-            "is_tenant_context": context.is_tenant_context,
-            "admin_roles": admin_roles,
+            "is_tenant_context"    : context.is_tenant_context,
+            "admin_roles"          : admin_roles,
         }
 
-    async def paginated_call(self, context, service_method, pagination, response_class, **kwargs):
+
+    async def paginated_call(
+        self,
+        context,
+        service_method,
+        pagination,
+        response_class,
+        **kwargs
+    ):
         """Execute paginated service call with admin context."""
         if context.is_global_context:
             result = await self.handle_global_request(service_method, pagination, **kwargs)

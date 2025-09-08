@@ -11,9 +11,9 @@ from uuid import UUID
 class AdminContext:
     """Admin context with tenant switching capabilities."""
 
-    user: AuthenticatedUser
-    db_session: AsyncSession
-    tenant_id: Optional[UUID] = None
+    user         : AuthenticatedUser
+    db_session   : AsyncSession
+    tenant_id    : Optional[UUID] = None
     tenant_schema: Optional[str] = None
 
     @property

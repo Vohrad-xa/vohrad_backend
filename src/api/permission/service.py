@@ -128,7 +128,12 @@ class PermissionService(BaseService[Permission, PermissionCreate, PermissionUpda
             return existing
         except IntegrityError as e:
             await db.rollback()
-            await self._handle_integrity_error(e, {"operation": "update_permission", "permission_id": permission_id})
+            await self._handle_integrity_error(
+                e, {
+                    "operation"    : "update_permission",
+                    "permission_id": permission_id
+                }
+            )
 
     async def delete_permission(self, db: AsyncSession, permission_id: UUID, etag: str | None = None) -> None:
         """Delete permission. Raises BaseAppException on ETag mismatch, immutability, or restricted pair."""
@@ -182,7 +187,13 @@ class PermissionService(BaseService[Permission, PermissionCreate, PermissionUpda
         return result.scalars().all()
 
 
-    async def permission_exists(self, db: AsyncSession, role_id: UUID, resource: str, action: str) -> bool:
+    async def permission_exists(
+        self,
+        db      : AsyncSession,
+        role_id : UUID,
+        resource: str,
+        action  : str
+    ) -> bool:
         query = select(Permission).where(
             Permission.role_id == role_id, Permission.resource == resource, Permission.action == action
         )
@@ -196,13 +207,22 @@ class PermissionService(BaseService[Permission, PermissionCreate, PermissionUpda
         return result.scalars().all()
 
 
-    async def get_permissions_by_resource_action(self, db: AsyncSession, resource: str, action: str) -> list[Permission]:
+    async def get_permissions_by_resource_action(
+        self,
+        db      : AsyncSession,
+        resource: str,
+        action  : str
+    ) -> list[Permission]:
         query = select(Permission).where(Permission.resource == resource, Permission.action == action)
         result = await db.execute(query)
         return result.scalars().all()
 
 
-    async def _handle_integrity_error(self, error: IntegrityError, operation_context: dict[str, Any]) -> None:
+    async def _handle_integrity_error(
+        self,
+        error            : IntegrityError,
+        operation_context: dict[str, Any]
+    ) -> None:
         """Map database constraints to domain exceptions."""
         exception = constraint_handler.handle_violation(error, operation_context)
         raise exception
