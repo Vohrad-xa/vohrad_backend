@@ -9,6 +9,7 @@ Invariants:
 from api.common import BaseService
 from api.permission.models import Permission
 from api.permission.schema import PermissionCreate, PermissionUpdate
+from api.role.models import Role
 from api.role.service import role_service
 from database.constraint_handler import constraint_handler
 from exceptions import ExceptionFactory
@@ -28,12 +29,22 @@ class PermissionService(BaseService[Permission, PermissionCreate, PermissionUpda
 
 
     def _assert_not_restricted(self, resource: str, action: str) -> None:
-        """Raise authorization failure if (resource, action) is restricted.
-
-        Centralizes restricted-permission policy enforcement.
-        """
+        """Raise authorization failure if (resource, action) is restricted."""
         if is_restricted_perm(resource, action):
             raise ExceptionFactory.restricted_permission(resource, action)
+
+    async def _validate_role_permissions_mutable(self, db: AsyncSession, role_id: UUID) -> Role:
+        """Ensure the role's permissions are mutable; return the role otherwise."""
+        role = await role_service.get_role_by_id(db, role_id)
+        if not role.permissions_mutable:
+            raise ExceptionFactory.business_rule(
+                "Permissions are immutable for this role",
+                {
+                    "role_id": str(role.id),
+                    "role_name": role.name,
+                },
+            )
+        return role
 
 
     def get_search_fields(self) -> list[str]:
@@ -42,15 +53,7 @@ class PermissionService(BaseService[Permission, PermissionCreate, PermissionUpda
 
     async def create_permission(self, db: AsyncSession, permission_data: PermissionCreate) -> Permission:
         try:  # Enforce role permissions mutability
-            role = await role_service.get_role_by_id(db, permission_data.role_id)
-            if not role.permissions_mutable:
-                raise ExceptionFactory.business_rule(
-                    "Permissions are immutable for this role",
-                    {
-                        "role_id"  : str(role.id),
-                        "role_name": role.name,
-                    },
-                )
+            await self._validate_role_permissions_mutable(db, permission_data.role_id)
 
             # Enforce restricted permission patterns
             self._assert_not_restricted(permission_data.resource, permission_data.action)
@@ -112,15 +115,7 @@ class PermissionService(BaseService[Permission, PermissionCreate, PermissionUpda
                 },
             )
 
-        role = await role_service.get_role_by_id(db, existing.role_id)
-        if not role.permissions_mutable:
-            raise ExceptionFactory.business_rule(
-                "Permissions are immutable for this role",
-                {
-                    "role_id"  : str(role.id),
-                    "role_name": role.name,
-                },
-            )
+        await self._validate_role_permissions_mutable(db, existing.role_id)
         # Enforce restricted patterns (evaluate intended new state)
         new_resource = update_data.get("resource", existing.resource)
         new_action = update_data.get("action", existing.action)
@@ -154,15 +149,7 @@ class PermissionService(BaseService[Permission, PermissionCreate, PermissionUpda
                     "provided_etag": etag,
                 },
             )
-        role = await role_service.get_role_by_id(db, existing.role_id)
-        if not role.permissions_mutable:
-            raise ExceptionFactory.business_rule(
-                "Permissions are immutable for this role",
-                {
-                    "role_id"  : str(role.id),
-                    "role_name": role.name,
-                },
-            )
+        await self._validate_role_permissions_mutable(db, existing.role_id)
 
         # Disallow deleting sensitive permissions
         self._assert_not_restricted(existing.resource, existing.action)
