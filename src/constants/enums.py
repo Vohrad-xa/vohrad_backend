@@ -18,6 +18,16 @@ class RoleScope(Enum):
     TENANT = "TENANT"  # Database value: "TENANT"
 
 
+class RoleStage(Enum):
+    """Lifecycle stage for custom roles."""
+
+    ALPHA      = "ALPHA"
+    BETA       = "BETA"
+    GA         = "GA"
+    DEPRECATED = "DEPRECATED"
+    DISABLED   = "DISABLED"
+
+
 class UserRoles(Enum):
     """Enumeration of user roles."""
 
