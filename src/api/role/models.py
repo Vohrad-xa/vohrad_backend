@@ -1,7 +1,7 @@
 """Role model for both shared and tenant schemas."""
 
 from constants import ValidationConstraints
-from constants.enums import RoleScope, RoleType
+from constants.enums import RoleScope, RoleStage, RoleType
 from database import Base
 import sqlalchemy as sa
 from sqlalchemy.orm import relationship, validates
@@ -25,6 +25,7 @@ class Role(Base):
     is_active           = sa.Column(sa.Boolean, nullable=False, server_default=sa.text("true"))
     role_type           = sa.Column(sa.Enum(RoleType, name="role_type_enum"), nullable=False, default=RoleType.PREDEFINED)
     role_scope          = sa.Column(sa.Enum(RoleScope, name="role_scope_enum"), nullable=False, default=RoleScope.TENANT)
+    stage               = sa.Column(sa.Enum(RoleStage, name="role_stage_enum"), nullable=False, server_default=sa.text("'GA'"))
     is_mutable          = sa.Column(sa.Boolean, nullable=False, default=False)
     permissions_mutable = sa.Column(sa.Boolean, nullable=False, default=False)
     managed_by          = sa.Column(sa.String(ValidationConstraints.MAX_ROLE_LENGTH), nullable=True)

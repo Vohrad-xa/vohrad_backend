@@ -1,8 +1,7 @@
 """Role management schemas following project patterns."""
 
 from api.common import BaseCreateSchema, BaseResponseSchema, BaseUpdateSchema
-from constants import ValidationConstraints, ValidationMessages
-from constants.enums import RoleScope, RoleType
+from constants import RoleScope, RoleStage, RoleType, ValidationConstraints, ValidationMessages
 from pydantic import BaseModel, field_validator
 from typing import Optional
 from uuid import UUID
@@ -13,8 +12,9 @@ class RoleCreate(BaseCreateSchema):
 
     name       : str
     description: Optional[str] = None
-    role_type  : Optional[RoleType] = RoleType.PREDEFINED
+    role_type  : Optional[RoleType]  = RoleType.PREDEFINED
     role_scope : Optional[RoleScope] = RoleScope.TENANT
+    stage      : Optional[RoleStage] = RoleStage.GA
 
     @field_validator("name")
     @classmethod
@@ -52,13 +52,26 @@ class RoleCreate(BaseCreateSchema):
 
         return v
 
+    @field_validator("stage")
+    @classmethod
+    def validate_stage_for_role_type(cls, v, info):
+        """Enforce that BASIC/PREDEFINED roles are always GA."""
+        role_type = info.data.get("role_type") if hasattr(info, "data") and info.data else None
+        if role_type in (RoleType.BASIC, RoleType.PREDEFINED):
+            if v is None:
+                return RoleStage.GA
+            if v != RoleStage.GA:
+                raise ValueError("BASIC/PREDEFINED roles must have stage GA")
+        return v
+
 
 class RoleUpdate(BaseUpdateSchema):
     """Schema for updating role - all fields optional."""
 
     name       : Optional[str]  = None
     description: Optional[str]  = None
-    is_active  : Optional[bool] = None
+    is_active  : Optional[bool]      = None
+    stage      : Optional[RoleStage] = None
     etag       : Optional[str]  = None
 
     @field_validator("name")
@@ -85,6 +98,7 @@ class RoleResponse(BaseResponseSchema):
     is_active          : bool
     role_type          : RoleType
     role_scope         : RoleScope
+    stage              : RoleStage
     is_mutable         : bool
     permissions_mutable: bool
     managed_by         : Optional[str] = None

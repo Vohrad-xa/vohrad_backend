@@ -91,10 +91,10 @@ async def create_tenant_roles_for_schema(schema_name: str):
                 await session.execute(
                     sa.text(f"""
                         INSERT INTO {quoted_schema}.roles (id, name, description, role_type, role_scope,
-                                                      is_mutable, permissions_mutable, is_deletable,
+                                                      stage, is_mutable, permissions_mutable, is_deletable,
                                                       managed_by, is_active, etag, created_at, updated_at)
                         VALUES (:id, :name, :description, :role_type, :role_scope,
-                               :is_mutable, :permissions_mutable, :is_deletable,
+                               :stage, :is_mutable, :permissions_mutable, :is_deletable,
                                :managed_by, :is_active, :etag, :created_at, :updated_at)
                     """),
                     {
@@ -103,6 +103,7 @@ async def create_tenant_roles_for_schema(schema_name: str):
                         "description"        : role_config["description"],
                         "role_type"          : role_config["role_type"],
                         "role_scope"         : role_config["role_scope"],
+                        "stage"              : "GA",
                         "is_mutable"         : False,
                         "permissions_mutable": role_config.get("permissions_mutable", False),
                         "is_deletable"       : False,

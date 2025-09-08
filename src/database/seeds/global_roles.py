@@ -60,10 +60,10 @@ async def create_global_roles():
                 await session.execute(
                     sa.text("""
                         INSERT INTO shared.roles (id, name, description, role_type, role_scope,
-                                                is_mutable, permissions_mutable, is_deletable,
+                                                stage, is_mutable, permissions_mutable, is_deletable,
                                                 is_active, created_at, updated_at)
                         VALUES (:id, :name, :description, :role_type, :role_scope,
-                               :is_mutable, :permissions_mutable, :is_deletable,
+                               :stage, :is_mutable, :permissions_mutable, :is_deletable,
                                :is_active, :created_at, :updated_at)
                     """),
                     {
@@ -72,6 +72,7 @@ async def create_global_roles():
                         "description"        : role_config["description"],
                         "role_type"          : role_config["role_type"],
                         "role_scope"         : role_config["role_scope"],
+                        "stage"              : "GA",
                         "is_mutable"         : False,
                         "permissions_mutable": False,
                         "is_deletable"       : False,
