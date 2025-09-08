@@ -6,10 +6,12 @@ Principles:
 - Optional conditional filters may restrict actions.
 """
 
+from api.tenant import get_tenant_schema_resolver
 from constants.enums import RoleScope
 from database import with_default_db, with_tenant_db
 from database.constraint_handler import constraint_handler
 from exceptions import ExceptionFactory
+from security.policy import apply_conditional_access, merge_permissions_with_precedence
 from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
 from typing import Optional
@@ -21,8 +23,6 @@ class AuthorizationService:
 
     async def _get_tenant_schema(self, tenant_id: UUID) -> str:
         """Resolve tenant schema name via cached resolver (DRY, fast)."""
-        from api.tenant import get_tenant_schema_resolver
-
         resolver = get_tenant_schema_resolver()
         return await resolver.resolve_tenant_schema_by_id(tenant_id)
 
@@ -50,7 +50,7 @@ class AuthorizationService:
     ) -> bool:
         """Return True if user has permission."""
         permissions = await self._get_user_permissions(user_id, tenant_id)
-        permissions = await self._apply_conditional_access(permissions, user_id, tenant_id, resource)
+        permissions = apply_conditional_access(permissions, resource)
 
         required_patterns = ["*.*", f"{resource}.*", f"{resource}.{action}"]
 
@@ -72,28 +72,6 @@ class AuthorizationService:
         if not await self.user_has_role(user_id, role_name, tenant_id):
             raise ExceptionFactory.authorization_failed("role", role_name)
 
-    async def _apply_conditional_access(
-        self, permissions: set[str], user_id: UUID, tenant_id: Optional[UUID], resource: str
-    ) -> set[str]:
-        """Google-style conditional access controls."""
-        from datetime import datetime
-
-        current_hour = datetime.now().hour
-        if not (9 <= current_hour <= 17):
-            permissions = {p for p in permissions if not p.endswith(".delete")}
-
-        if resource:
-            permissions = {p for p in permissions if self._permission_applies_to_resource(p, resource)}
-
-        return permissions
-
-    def _permission_applies_to_resource(self, permission: str, resource: str) -> bool:
-        """Check if permission applies to the requested resource."""
-        if permission == "*.*":
-            return True
-
-        perm_resource = permission.split(".")[0]
-        return perm_resource == "*" or perm_resource == resource
 
     async def _has_global_role(self, user_id: UUID, role_name: str) -> bool:
         """Check if user has global role in shared schema."""
@@ -225,20 +203,7 @@ class AuthorizationService:
         if tenant_id:
             tenant_permissions = await self._get_permissions_from_db(user_id, RoleScope.TENANT, tenant_id)
 
-        return self._merge_permissions_with_precedence(tenant_permissions, system_permissions)
-
-    def _merge_permissions_with_precedence(self, tenant_perms: set[str], system_perms: set[str]) -> set[str]:
-        """Merge permissions with hierarchical precedence."""
-        effective = system_perms.copy()
-
-        for perm in tenant_perms:
-            if perm.startswith("-"):
-                deny_perm = perm[1:]
-                effective.discard(deny_perm)
-            else:
-                effective.add(perm)
-
-        return effective
+        return merge_permissions_with_precedence(tenant_permissions, system_permissions)
 
     async def _get_roles_from_db(
         self,

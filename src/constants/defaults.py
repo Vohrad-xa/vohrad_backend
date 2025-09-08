@@ -28,3 +28,21 @@ class DatabaseDefaults:
     POOL_SIZE         : Final[int] = 10
     MAX_OVERFLOW      : Final[int] = 20
     POOL_RECYCLE_TIME : Final[int] = 3600  # 1 hour
+
+
+class SecurityDefaults:
+    """Security-related default values."""
+
+    BCRYPT_MIN_ROUNDS       : Final[int] = 12
+    BUSINESS_HOUR_START     : Final[int] = 9
+    BUSINESS_HOUR_END       : Final[int] = 17
+    HSTS_MAX_AGE_SECONDS    : Final[int] = 31536000  # 1 year
+
+
+class CacheDefaults:
+    """Cache-related default values."""
+
+    LRU_MAX_SIZE            : Final[int] = 1000
+    LRU_TTL_SECONDS         : Final[int] = 3600
+    USER_CACHE_MAX_SIZE     : Final[int] = 10000
+    USER_CACHE_TTL_SECONDS  : Final[int] = 900
