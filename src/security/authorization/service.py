@@ -6,9 +6,12 @@ Principles:
 - Optional conditional filters may restrict actions.
 """
 
+from api.tenant import get_tenant_schema_resolver
+from constants.defaults import SecurityDefaults
 from constants.enums import RoleScope
 from database import with_default_db, with_tenant_db
 from database.constraint_handler import constraint_handler
+from datetime import datetime
 from exceptions import ExceptionFactory
 from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
@@ -21,8 +24,6 @@ class AuthorizationService:
 
     async def _get_tenant_schema(self, tenant_id: UUID) -> str:
         """Resolve tenant schema name via cached resolver (DRY, fast)."""
-        from api.tenant import get_tenant_schema_resolver
-
         resolver = get_tenant_schema_resolver()
         return await resolver.resolve_tenant_schema_by_id(tenant_id)
 
@@ -76,10 +77,12 @@ class AuthorizationService:
         self, permissions: set[str], user_id: UUID, tenant_id: Optional[UUID], resource: str
     ) -> set[str]:
         """Google-style conditional access controls."""
-        from datetime import datetime
-
         current_hour = datetime.now().hour
-        if not (9 <= current_hour <= 17):
+        if not (
+            SecurityDefaults.BUSINESS_HOUR_START
+            <= current_hour
+            <= SecurityDefaults.BUSINESS_HOUR_END
+        ):
             permissions = {p for p in permissions if not p.endswith(".delete")}
 
         if resource:

@@ -1,6 +1,7 @@
 """User-specific cache implementation for authentication performance."""
 
 from .lru_cache import LRUCache
+from constants.defaults import CacheDefaults
 from typing import Any, Optional
 from uuid import UUID
 
@@ -8,7 +9,11 @@ from uuid import UUID
 class UserCache:
     """High-level user cache for authentication and frequent lookups."""
 
-    def __init__(self, max_users: int = 10000, ttl_seconds: int = 900):
+    def __init__(
+        self,
+        max_users: int = CacheDefaults.USER_CACHE_MAX_SIZE,
+        ttl_seconds: int = CacheDefaults.USER_CACHE_TTL_SECONDS,
+    ):
         """Initialize user cache.
 
         Args:
