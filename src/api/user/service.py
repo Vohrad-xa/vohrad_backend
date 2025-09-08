@@ -10,6 +10,7 @@ from api.role.models import Role
 from api.tenant.models import Tenant
 from api.user.models import User
 from api.user.schema import UserCreate, UserPasswordUpdate, UserUpdate
+from constants.enums import RoleStage
 from database.cache import UserCache
 from database.constraint_handler import constraint_handler
 from exceptions import ExceptionFactory, invalid_credentials
@@ -144,6 +145,15 @@ class UserService(BaseService[User, UserCreate, UserUpdate]):
     ) -> Assignment:
         """Assign role to user."""
         try:
+            # Block assignment for deprecated or disabled roles
+            role = await db.get(Role, role_id)
+            if not role:
+                raise ExceptionFactory.not_found("Role", role_id)
+            if role.stage in (RoleStage.DEPRECATED, RoleStage.DISABLED):
+                raise ExceptionFactory.business_rule(
+                    "Role cannot be assigned due to lifecycle stage",
+                    {"role_id": str(role_id), "stage": str(role.stage)},
+                )
             assignment = Assignment(user_id=user_id, role_id=role_id, assigned_by=assigned_by)
             db.add(assignment)
             await db.commit()

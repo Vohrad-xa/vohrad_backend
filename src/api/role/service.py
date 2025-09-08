@@ -9,8 +9,8 @@ Invariants:
 from api.common import BaseService
 from api.role.models import Role
 from api.role.schema import RoleCreate, RoleUpdate
-from constants.enums import RoleScope, RoleType
-from database.constraint_handler import constraint_handler
+from constants import RoleScope, RoleType
+from database import constraint_handler
 from exceptions import ExceptionFactory
 from security.policy import is_reserved_role
 from sqlalchemy.exc import IntegrityError
@@ -115,6 +115,13 @@ class RoleService(BaseService[Role, RoleCreate, RoleUpdate]):
                     "Role name is reserved and cannot be used",
                     {"role_id": str(role_id), "new_name": new_name},
                 )
+
+        # Enforce stage changes only for CUSTOM roles
+        if "stage" in update_data and role.role_type in (RoleType.BASIC, RoleType.PREDEFINED):
+            raise ExceptionFactory.business_rule(
+                "Stage can only be changed for CUSTOM roles",
+                {"role_id": str(role_id), "role_type": str(role.role_type)},
+            )
 
         try:
             for field, value in update_data.items():
