@@ -11,6 +11,7 @@ from api.permission.schema import PermissionCreate, PermissionUpdate
 from api.role.service import role_service
 from database.constraint_handler import constraint_handler
 from exceptions import ExceptionFactory
+from security.policy import is_restricted_perm
 from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -40,10 +41,7 @@ class PermissionService(BaseService[Permission, PermissionCreate, PermissionUpda
                 })
 
             # Enforce restricted permission patterns in tenant context
-            if (
-                (permission_data.resource == "tenant" and permission_data.action in {"create", "update", "delete"})
-                or (permission_data.resource == "user" and permission_data.action == "delete")
-            ):
+            if is_restricted_perm(permission_data.resource, permission_data.action):
                 raise ExceptionFactory.authorization_failed("permission", "restricted")
 
             permission_dict = permission_data.model_dump()
@@ -101,11 +99,10 @@ class PermissionService(BaseService[Permission, PermissionCreate, PermissionUpda
                 "role_id": str(role.id),
                 "role_name": role.name,
             })
-        # Enforce restricted patterns
-        if (
-            (permission_data.resource == "tenant" and permission_data.action in {"create", "update", "delete"})
-            or (permission_data.resource == "user" and permission_data.action == "delete")
-        ):
+        # Enforce restricted patterns (evaluate intended new state)
+        new_resource = update_data.get("resource", existing.resource)
+        new_action   = update_data.get("action", existing.action)
+        if is_restricted_perm(new_resource, new_action):
             raise ExceptionFactory.authorization_failed("permission", "restricted")
 
         # Apply updates and refresh ETag
@@ -130,7 +127,6 @@ class PermissionService(BaseService[Permission, PermissionCreate, PermissionUpda
                 "current_etag": existing.etag,
                 "provided_etag": etag,
             })
-        from api.role.service import role_service
         role = await role_service.get_role_by_id(db, existing.role_id)
         if not role.permissions_mutable:
             raise ExceptionFactory.business_rule("Permissions are immutable for this role", {
@@ -139,10 +135,7 @@ class PermissionService(BaseService[Permission, PermissionCreate, PermissionUpda
             })
 
         # Disallow deleting sensitive permissions
-        if (
-            (existing.resource == "tenant" and existing.action in {"create", "update", "delete"})
-            or (existing.resource == "user" and existing.action == "delete")
-        ):
+        if is_restricted_perm(existing.resource, existing.action):
             raise ExceptionFactory.authorization_failed("permission", "restricted")
         await self.delete(db, permission_id)
 
@@ -158,7 +151,6 @@ class PermissionService(BaseService[Permission, PermissionCreate, PermissionUpda
 
     async def get_role_permissions(self, db: AsyncSession, role_id: UUID) -> list[Permission]:
         """Retrieves all permissions associated with role."""
-        from api.role.service import role_service
         role = await role_service.get_role_by_id(db, role_id)
         return role.permissions
 

@@ -2,7 +2,7 @@
 
 from api.common import BaseCreateSchema, BaseResponseSchema, BaseUpdateSchema
 from constants import ValidationConstraints, ValidationMessages
-from constants.enums import RoleScope, RoleType, UserRoles
+from constants.enums import RoleScope, RoleType
 from pydantic import BaseModel, field_validator
 from typing import Optional
 from uuid import UUID
@@ -26,9 +26,8 @@ class RoleCreate(BaseCreateSchema):
             raise ValueError(ValidationMessages.ROLE_TOO_SHORT)
         if len(v.strip()) > ValidationConstraints.MAX_ROLE_LENGTH:
             raise ValueError(ValidationMessages.ROLE_TOO_LONG)
-        reserved_names = [role.value for role in UserRoles]
-        reserved_names.extend(["super_admin", "employee"])
-        if v.strip().lower() in reserved_names:
+        from security.policy import is_reserved_role
+        if is_reserved_role(v):
             raise ValueError(f"Role name '{v}' is reserved for system roles")
 
         return v.strip().lower()
