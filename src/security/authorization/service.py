@@ -7,9 +7,8 @@ Principles:
 """
 
 from api.tenant import get_tenant_schema_resolver
-from constants.enums import RoleScope
-from database import with_default_db, with_tenant_db
-from database.constraint_handler import constraint_handler
+from constants import RoleScope, RoleStage
+from database import constraint_handler, with_default_db, with_tenant_db
 from datetime import datetime, timezone
 from exceptions import ExceptionFactory
 from security.policy import apply_conditional_access, merge_permissions_with_precedence
@@ -28,6 +27,7 @@ class AuthorizationService:
         resolver = get_tenant_schema_resolver()
         return await resolver.resolve_tenant_schema_by_id(tenant_id)
 
+
     async def user_has_role(
         self,
         user_id  : UUID,
@@ -43,6 +43,7 @@ class AuthorizationService:
 
         return False
 
+
     async def user_has_permission(
         self,
         user_id  : UUID,
@@ -52,19 +53,20 @@ class AuthorizationService:
     ) -> bool:
         """Return True if user has permission."""
         permissions = await self._get_user_permissions(user_id, tenant_id)
-        # Apply conditional access using tenant-aware timezone and working hours (minutes-of-day)
+        # Apply conditional access using tenant-aware timezone and working hours
         current_minute, bh_start, bh_end = await self._get_time_policy_params(tenant_id)
         permissions = apply_conditional_access(
             permissions,
             resource,
-            current_hour=current_minute,
-            business_hour_start=bh_start,
-            business_hour_end=bh_end,
+            current_hour        = current_minute,
+            business_hour_start = bh_start,
+            business_hour_end   = bh_end,
         )
 
         required_patterns = ["*.*", f"{resource}.*", f"{resource}.{action}"]
 
         return any(pattern in permissions for pattern in required_patterns)
+
 
     async def _get_time_policy_params(self, tenant_id: Optional[UUID]) -> tuple[int, int | None, int | None]:
         """Return current minute-of-day in tenant TZ and tenant-specific business hours (minutes).
@@ -80,10 +82,10 @@ class AuthorizationService:
             try:
                 from api.tenant.service import tenant_service
                 async with with_default_db() as shared_db:
-                    tenant = await tenant_service.get_tenant_by_id(shared_db, tenant_id)
-                    tz_name = getattr(tenant, "timezone", None)
+                    tenant   = await tenant_service.get_tenant_by_id(shared_db, tenant_id)
+                    tz_name  = getattr(tenant, "timezone", None)
                     bh_start = getattr(tenant, "business_hour_start", None)
-                    bh_end = getattr(tenant, "business_hour_end", None)
+                    bh_end   = getattr(tenant, "business_hour_end", None)
             except Exception:
                 tz_name  = None
                 bh_start = None
@@ -97,7 +99,7 @@ class AuthorizationService:
         now = datetime.now(tzinfo)
         current_minute = now.hour * 60 + now.minute
 
-        # Normalize business hours: values <= 23 are treated as hours; 0..1439 treated as minutes
+        # Values <= 23 are treated as hours; 0..1439 treated as minutes
         def normalize(v: Optional[int]) -> Optional[int]:
             if v is None:
                 return None
@@ -108,6 +110,7 @@ class AuthorizationService:
             return None
 
         return current_minute, normalize(bh_start), normalize(bh_end)
+
 
     async def require_permission(
         self,
@@ -120,7 +123,13 @@ class AuthorizationService:
         if not await self.user_has_permission(user_id, resource, action, tenant_id):
             raise ExceptionFactory.authorization_failed(resource, action)
 
-    async def require_role(self, user_id: UUID, role_name: str, tenant_id: Optional[UUID] = None) -> None:
+
+    async def require_role(
+        self,
+        user_id  : UUID,
+        role_name: str,
+        tenant_id: Optional[UUID] = None
+    ) -> None:
         """Require role or raise."""
         if not await self.user_has_role(user_id, role_name, tenant_id):
             raise ExceptionFactory.authorization_failed("role", role_name)
@@ -128,7 +137,11 @@ class AuthorizationService:
 
     async def _has_global_role(self, user_id: UUID, role_name: str) -> bool:
         """Check if user has global role in shared schema."""
-        context = {"operation": "global_role_check", "user_id": user_id, "role_name": role_name}
+        context = {
+            "operation": "global_role_check",
+            "user_id"  : user_id,
+            "role_name": role_name
+        }
 
         try:
             from api.assignment.models import Assignment
@@ -142,7 +155,8 @@ class AuthorizationService:
                         Assignment.user_id == user_id,
                         Role.name          == role_name,
                         Role.role_scope    == RoleScope.GLOBAL,
-                        Role.is_active
+                        Role.is_active,
+                        Role.stage != RoleStage.DISABLED,
                     )
                 )
 
@@ -160,6 +174,7 @@ class AuthorizationService:
                     "error"    : str(e)
                 }
             ) from e
+
 
     async def _has_tenant_role(self, user_id: UUID, role_name: str, tenant_id: UUID) -> bool:
         """Check if user has tenant role in the correct tenant schema (resolved from tenant_id)."""
@@ -183,7 +198,8 @@ class AuthorizationService:
                         Assignment.user_id == user_id,
                         Role.name          == role_name,
                         Role.role_scope    == RoleScope.TENANT,
-                        Role.is_active
+                        Role.is_active,
+                        Role.stage != RoleStage.DISABLED,
                     )
                 )
 
@@ -195,8 +211,14 @@ class AuthorizationService:
         except Exception as e:
             raise ExceptionFactory.database_error(
                 operation = "check_tenant_role",
-                details   = {"user_id": str(user_id), "role_name": role_name, "tenant_id": str(tenant_id), "error": str(e)},
+                details   = {
+                    "user_id"  : str(user_id),
+                    "role_name": role_name,
+                    "tenant_id": str(tenant_id),
+                    "error"    : str(e)
+                },
             ) from e
+
 
     async def _get_permissions_from_db(
         self,
@@ -206,7 +228,11 @@ class AuthorizationService:
     ) -> set[str]:
         """Retrieve permissions from database."""
         permissions: set[str] = set()
-        context = {"operation": f"{role_scope.value}_permissions_query", "user_id": user_id, "role_scope": role_scope.value}
+        context = {
+            "operation" : f"{role_scope.value}_permissions_query",
+            "user_id"   : user_id,
+            "role_scope": role_scope.value
+        }
 
         if tenant_id:
             context["tenant_id"] = tenant_id
@@ -229,7 +255,12 @@ class AuthorizationService:
                     select(Permission)
                     .join(Role)
                     .join(Assignment)
-                    .where(Assignment.user_id == user_id, Role.role_scope == role_scope, Role.is_active)
+                    .where(
+                        Assignment.user_id == user_id,
+                        Role.role_scope == role_scope,
+                        Role.is_active,
+                        Role.stage != RoleStage.DISABLED,
+                    )
                 )
 
                 result = await db.execute(query)
@@ -243,10 +274,15 @@ class AuthorizationService:
         except Exception as e:
             raise ExceptionFactory.database_error(
                 operation = f"retrieve_{role_scope.value}_permissions",
-                details   = {"user_id": str(user_id), "role_scope": role_scope.value, "error": str(e)},
+                details   = {
+                    "user_id"   : str(user_id),
+                    "role_scope": role_scope.value,
+                    "error"     : str(e)
+                },
             ) from e
 
         return permissions
+
 
     async def _get_user_permissions(self, user_id: UUID, tenant_id: Optional[UUID] = None) -> set[str]:
         """Resolve permissions with precedence."""
@@ -258,6 +294,7 @@ class AuthorizationService:
 
         return merge_permissions_with_precedence(tenant_permissions, system_permissions)
 
+
     async def _get_roles_from_db(
         self,
         user_id   : UUID,
@@ -266,7 +303,11 @@ class AuthorizationService:
     ) -> list[str]:
         """Retrieve roles from database."""
         roles: list[str] = []
-        context = {"operation": f"{role_scope.value}_roles_query", "user_id": user_id, "role_scope": role_scope.value}
+        context = {
+            "operation" : f"{role_scope.value}_roles_query",
+            "user_id"   : user_id,
+            "role_scope": role_scope.value
+        }
 
         if tenant_id:
             context["tenant_id"] = tenant_id
@@ -299,12 +340,21 @@ class AuthorizationService:
         except Exception as e:
             raise ExceptionFactory.database_error(
                 operation = f"retrieve_{role_scope.value}_roles",
-                details   = {"user_id": str(user_id), "role_scope": role_scope.value, "error": str(e)},
+                details   = {
+                    "user_id"   : str(user_id),
+                    "role_scope": role_scope.value,
+                    "error"     : str(e)
+                },
             ) from e
 
         return roles
 
-    async def get_user_roles(self, user_id: UUID, tenant_id: Optional[UUID] = None) -> list[str]:
+
+    async def get_user_roles(
+        self,
+        user_id  : UUID,
+        tenant_id: Optional[UUID] = None
+    ) -> list[str]:
         """Return role names for user."""
         global_roles = await self._get_roles_from_db(user_id, RoleScope.GLOBAL)
 
