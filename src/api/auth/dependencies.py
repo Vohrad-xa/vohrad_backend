@@ -1,5 +1,6 @@
 """Authentication dependencies for FastAPI integration."""
 
+from domain.subdomain import SubdomainExtractor
 from exceptions import AuthenticationException, AuthorizationException, TokenMissingException
 from fastapi import Depends, Request
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
@@ -13,14 +14,13 @@ async def _validate_token_with_subdomain(token: str, request: Request) -> Authen
     """Extract subdomain and validate token - DRY utility."""
     auth_service = get_auth_jwt_service()
 
-    from domain.subdomain import SubdomainExtractor
     subdomain = SubdomainExtractor.from_request(request)
 
     return await auth_service.validate_access_token(token, subdomain)
 
 
 async def get_current_user(
-    request: Request,
+    request    : Request,
     credentials: Optional[HTTPAuthorizationCredentials] = Depends(security_scheme)
 ) -> AuthenticatedUser:
     """Get current authenticated user from JWT token with tenant-subdomain validation."""
@@ -31,14 +31,12 @@ async def get_current_user(
         return await _validate_token_with_subdomain(credentials.credentials, request)
     except Exception as e:
         # Let JWT exceptions bubble up naturally, convert others to AuthenticationException
-        if hasattr(e, 'error_code'):  # It's already a structured exception
+        if hasattr(e, "error_code"):  # It's already a structured exception
             raise
         raise AuthenticationException("Authentication failed") from e
 
 
-def get_current_admin(
-    current_user: AuthenticatedUser = Depends(get_current_user)
-) -> AuthenticatedUser:
+def get_current_admin(current_user: AuthenticatedUser = Depends(get_current_user)) -> AuthenticatedUser:
     """Get current authenticated admin user."""
     if not current_user.is_admin():
         raise AuthorizationException("admin", "access")
@@ -46,9 +44,7 @@ def get_current_admin(
     return current_user
 
 
-def get_current_tenant_user(
-    current_user: AuthenticatedUser = Depends(get_current_user)
-) -> AuthenticatedUser:
+def get_current_tenant_user(current_user: AuthenticatedUser = Depends(get_current_user)) -> AuthenticatedUser:
     """Get current authenticated tenant user."""
     if not current_user.is_tenant_user():
         raise AuthorizationException("tenant", "access")
@@ -57,7 +53,7 @@ def get_current_tenant_user(
 
 
 async def get_optional_user(
-    request: Request,
+    request    : Request,
     credentials: Optional[HTTPAuthorizationCredentials] = Depends(security_scheme)
 ) -> Optional[AuthenticatedUser]:
     """Get authenticated user if present, None otherwise."""
@@ -71,7 +67,7 @@ async def get_optional_user(
 
 
 async def get_current_tenant_and_user(
-    current_user: AuthenticatedUser = Depends(get_current_user)
+    current_user: AuthenticatedUser = Depends(get_current_user),
 ) -> tuple[AuthenticatedUser, Any]:
     """Get current tenant and user objects with proper isolation."""
     if not current_user.tenant_id:

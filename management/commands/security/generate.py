@@ -1,4 +1,5 @@
 """Security key generation commands."""
+
 from commands import CLIEnvironment, CLIFileUtils, CLIStyler, MessageType
 from config.keys import KeyManager
 import os
@@ -10,7 +11,7 @@ styler = CLIStyler()
 
 def generate_secret(
     to_file: str = typer.Option(None, "--to-file", help="Write to specified file (e.g., .env.new)"),
-    show: bool = typer.Option(False, "--show", help="Display key in console (development only)")
+    show: bool = typer.Option(False, "--show", help="Display key in console (development only)"),
 ):
     """Generate a new cryptographically secure secret key."""
     new_key = KeyManager.generate_secret_key()
@@ -19,7 +20,7 @@ def generate_secret(
 
 def generate_encryption_key(
     to_file: str = typer.Option(None, "--to-file", help="Write to specified file (e.g., .env.new)"),
-    show: bool = typer.Option(False, "--show", help="Display key in console (development only)")
+    show: bool = typer.Option(False, "--show", help="Display key in console (development only)"),
 ):
     """Generate a new base64-encoded encryption key."""
     new_key = KeyManager.generate_encryption_key()
@@ -28,7 +29,7 @@ def generate_encryption_key(
 
 def generate_jwt_keys(
     to_dir: str = typer.Option("keys", "--to-dir", help="Directory to save keys (default: keys/)"),
-    show: bool = typer.Option(False, "--show", help="Display keys in console (development only)")
+    show: bool = typer.Option(False, "--show", help="Display keys in console (development only)"),
 ):
     """Generate RSA key pair for JWT signing with production-safe output."""
     env = CLIEnvironment.get_environment()
@@ -49,15 +50,12 @@ def generate_jwt_keys(
 
     # Set secure file permissions
     os.chmod(private_key_path, 0o600)  # Private key: owner-only
-    os.chmod(public_key_path, 0o644)   # Public key: readable
+    os.chmod(public_key_path, 0o644)  # Public key: readable
 
     styler.print_clean_message("RSA key pair generated successfully", MessageType.SUCCESS)
 
     # Display key file information using clean table
-    key_info = {
-        "Private Key": f"{private_key_path} (permissions: 600)",
-        "Public Key": f"{public_key_path} (permissions: 644)"
-    }
+    key_info = {"Private Key": f"{private_key_path} (permissions: 600)", "Public Key": f"{public_key_path} (permissions: 644)"}
     styler.print_clean_table(key_info, "Generated Key Files")
 
     # Environment-specific display behavior

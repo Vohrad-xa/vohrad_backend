@@ -1,3 +1,5 @@
+"""Permission model."""
+
 from constants import ValidationConstraints
 from database import Base
 import sqlalchemy as sa
@@ -8,7 +10,8 @@ from uuid import uuid4
 
 class Permission(Base):
     """Reusable permission model for both shared and tenant schemas"""
-    __tablename__  = "permissions"
+
+    __tablename__ = "permissions"
     __table_args__ = (
         sa.UniqueConstraint("role_id", "resource", "action"),
         sa.Index("idx_permissions_role_id", "role_id"),
@@ -21,13 +24,6 @@ class Permission(Base):
     role_id    = sa.Column(sa.UUID, sa.ForeignKey("roles.id", ondelete="CASCADE"), nullable=False)
     resource   = sa.Column(sa.String(ValidationConstraints.MAX_RESOURCE_LENGTH), nullable=False)
     action     = sa.Column(sa.String(ValidationConstraints.MAX_ACTION_LENGTH), nullable=False)
-    etag       = sa.Column(
-        sa.String(50),
-        nullable=False,
-        default=lambda: str(uuid4())[:8],
-        server_default=sa.text("'AA=='")
-    )
+    etag       = sa.Column(sa.String(50), nullable=False, default=lambda: str(uuid4())[:8], server_default=sa.text("'AA=='"))
     created_at = sa.Column(sa.DateTime(timezone=True), nullable=False, server_default=func.now())
-
-    # ORM Relationship
-    role = relationship("Role", back_populates="permissions", lazy="selectin")
+    role       = relationship("Role", back_populates="permissions", lazy="selectin")

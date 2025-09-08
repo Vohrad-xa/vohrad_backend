@@ -1,4 +1,5 @@
 """User command module."""
+
 from .create_with_role import create_user_with_role
 import typer
 

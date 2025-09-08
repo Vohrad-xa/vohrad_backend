@@ -13,38 +13,33 @@ from uuid import uuid4
 def get_database_url():
     """Get database URL using the system's settings."""
     settings = get_settings()
-    return (
-        f"postgresql+asyncpg://"
-        f"{settings.DB_USER}:{settings.DB_PASS}@"
-        f"{settings.DB_HOST}:{settings.DB_PORT}/"
-        f"{settings.DB_NAME}"
-    )
+    return f"postgresql+asyncpg://{settings.DB_USER}:{settings.DB_PASS}@{settings.DB_HOST}:{settings.DB_PORT}/{settings.DB_NAME}"
 
 
 TENANT_ROLES = [
     {
-        "name": "manager",
-        "description": "Tenant manager with delegated administration",
-        "role_type": RoleType.PREDEFINED.name,
-        "role_scope": RoleScope.TENANT.name,
+        "name"               : "manager",
+        "description"        : "Tenant manager with delegated administration",
+        "role_type"          : RoleType.PREDEFINED.name,
+        "role_scope"         : RoleScope.TENANT.name,
         "permissions_mutable": False,
-        "permissions": [
+        "permissions"        : [
             ("role", "manage"),
             ("permission", "manage"),
             ("user", "create"),
             ("user", "read"),
             ("user", "update"),
-        ]
+        ],
     },
     {
-        "name": "employee",
-        "description": "Employee (basic tenant user)",
-        "role_type": RoleType.PREDEFINED.name,
-        "role_scope": RoleScope.TENANT.name,
+        "name"               : "employee",
+        "description"        : "Employee (basic tenant user)",
+        "role_type"          : RoleType.PREDEFINED.name,
+        "role_scope"         : RoleScope.TENANT.name,
         "permissions_mutable": True,
-        "managed_by": "manager",
-        "permissions": []
-    }
+        "managed_by"         : "manager",
+        "permissions"        : [],
+    },
 ]
 
 
@@ -82,8 +77,7 @@ async def create_tenant_roles_for_schema(schema_name: str):
                 quoted_schema = session.bind.dialect.identifier_preparer.quote_identifier(schema_name)
                 # nosec B608
                 result = await session.execute(
-                    sa.text(f"SELECT COUNT(*) FROM {quoted_schema}.roles WHERE name = :name"),
-                    {"name": role_config["name"]}
+                    sa.text(f"SELECT COUNT(*) FROM {quoted_schema}.roles WHERE name = :name"), {"name": role_config["name"]}
                 )
                 exists = result.scalar() > 0
 
@@ -103,20 +97,20 @@ async def create_tenant_roles_for_schema(schema_name: str):
                                :managed_by, :is_active, :etag, :created_at, :updated_at)
                     """),
                     {
-                        "id": role_id,
-                        "name": role_config["name"],
-                        "description": role_config["description"],
-                        "role_type": role_config["role_type"],
-                        "role_scope": role_config["role_scope"],
-                        "is_mutable": False,
+                        "id"                 : role_id,
+                        "name"               : role_config["name"],
+                        "description"        : role_config["description"],
+                        "role_type"          : role_config["role_type"],
+                        "role_scope"         : role_config["role_scope"],
+                        "is_mutable"         : False,
                         "permissions_mutable": role_config.get("permissions_mutable", False),
-                        "is_deletable": False,
-                        "managed_by": role_config.get("managed_by"),
-                        "is_active": True,
-                        "etag": "AA==",
-                        "created_at": datetime.now(),
-                        "updated_at": datetime.now()
-                    }
+                        "is_deletable"       : False,
+                        "managed_by"         : role_config.get("managed_by"),
+                        "is_active"          : True,
+                        "etag"               : "AA==",
+                        "created_at"         : datetime.now(),
+                        "updated_at"         : datetime.now(),
+                    },
                 )
 
                 for resource, action in role_config["permissions"]:
@@ -127,12 +121,12 @@ async def create_tenant_roles_for_schema(schema_name: str):
                             VALUES (:id, :role_id, :resource, :action, :created_at)
                         """),
                         {
-                            "id": str(uuid4()),
-                            "role_id": role_id,
-                            "resource": resource,
-                            "action": action,
-                            "created_at": datetime.now()
-                        }
+                            "id"        : str(uuid4()),
+                            "role_id"   : role_id,
+                            "resource"  : resource,
+                            "action"    : action,
+                            "created_at": datetime.now(),
+                        },
                     )
 
                 created_count += 1

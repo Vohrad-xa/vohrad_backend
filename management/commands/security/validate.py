@@ -24,7 +24,7 @@ def validate_keys():
         "secret_key": f"{secret_configured} {secret_strength}",
         "encryption_key": enc_configured,
         "jwt_algorithm": status["jwt_algorithm"],
-        "environment": f"{status['environment']} ({env_style} mode)"
+        "environment": f"{status['environment']} ({env_style} mode)",
     }
 
     styler.print_clean_table(table_data, "Key Configuration Status")

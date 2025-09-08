@@ -1,4 +1,5 @@
 """Security command module."""
+
 from .generate import generate_encryption_key, generate_jwt_keys, generate_secret
 from .generate_token import app as token_app
 from .revoke_tokens import app as revoke_app

@@ -1,3 +1,5 @@
+"""Application settings."""
+
 from observability.logger import get_logger
 import os
 from pydantic import Field, field_validator

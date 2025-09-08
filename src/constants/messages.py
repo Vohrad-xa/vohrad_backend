@@ -9,13 +9,9 @@ class ValidationMessages:
     """Standardized validation error messages."""
 
     # Password messages
-    PASSWORD_TOO_SHORT: Final[str] = (
-        f"Password must be at least {ValidationConstraints.MIN_PASSWORD_LENGTH} characters long"
-    )
-    PASSWORD_TOO_LONG: Final[str] = (
-        f"Password must be no more than {ValidationConstraints.MAX_PASSWORD_LENGTH} characters long"
-    )
-    PASSWORD_REQUIRED: Final[str] = "Password is required"
+    PASSWORD_TOO_SHORT: Final[str] = f"Password must be at least {ValidationConstraints.MIN_PASSWORD_LENGTH} characters long"
+    PASSWORD_TOO_LONG : Final[str] = f"Password must be no more than {ValidationConstraints.MAX_PASSWORD_LENGTH} characters long"
+    PASSWORD_REQUIRED : Final[str] = "Password is required"
 
     # Name messages
     NAME_TOO_SHORT: Final[str] = f"Name must be at least {ValidationConstraints.MIN_NAME_LENGTH} character long"
@@ -32,8 +28,8 @@ class ValidationMessages:
 
     # Role messages
     ROLE_NAME_REQUIRED: Final[str] = "Role name cannot be empty"
-    ROLE_TOO_SHORT   : Final[str] = f"Role name must be at least {ValidationConstraints.MIN_ROLE_LENGTH} characters"
-    ROLE_TOO_LONG    : Final[str] = f"Role name cannot exceed {ValidationConstraints.MAX_ROLE_LENGTH} characters"
+    ROLE_TOO_SHORT    : Final[str] = f"Role name must be at least {ValidationConstraints.MIN_ROLE_LENGTH} characters"
+    ROLE_TOO_LONG     : Final[str] = f"Role name cannot exceed {ValidationConstraints.MAX_ROLE_LENGTH} characters"
 
     # Permission messages
     RESOURCE_REQUIRED: Final[str] = "Resource cannot be empty"
@@ -44,16 +40,12 @@ class ValidationMessages:
     PASSWORD_MISSING_SPECIAL  : Final[str] = "Password must contain at least one special character"
 
     # Tenant messages
-    SUBDOMAIN_INVALID  : Final[str] = "Subdomain can only contain letters, numbers, and hyphens"
-    SUBDOMAIN_TOO_SHORT: Final[str] = (
-        f"Subdomain must be at least {TenantDefaults.MIN_SUBDOMAIN_LENGTH} characters long"
-    )
-    SUBDOMAIN_TOO_LONG: Final[str] = (
-        f"Subdomain must be no more than {TenantDefaults.MAX_SUBDOMAIN_LENGTH} characters long"
-    )
-    TENANT_NAME_REQUIRED    : Final[str] = "Tenant name is required"
-    SUBDOMAIN_REQUIRED      : Final[str] = "sub_domain cannot be empty"
-    TENANT_SCHEMA_REQUIRED  : Final[str] = "tenant_schema_name cannot be empty"
+    SUBDOMAIN_INVALID     : Final[str] = "Subdomain can only contain letters, numbers, and hyphens"
+    SUBDOMAIN_TOO_SHORT   : Final[str] = f"Subdomain must be at least {TenantDefaults.MIN_SUBDOMAIN_LENGTH} characters long"
+    SUBDOMAIN_TOO_LONG    : Final[str] = f"Subdomain must be no more than {TenantDefaults.MAX_SUBDOMAIN_LENGTH} characters long"
+    TENANT_NAME_REQUIRED  : Final[str] = "Tenant name is required"
+    SUBDOMAIN_REQUIRED    : Final[str] = "sub_domain cannot be empty"
+    TENANT_SCHEMA_REQUIRED: Final[str] = "tenant_schema_name cannot be empty"
 
 
 class HTTPStatusMessages:

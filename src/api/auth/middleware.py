@@ -11,26 +11,20 @@ from typing import List, Optional, Set
 
 class AuthMiddleware(BaseHTTPMiddleware):
     """Authentication middleware following enterprise security patterns."""
+
     def __init__(
         self,
         app,
-    excluded_paths   : Optional[Set[str]] = None,
-    excluded_patterns: Optional[List[str]] = None,
-    auto_error       : bool = False
+        excluded_paths   : Optional[Set[str]] = None,
+        excluded_patterns: Optional[List[str]] = None,
+        auto_error       : bool = False,
     ):
         super().__init__(app)
         self.auth_service = get_auth_jwt_service()
 
         # Default excluded paths
         if excluded_paths is None:
-            self.excluded_paths = {
-                "/",
-                "/health",
-                "/docs",
-                "/redoc",
-                "/openapi.json",
-                "/favicon.ico"
-            }
+            self.excluded_paths = {"/", "/health", "/docs", "/redoc", "/openapi.json", "/favicon.ico"}
         else:
             self.excluded_paths = excluded_paths
 
@@ -42,7 +36,7 @@ class AuthMiddleware(BaseHTTPMiddleware):
                 r"^/v1/auth/status$",
                 r"^/static/.*",
                 r"^/assets/.*",
-                r"^/public/.*"
+                r"^/public/.*",
             ]
         else:
             default_patterns = excluded_patterns
@@ -82,15 +76,15 @@ class AuthMiddleware(BaseHTTPMiddleware):
             status_code=401,
             content={
                 "error": {
-                    "code"   : getattr(exception, 'error_code', 'AUTH_ERROR'),
+                    "code"   : getattr(exception, "error_code", "AUTH_ERROR"),
                     "message": str(exception),
-                    "type"   : "authentication_error"
+                    "type"   : "authentication_error",
                 }
             },
             headers={
-                "WWW-Authenticate"      : "Bearer",
+                "WWW-Authenticate": "Bearer",
                 "X-Content-Type-Options": "nosniff"
-            }
+            },
         )
 
     async def dispatch(self, request: Request, call_next) -> Response:
@@ -114,13 +108,13 @@ class AuthMiddleware(BaseHTTPMiddleware):
                 authenticated_user = await self.auth_service.validate_access_token(token)
 
                 # Set request state for downstream usage
-                request.state.authenticated      = True
+                request.state.authenticated = True
                 request.state.authenticated_user = authenticated_user
-                request.state.auth_context       = {
-                    "user_id"    : str(authenticated_user.user_id),
-                    "email"      : authenticated_user.email,
-                    "tenant_id"  : str(authenticated_user.tenant_id) if authenticated_user.tenant_id else None,
-                    "user_type"  : authenticated_user.user_type
+                request.state.auth_context = {
+                    "user_id"  : str(authenticated_user.user_id),
+                    "email"    : authenticated_user.email,
+                    "tenant_id": str(authenticated_user.tenant_id) if authenticated_user.tenant_id else None,
+                    "user_type": authenticated_user.user_type,
                 }
 
             except (TokenInvalidException, TokenExpiredException) as e:
@@ -131,9 +125,7 @@ class AuthMiddleware(BaseHTTPMiddleware):
             except Exception:
                 # Log unexpected errors (add proper logging here)
                 if self.auto_error:
-                    return self._create_error_response(
-                        TokenInvalidException("Authentication service error")
-                    )
+                    return self._create_error_response(TokenInvalidException("Authentication service error"))
 
         response = await call_next(request)
 
@@ -150,7 +142,7 @@ class AuthMiddleware(BaseHTTPMiddleware):
             "Referrer-Policy"                  : "strict-origin-when-cross-origin",
             "X-Permitted-Cross-Domain-Policies": "none",
             "Cache-Control"                    : "no-store, no-cache, must-revalidate, max-age=0",
-            "Pragma"                           : "no-cache"
+            "Pragma"                           : "no-cache",
         }
 
         for header, value in security_headers.items():
@@ -160,6 +152,7 @@ class AuthMiddleware(BaseHTTPMiddleware):
 
 
 # Convenience factory functions for different configurations
+
 
 def create_strict_auth_middleware(app) -> AuthMiddleware:
     """Create strict auth middleware that requires authentication for most routes."""
@@ -179,15 +172,15 @@ def create_strict_auth_middleware(app) -> AuthMiddleware:
             r"^/v1/auth/status$",
             r"^/static/.*",
             r"^/public/.*"
-        ]
+        ],
     )
 
 
 def create_permissive_auth_middleware(app) -> AuthMiddleware:
     """Create permissive auth middleware that injects context when available."""
     return AuthMiddleware(
-        app               = app,
-        auto_error        = False,   # Don't automatically error on missing/invalid tokens
-        excluded_paths    = set(),   # Process all paths for context injection
-        excluded_patterns = []       # No excluded patterns
+        app=app,
+        auto_error=False,          # Don't automatically error on missing/invalid tokens
+        excluded_paths    = set(),  # Process all paths for context injection
+        excluded_patterns = [],    # No excluded patterns
     )

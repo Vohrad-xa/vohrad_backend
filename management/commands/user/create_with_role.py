@@ -43,9 +43,7 @@ def validate_password_input() -> str:
 async def _get_available_tenants():
     """Fetch and return available active tenants."""
     async with with_default_db() as db:
-        result = await db.execute(
-            select(Tenant).where(Tenant.status == "active").order_by(Tenant.sub_domain)
-        )
+        result = await db.execute(select(Tenant).where(Tenant.status == "active").order_by(Tenant.sub_domain))
         return result.scalars().all()
 
 
@@ -63,27 +61,24 @@ async def _create_user_with_role_async():
     user_type_choices = [
         inquirer.List(
             "user_type",
-            message = "Select user type",
-            choices = [
-                ("System Administrator (Global Access)", "1"),
-                ("Tenant User (Organization Access)", "2")
-            ],
-            default="2"
+            message="Select user type",
+            choices=[("System Administrator (Global Access)", "1"), ("Tenant User (Organization Access)", "2")],
+            default="2",
         )
     ]
-    answers   = inquirer.prompt(user_type_choices)
+    answers = inquirer.prompt(user_type_choices)
     user_type = answers["user_type"]
-    is_admin  = user_type == "1"
+    is_admin = user_type == "1"
 
     styler.print_clean_message("Please provide the following user details:", "INFO")
     styler.console.print("  All fields marked with * are required")
     styler.console.print("  Password will be hidden during input")
 
-    email      = typer.prompt("Email address *", type=str)
-    password   = validate_password_input()
+    email = typer.prompt("Email address *", type=str)
+    password = validate_password_input()
     first_name = typer.prompt("First name *", type=str)
-    last_name  = typer.prompt("Last name *", type=str)
-    phone      = typer.prompt("Phone number (optional)", default="", show_default=False)
+    last_name = typer.prompt("Last name *", type=str)
+    phone = typer.prompt("Phone number (optional)", default="", show_default=False)
 
     if is_admin:
         styler.print_clean_message("Creating administrator...", "STEP")
@@ -93,8 +88,7 @@ async def _create_user_with_role_async():
         available_tenants = await _get_available_tenants()
         if not available_tenants:
             styler.print_clean_message(
-                "No active tenants found. Please create a tenant first using the tenant management commands.",
-                "ERROR"
+                "No active tenants found. Please create a tenant first using the tenant management commands.", "ERROR"
             )
             return
 
@@ -109,24 +103,18 @@ async def _create_user_with_role_async():
             display_text = " ".join(display_parts)
             tenant_choices.append((display_text, tenant))
 
-        tenant_question = [
-            inquirer.List(
-                "tenant",
-                message="Select target tenant",
-                choices=tenant_choices
-            )
-        ]
+        tenant_question = [inquirer.List("tenant", message="Select target tenant", choices=tenant_choices)]
 
         tenant_answers = inquirer.prompt(tenant_question)
         selected_tenant = tenant_answers["tenant"]
         styler.print_clean_message("Creating user...", "STEP")
         await _create_user_with_role(
-            email      = email,
-            password   = password,
-            first_name = first_name,
-            last_name  = last_name,
-            tenant_id  = selected_tenant.tenant_id,
-            phone      = phone if phone else None,
+            email=email,
+            password=password,
+            first_name=first_name,
+            last_name=last_name,
+            tenant_id=selected_tenant.tenant_id,
+            phone=phone if phone else None,
         )
 
 
@@ -135,9 +123,7 @@ def create_user_with_role():
     asyncio.run(_create_user_with_role_async())
 
 
-async def _create_admin_with_role(
-    email: str, password: str, first_name: str, last_name: str, phone: Optional[str] = None
-):
+async def _create_admin_with_role(email: str, password: str, first_name: str, last_name: str, phone: Optional[str] = None):
     """Create admin user and assign global role."""
     async with with_default_db() as db:
         try:
@@ -145,26 +131,19 @@ async def _create_admin_with_role(
             existing = await db.execute(select(Admin).where(Admin.email == email))
             if existing.scalar_one_or_none():
                 styler.print_clean_message(
-                    f"An administrator with email '{email}' already exists. Please use a different email address.",
-                    "ERROR"
+                    f"An administrator with email '{email}' already exists. Please use a different email address.", "ERROR"
                 )
                 return
 
             # Show available global roles (restricted to system roles)
-            roles_result = await db.execute(
-                select(Role).where(
-                    Role.role_scope == RoleScope.GLOBAL,
-                    Role.is_active
-                )
-            )
+            roles_result = await db.execute(select(Role).where(Role.role_scope == RoleScope.GLOBAL, Role.is_active))
             # Only allow core system global roles
             global_roles_all = roles_result.scalars().all()
             global_roles = [r for r in global_roles_all if r.name in ("super_admin", "admin")]
 
             if not global_roles:
                 styler.print_clean_message(
-                    "No global roles found. Please create global roles first using the role management commands.",
-                    "ERROR"
+                    "No global roles found. Please create global roles first using the role management commands.", "ERROR"
                 )
                 return
 
@@ -174,31 +153,25 @@ async def _create_admin_with_role(
                 display_text = f"{role.name} - {desc}"
                 role_choices.append((display_text, role))
 
-            role_question = [
-                inquirer.List(
-                    "role",
-                    message="Choose role for this administrator",
-                    choices=role_choices
-                )
-            ]
+            role_question = [inquirer.List("role", message="Choose role for this administrator", choices=role_choices)]
 
-            role_answers  = inquirer.prompt(role_question)
+            role_answers = inquirer.prompt(role_question)
             selected_role = role_answers["role"]
 
             selected_role_name = selected_role.name
-            selected_role_id   = selected_role.id
+            selected_role_id = selected_role.id
 
             hashed_password = bcrypt.hashpw(password.encode("utf-8"), bcrypt.gensalt()).decode("utf-8")
             admin_id = uuid4()
             admin = Admin(
-                id           = admin_id,
-                email        = email,
-                password     = hashed_password,
-                first_name   = first_name,
-                last_name    = last_name,
-                role         = selected_role_name,
-                phone_number = phone,
-                is_active    = True,
+                id=admin_id,
+                email=email,
+                password=hashed_password,
+                first_name=first_name,
+                last_name=last_name,
+                role=selected_role_name,
+                phone_number=phone,
+                is_active=True,
             )
 
             db.add(admin)
@@ -218,7 +191,7 @@ async def _create_admin_with_role(
                 "Full Name": f"{first_name} {last_name}",
                 "Role": selected_role_name,
                 "User ID": str(admin_id),
-                "Status": "Active"
+                "Status": "Active",
             }
             styler.print_clean_table(table_data, "Administrator Details")
 
@@ -229,12 +202,7 @@ async def _create_admin_with_role(
 
 
 async def _create_user_with_role(
-    email     : str,
-    password  : str,
-    first_name: str,
-    last_name : str,
-    tenant_id : UUID,
-    phone     : Optional[str] = None
+    email: str, password: str, first_name: str, last_name: str, tenant_id: UUID, phone: Optional[str] = None
 ):
     """Create regular user and assign tenant role."""
     try:
@@ -245,25 +213,18 @@ async def _create_user_with_role(
                 styler.print_clean_message(f"Tenant '{tenant_id}' not found", "ERROR")
                 return
 
-            tenant_schema    = tenant.tenant_schema_name
+            tenant_schema = tenant.tenant_schema_name
             tenant_subdomain = tenant.sub_domain
 
         async with with_tenant_db(tenant_schema) as tenant_db:
             existing = await tenant_db.execute(select(User).where(User.email == email))
             if existing.scalar_one_or_none():
                 styler.print_clean_message(
-                    f"A user with email '{email}' already exists in '{tenant_subdomain}'. "
-                    f"Use a different email address.",
-                    "ERROR"
+                    f"A user with email '{email}' already exists in '{tenant_subdomain}'. Use a different email address.", "ERROR"
                 )
                 return
 
-            roles_result = await tenant_db.execute(
-                select(Role).where(
-                    Role.role_scope == RoleScope.TENANT,
-                    Role.is_active
-                )
-            )
+            roles_result = await tenant_db.execute(select(Role).where(Role.role_scope == RoleScope.TENANT, Role.is_active))
             tenant_roles_all = roles_result.scalars().all()
 
             # Safety: forbid global admin role names in tenant context
@@ -272,8 +233,7 @@ async def _create_user_with_role(
 
             if not tenant_roles:
                 styler.print_clean_message(
-                    f"No tenant roles found for '{tenant_subdomain}'. Please create tenant roles first.",
-                    "ERROR"
+                    f"No tenant roles found for '{tenant_subdomain}'. Please create tenant roles first.", "ERROR"
                 )
                 return
 
@@ -283,31 +243,25 @@ async def _create_user_with_role(
                 display_text = f"{role.name} - {desc}"
                 role_choices.append((display_text, role))
 
-            role_question = [
-                inquirer.List(
-                    "role",
-                    message = f"Select role for user in '{tenant_subdomain}'",
-                    choices = role_choices
-                )
-            ]
+            role_question = [inquirer.List("role", message=f"Select role for user in '{tenant_subdomain}'", choices=role_choices)]
 
-            role_answers  = inquirer.prompt(role_question)
+            role_answers = inquirer.prompt(role_question)
             selected_role = role_answers["role"]
 
-            selected_role_id   = selected_role.id
+            selected_role_id = selected_role.id
             selected_role_name = selected_role.name
 
             hashed_password = bcrypt.hashpw(password.encode("utf-8"), bcrypt.gensalt()).decode("utf-8")
             user_id = uuid4()
             user = User(
-                id           = user_id,
-                tenant_id    = tenant_id,          # Associate user with tenant
-                email        = email,
-                password     = hashed_password,
-                first_name   = first_name,
-                last_name    = last_name,
-                role         = selected_role_name,
-                phone_number = phone,
+                id=user_id,
+                tenant_id=tenant_id,  # Associate user with tenant
+                email=email,
+                password=hashed_password,
+                first_name=first_name,
+                last_name=last_name,
+                role=selected_role_name,
+                phone_number=phone,
             )
 
             tenant_db.add(user)
@@ -329,7 +283,7 @@ async def _create_user_with_role(
                 "Tenant ID": str(tenant_id),
                 "Role": selected_role_name,
                 "User ID": str(user_id),
-                "Status": "Active"
+                "Status": "Active",
             }
             styler.print_clean_table(table_data, "User Details")
 

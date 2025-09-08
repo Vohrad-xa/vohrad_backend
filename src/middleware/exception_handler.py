@@ -45,7 +45,7 @@ class EnterpriseExceptionHandler:
         """Create standardized error response structure."""
         return {
             "success": False,
-            "error"  : {
+            "error": {
                 "code"          : error_code,
                 "message"       : message,
                 "type"          : exception_type,
@@ -73,7 +73,7 @@ class EnterpriseExceptionHandler:
     @staticmethod
     async def base_app_exception_handler(request: Request, exc: BaseAppException) -> JSONResponse:
         """Handle application exceptions with structured metadata."""
-        correlation_id   = EnterpriseExceptionHandler._generate_correlation_id(exc)
+        correlation_id = EnterpriseExceptionHandler._generate_correlation_id(exc)
         request_metadata = EnterpriseExceptionHandler._extract_request_metadata(request)
 
         error_response = EnterpriseExceptionHandler._create_error_response(
@@ -110,8 +110,8 @@ class EnterpriseExceptionHandler:
     @staticmethod
     async def validation_exception_handler(request: Request, exc: RequestValidationError) -> JSONResponse:
         """Handle FastAPI validation errors."""
-        correlation_id    = str(uuid4())
-        request_metadata  = EnterpriseExceptionHandler._extract_request_metadata(request)
+        correlation_id = str(uuid4())
+        request_metadata = EnterpriseExceptionHandler._extract_request_metadata(request)
         validation_errors = EnterpriseExceptionHandler._format_validation_errors(exc.errors())
 
         error_response = EnterpriseExceptionHandler._create_error_response(
@@ -166,7 +166,7 @@ class EnterpriseExceptionHandler:
     @staticmethod
     async def generic_exception_handler(request: Request, exc: Exception) -> JSONResponse:
         """Handle unexpected exceptions."""
-        correlation_id   = str(uuid4())
+        correlation_id = str(uuid4())
         request_metadata = EnterpriseExceptionHandler._extract_request_metadata(request)
 
         error_response = EnterpriseExceptionHandler._create_error_response(
@@ -189,7 +189,7 @@ class EnterpriseExceptionHandler:
                 "client_ip"        : request.client.host if request.client else None,
                 "user_agent"       : request.headers.get("user-agent"),
             },
-            exc_info = True,
+            exc_info=True,
         )
 
         return JSONResponse(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, content=error_response)

@@ -10,11 +10,11 @@ class InfrastructureException(BaseAppException):
 
     def __init__(
         self,
-    message    : str,
-    error_code : str,
-    status_code: int = status.HTTP_500_INTERNAL_SERVER_ERROR,
-    details    : Optional[Dict[str, Any]] = None,
-    )          :
+        message    : str,
+        error_code : str,
+        status_code: int = status.HTTP_500_INTERNAL_SERVER_ERROR,
+        details    : Optional[Dict[str, Any]] = None,
+    ):
         super().__init__(message, error_code, status_code, details)
 
 
@@ -27,9 +27,9 @@ class DatabaseException(InfrastructureException):
             error_details.update(details)
 
         super().__init__(
-            message     = f"Database error during {operation}: {message}",
-            error_code  = "DATABASE_ERROR",
-            details     = error_details,
+            message    = f"Database error during {operation}: {message}",
+            error_code = "DATABASE_ERROR",
+            details    = error_details,
         )
 
 
@@ -77,9 +77,9 @@ class FileSystemException(InfrastructureException):
 
     def __init__(self, operation: str, path: str, details: Optional[Dict[str, Any]] = None):
         super().__init__(
-            message    = f"File system error during {operation} at {path}",
-            error_code = "FILESYSTEM_ERROR",
-            details    = {"operation": operation, "path": path, **(details or {})},
+            message     = f"File system error during {operation} at {path}",
+            error_code  = "FILESYSTEM_ERROR",
+            details     = {"operation": operation, "path": path, **(details or {})},
         )
 
 

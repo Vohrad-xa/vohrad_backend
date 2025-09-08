@@ -1,3 +1,5 @@
+"""Role router."""
+
 from api.common.base_router import BaseRouterMixin
 from api.common.context_dependencies import get_tenant_context
 from api.permission.dependencies import RequireRoleManagement
@@ -5,7 +7,15 @@ from api.role.schema import RoleCreate, RoleResponse, RoleUpdate
 from api.role.service import role_service
 from fastapi import APIRouter, Depends, Query, status
 from uuid import UUID
-from web import DeletedResponse, PaginationParams, ResponseFactory, pagination_params
+from web import (
+    CreatedResponse,
+    DeletedResponse,
+    PaginatedResponse,
+    PaginationParams,
+    ResponseFactory,
+    SuccessResponse,
+    pagination_params,
+)
 from web.headers import get_if_match_header
 
 routes = APIRouter(
@@ -14,11 +24,15 @@ routes = APIRouter(
 )
 
 
-@routes.post("/", status_code=status.HTTP_201_CREATED)
+@routes.post(
+    "/",
+    status_code    = status.HTTP_201_CREATED,
+    response_model = CreatedResponse[RoleResponse],
+)
 async def create_role(
     role_data: RoleCreate,
-    context      = Depends(get_tenant_context),
-    _authorized  = Depends(RequireRoleManagement)
+    context=Depends(get_tenant_context),
+    _authorized=Depends(RequireRoleManagement)
 ):
     """Create new role"""
     _, _tenant, db = context
@@ -26,11 +40,14 @@ async def create_role(
     return ResponseFactory.transform_and_respond(role, RoleResponse, "created")
 
 
-@routes.get("/search")
+@routes.get(
+    "/search",
+    response_model = SuccessResponse[PaginatedResponse[RoleResponse]],
+)
 async def search_roles(
-    q         : str              = Query(..., min_length=2, description="Search term"),
+    q: str = Query(..., min_length=2, description="Search term"),
     pagination: PaginationParams = Depends(pagination_params),
-               context           = Depends(get_tenant_context),
+    context = Depends(get_tenant_context),
 ):
     """Search roles by name or description"""
     _, _tenant, db = context
@@ -38,9 +55,9 @@ async def search_roles(
     return BaseRouterMixin.create_paginated_response(roles, total, pagination, RoleResponse)
 
 
-@routes.get("/active")
+@routes.get("/active", response_model = SuccessResponse[list[RoleResponse]])
 async def get_active_roles(
-    context=Depends(get_tenant_context),
+    context = Depends(get_tenant_context),
 ):
     """Get all active roles"""
     _, _tenant, db = context
@@ -50,10 +67,10 @@ async def get_active_roles(
     return ResponseFactory.success(data=role_responses)
 
 
-@routes.get("/name/{name}")
+@routes.get("/name/{name}", response_model = SuccessResponse[RoleResponse])
 async def get_role_by_name(
     name: str,
-    context=Depends(get_tenant_context),
+    context = Depends(get_tenant_context),
 ):
     """Get role by name"""
     _, _tenant, db = context
@@ -65,10 +82,10 @@ async def get_role_by_name(
     return ResponseFactory.transform_and_respond(role, RoleResponse)
 
 
-@routes.get("/{role_id}")
+@routes.get("/{role_id}", response_model = SuccessResponse[RoleResponse])
 async def get_role(
     role_id: UUID,
-    context=Depends(get_tenant_context),
+    context = Depends(get_tenant_context),
 ):
     """Get role by ID"""
     _, _tenant, db = context
@@ -76,10 +93,10 @@ async def get_role(
     return ResponseFactory.transform_and_respond(role, RoleResponse)
 
 
-@routes.get("/")
+@routes.get("/", response_model = SuccessResponse[PaginatedResponse[RoleResponse]])
 async def get_roles(
     pagination: PaginationParams = Depends(pagination_params),
-    context=Depends(get_tenant_context),
+    context = Depends(get_tenant_context),
 ):
     """Get paginated list of roles"""
     _, _tenant, db = context
@@ -87,7 +104,7 @@ async def get_roles(
     return BaseRouterMixin.create_paginated_response(roles, total, pagination, RoleResponse)
 
 
-@routes.put("/{role_id}")
+@routes.put("/{role_id}", response_model = SuccessResponse[RoleResponse])
 async def update_role(
     role_id  : UUID,
     role_data: RoleUpdate,
@@ -100,10 +117,10 @@ async def update_role(
     return ResponseFactory.transform_and_respond(role, RoleResponse)
 
 
-@routes.put("/{role_id}/activate")
+@routes.put("/{role_id}/activate", response_model = SuccessResponse[RoleResponse])
 async def activate_role(
     role_id: UUID,
-    context=Depends(get_tenant_context),
+    context = Depends(get_tenant_context),
 ):
     """Activate role"""
     _, _tenant, db = context
@@ -111,7 +128,7 @@ async def activate_role(
     return ResponseFactory.transform_and_respond(role, RoleResponse)
 
 
-@routes.put("/{role_id}/deactivate")
+@routes.put("/{role_id}/deactivate", response_model=SuccessResponse[RoleResponse])
 async def deactivate_role(
     role_id: UUID,
     context = Depends(get_tenant_context),
@@ -131,5 +148,5 @@ async def delete_role(
 ):
     """Remove role"""
     _, _tenant, db = context
-    await role_service.delete_role(db, role_id, etag=if_match)
+    await role_service.delete_role(db, role_id, etag = if_match)
     return DeletedResponse()

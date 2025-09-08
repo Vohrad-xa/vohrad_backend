@@ -25,26 +25,21 @@ def create_tenant():
     styler.console.print("Email: Contact email for the tenant (required)")
 
     schema_name = typer.prompt("\nSchema name *", type=str)
-    sub_domain  = typer.prompt("Subdomain *", type=str)
-    email       = typer.prompt("Email *", type=str)
+    sub_domain = typer.prompt("Subdomain *", type=str)
+    email = typer.prompt("Email *", type=str)
 
     styler.console.print("\nOptional information (press Enter to skip):")
     telephone = typer.prompt("Telephone", default="", show_default=False)
-    website   = typer.prompt("Website", default="", show_default=False)
-    industry  = typer.prompt("Industry", default="", show_default=False)
-    city      = typer.prompt("City", default="", show_default=False)
-    country   = typer.prompt("Country", default="", show_default=False)
+    website = typer.prompt("Website", default="", show_default=False)
+    industry = typer.prompt("Industry", default="", show_default=False)
+    city = typer.prompt("City", default="", show_default=False)
+    country = typer.prompt("Country", default="", show_default=False)
 
     styler.print_clean_message("Creating tenant and database schema...", MessageType.INFO)
 
     asyncio.run(_create_tenant(schema_name, sub_domain, email, telephone, website, industry, city, country))
 
-    table_data = {
-        "Schema Name": schema_name,
-        "Subdomain"  : sub_domain,
-        "Email"      : email,
-        "Status"     : "Active"
-    }
+    table_data = {"Schema Name": schema_name, "Subdomain": sub_domain, "Email": email, "Status": "Active"}
     if telephone:
         table_data["Telephone"] = telephone
     if website:
@@ -62,13 +57,13 @@ def create_tenant():
 
 async def _create_tenant(
     schema_name: str,
-    sub_domain : str,
-    email      : str,
-    telephone  : str | None = None,
-    website    : str | None = None,
-    industry   : str | None = None,
-    city       : str | None = None,
-    country    : str | None = None,
+    sub_domain: str,
+    email: str,
+    telephone: str | None = None,
+    website: str | None = None,
+    industry: str | None = None,
+    city: str | None = None,
+    country: str | None = None,
 ) -> None:
     """Create a new tenant in the shared schema tenants table and create the schema in the database.
 
@@ -91,7 +86,8 @@ async def _create_tenant(
                 styler.print_clean_message(
                     f"Database is not up-to-date. Current revision: {current_revision}, "
                     f"Head revision: {head_revision}. Please run migrations first.",
-                    MessageType.ERROR)
+                    MessageType.ERROR,
+                )
                 raise RuntimeError(
                     f"Database is not up-to-date. Current revision: {current_revision}, "
                     f"Head revision: {head_revision}. Please run migrations first."
@@ -100,15 +96,15 @@ async def _create_tenant(
         await connection.run_sync(check_migrations_sync)
 
         tenant = Tenant(
-            sub_domain         = sub_domain,
-            tenant_schema_name = schema_name,
-            email              = email,
-            status             = "active",
-            telephone          = telephone or None,
-            website            = website or None,
-            industry           = industry or None,
-            city               = city or None,
-            country            = country or None,
+            sub_domain=sub_domain,
+            tenant_schema_name=schema_name,
+            email=email,
+            status="active",
+            telephone=telephone or None,
+            website=website or None,
+            industry=industry or None,
+            city=city or None,
+            country=country or None,
         )
         db.add(tenant)
         await db.commit()
@@ -138,8 +134,6 @@ def get_tenant_specific_metadata():
         if table.schema != "shared":
             table.tometadata(
                 meta,
-                referred_schema_fn=lambda table, to_schema, constraint, referred_schema: (
-                    referred_schema or to_schema
-                ),
+                referred_schema_fn=lambda table, to_schema, constraint, referred_schema: (referred_schema or to_schema),
             )
     return meta

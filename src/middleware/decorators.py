@@ -1,6 +1,7 @@
 """Utility decorators for common patterns."""
 
 from database.sessions import get_default_db_session, get_tenant_db_session
+from exceptions import tenant_not_found, user_not_found
 from functools import wraps
 from typing import Awaitable, Callable, TypeVar
 
@@ -44,9 +45,6 @@ def handle_service_exceptions(func: Callable[..., Awaitable[T]]) -> Callable[...
 
             error_msg = str(e).lower()
             if "not found" in error_msg:
-
-                from exceptions import tenant_not_found, user_not_found
-
                 if "user" in func.__name__.lower():
                     raise user_not_found() from e
                 elif "tenant" in func.__name__.lower():

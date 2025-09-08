@@ -1,3 +1,5 @@
+"""FastAPI application setup (routers, middleware, handlers)."""
+
 from api.admin.router import routes as admin_routes
 from api.auth import router as auth_routes
 from api.auth.middleware import AuthMiddleware
@@ -29,7 +31,7 @@ async def lifespan(app: FastAPI):  # noqa: RUF029
 
 app = FastAPI(
     title       = "Vohrad API",
-    description = "Multi-tenant FastAPI application with enterprise logging",
+    description = "Inventory and Asset Management Backend API",
     version     = "1.0.0",
     lifespan    = lifespan,
 )
@@ -37,14 +39,14 @@ app = FastAPI(
 
 app.add_middleware(
     AuthMiddleware,
-    excluded_paths={
+    excluded_paths = {
         "/v1/system/health",
         "/v1/auth/login/user",
         "/v1/auth/login/admin",
         "/v1/auth/refresh",
         "/v1/auth/status"
     },
-    auto_error = True
+    auto_error     = True,
 )
 
 
@@ -54,10 +56,10 @@ app.add_exception_handler(RequestValidationError, EnterpriseExceptionHandler.val
 app.add_exception_handler(PydanticValidationError, EnterpriseExceptionHandler.pydantic_validation_exception_handler)
 app.add_exception_handler(Exception, EnterpriseExceptionHandler.generic_exception_handler)
 
-app.include_router(auth_routes, prefix = "/v1")
-app.include_router(admin_routes, prefix = "/v1")
-app.include_router(tenant_routes, prefix = "/v1")
-app.include_router(user_routes, prefix = "/v1")
-app.include_router(role_routes, prefix = "/v1")
-app.include_router(permission_routes, prefix = "/v1")
-app.include_router(system_routes, prefix = "/v1")
+app.include_router(auth_routes, prefix="/v1")
+app.include_router(admin_routes, prefix="/v1")
+app.include_router(tenant_routes, prefix="/v1")
+app.include_router(user_routes, prefix="/v1")
+app.include_router(role_routes, prefix="/v1")
+app.include_router(permission_routes, prefix="/v1")
+app.include_router(system_routes, prefix="/v1")

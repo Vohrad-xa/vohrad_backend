@@ -9,6 +9,7 @@ from uuid import UUID
 
 class PermissionCreate(BaseCreateSchema):
     """Schema for creating permission"""
+
     role_id : UUID
     resource: str
     action  : str
@@ -30,6 +31,7 @@ class PermissionCreate(BaseCreateSchema):
 
 class PermissionUpdate(BaseUpdateSchema):
     """Schema for updating permission"""
+
     role_id : Optional[UUID] = None
     resource: Optional[str]  = None
     action  : Optional[str]  = None
@@ -56,6 +58,7 @@ class PermissionUpdate(BaseUpdateSchema):
 
 class PermissionResponse(BaseResponseSchema):
     """Schema for permission response"""
+
     role_id : UUID
     resource: str
     action  : str

@@ -17,6 +17,7 @@ class ErrorDefinition:
 
 class ErrorRegistry:
     """Centralized registry of all application errors."""
+
     ENTITY_NOT_FOUND: Final[ErrorDefinition] = ErrorDefinition(
         code        = "ENTITY_NOT_FOUND",
         message     = "Resource not found",
@@ -104,11 +105,7 @@ class ErrorRegistry:
     @classmethod
     def get_all_errors(cls) -> Dict[str, ErrorDefinition]:
         """Get all registered errors."""
-        return {
-            name: getattr(cls, name)
-            for name in dir(cls)
-            if isinstance(getattr(cls, name), ErrorDefinition)
-        }
+        return {name: getattr(cls, name) for name in dir(cls) if isinstance(getattr(cls, name), ErrorDefinition)}
 
     @classmethod
     def get_by_code(cls, code: str) -> ErrorDefinition:

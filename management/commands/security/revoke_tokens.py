@@ -27,27 +27,23 @@ class TokenRevocationService:
         from sqlalchemy import select
 
         async with with_default_db() as db:
-            result = await db.execute(
-                select(Tenant).where(Tenant.tenant_id == tenant_id)
-            )
+            result = await db.execute(select(Tenant).where(Tenant.tenant_id == tenant_id))
             tenant = result.scalar_one_or_none()
 
             if not tenant:
                 return []
 
         async with with_tenant_db(tenant.tenant_schema_name) as tenant_db:
-            result = await tenant_db.execute(
-                select(User).order_by(User.email)
-            )
+            result = await tenant_db.execute(select(User).order_by(User.email))
             users = result.scalars().all()
 
             return [
                 {
-                    "id"         : user.id,
-                    "email"      : user.email,
-                    "name"       : f"{user.first_name or ''} {user.last_name or ''}".strip() or "N/A",
+                    "id": user.id,
+                    "email": user.email,
+                    "name": f"{user.first_name or ''} {user.last_name or ''}".strip() or "N/A",
                     "tenant_name": tenant.sub_domain,
-                    "tenant_id"  : tenant.tenant_id
+                    "tenant_id": tenant.tenant_id,
                 }
                 for user in users
             ]
@@ -59,18 +55,15 @@ class TokenRevocationService:
         from sqlalchemy import select
 
         async with with_default_db() as db:
-            result = await db.execute(
-                select(Tenant).where(Tenant.status == "active")
-                .order_by(Tenant.sub_domain)
-            )
+            result = await db.execute(select(Tenant).where(Tenant.status == "active").order_by(Tenant.sub_domain))
             tenants = result.scalars().all()
 
             return [
                 {
-                    "id"       : tenant.tenant_id,
-                    "name"     : tenant.sub_domain,
+                    "id": tenant.tenant_id,
+                    "name": tenant.sub_domain,
                     "subdomain": tenant.sub_domain,
-                    "schema"   : tenant.tenant_schema_name
+                    "schema": tenant.tenant_schema_name,
                 }
                 for tenant in tenants
             ]
@@ -93,17 +86,15 @@ class TokenRevocationService:
         # Update tokens_valid_after for all users in tenant
         async with with_tenant_db(tenant.tenant_schema_name) as tenant_db:
             now = datetime.now(timezone.utc)
-            result = await tenant_db.execute(
-                update(User).values(tokens_valid_after=now)
-            )
+            result = await tenant_db.execute(update(User).values(tokens_valid_after=now))
             affected_rows = result.rowcount
             await tenant_db.commit()
 
         return {
-            "tenant_found" : True,
-            "users_count"  : affected_rows,
+            "tenant_found": True,
+            "users_count": affected_rows,
             "revoked_count": affected_rows,
-            "tenant_name"  : tenant.sub_domain
+            "tenant_name": tenant.sub_domain,
         }
 
     async def revoke_all_tokens(self) -> dict:
@@ -114,14 +105,14 @@ class TokenRevocationService:
         from sqlalchemy import select
 
         revocation_service = get_jwt_revocation_service()
-        total_revoked      = 0
-        user_count         = 0
-        admin_count        = 0
+        total_revoked = 0
+        user_count = 0
+        admin_count = 0
 
         # Get all admin IDs and revoke their tokens
         async with with_default_db() as shared_db:
             admin_result = await shared_db.execute(select(Admin.id).where(Admin.is_active))
-            admin_ids    = admin_result.scalars().all()
+            admin_ids = admin_result.scalars().all()
 
         for admin_id in admin_ids:
             revoked = await revocation_service.revoke_user_tokens(admin_id, "system_wide_revocation")
@@ -139,9 +130,9 @@ class TokenRevocationService:
 
         return {
             "revoked_count": total_revoked,
-            "user_count"   : user_count,
-            "admin_count"  : admin_count,
-            "tenant_count" : len(tenants)
+            "user_count": user_count,
+            "admin_count": admin_count,
+            "tenant_count": len(tenants),
         }
 
     async def _display_tenants_table(self):
@@ -160,12 +151,7 @@ class TokenRevocationService:
         table.add_column("Schema", style="green")
 
         for tenant in tenants:
-            table.add_row(
-                str(tenant["id"]),
-                tenant["name"],
-                tenant["subdomain"],
-                tenant["schema"]
-            )
+            table.add_row(str(tenant["id"]), tenant["name"], tenant["subdomain"], tenant["schema"])
 
         styler.console.print(f"\n[bold blue]Found {len(tenants)} active tenants[/bold blue]")
         styler.console.print(table)
@@ -174,10 +160,8 @@ class TokenRevocationService:
 
 @app.command("tenant")
 def revoke_tenant_tokens(
-    tenant_id: str = typer.Argument(
-        None, help="Tenant ID to revoke tokens for (optional - will show selection if not provided)"
-    ),
-    force    : bool = typer.Option(False, "--force", "-f", help="Skip confirmation prompt")
+    tenant_id: str = typer.Argument(None, help="Tenant ID to revoke tokens for (optional - will show selection if not provided)"),
+    force: bool = typer.Option(False, "--force", "-f", help="Skip confirmation prompt"),
 ):
     """Revoke all JWT tokens for users in a specific tenant."""
 
@@ -194,20 +178,11 @@ def revoke_tenant_tokens(
 
             # Create choices for inquirer (display name -> tenant object)
             import inquirer
-            choices = [
-                f"{tenant['name']} ({tenant['subdomain']}) - {tenant['id']}"
-                for tenant in tenants
-            ]
+
+            choices = [f"{tenant['name']} ({tenant['subdomain']}) - {tenant['id']}" for tenant in tenants]
 
             styler.print_clean_header("Select Tenant for Token Revocation")
-            questions = [
-                inquirer.List(
-                    'tenant',
-                    message  = "Use arrow keys to select tenant",
-                    choices  = choices,
-                    carousel = True
-                )
-            ]
+            questions = [inquirer.List("tenant", message="Use arrow keys to select tenant", choices=choices, carousel=True)]
 
             answers = inquirer.prompt(questions)
             if not answers:
@@ -215,8 +190,8 @@ def revoke_tenant_tokens(
                 return
 
             # Extract tenant ID from selected choice
-            selected_choice = answers['tenant']
-            selected_tenant_id = selected_choice.split(' - ')[-1]
+            selected_choice = answers["tenant"]
+            selected_tenant_id = selected_choice.split(" - ")[-1]
             tenant_uuid = UUID(selected_tenant_id)
         else:
             try:
@@ -228,7 +203,6 @@ def revoke_tenant_tokens(
         styler.print_clean_header("Tenant Token Revocation")
 
         try:
-
             styler.print_clean_message("Loading tenant information...", MessageType.INFO)
             users = await service.get_tenant_users(tenant_uuid)
 
@@ -238,11 +212,7 @@ def revoke_tenant_tokens(
 
             tenant_name = users[0]["tenant_name"]
 
-            tenant_details = {
-                "Tenant ID"       : str(tenant_uuid),
-                "Tenant Subdomain": tenant_name,
-                "Users Found"     : str(len(users))
-            }
+            tenant_details = {"Tenant ID": str(tenant_uuid), "Tenant Subdomain": tenant_name, "Users Found": str(len(users))}
             styler.print_clean_table(tenant_details, "Tenant Information")
 
             if not force:
@@ -262,7 +232,7 @@ def revoke_tenant_tokens(
                 styler.print_clean_message(
                     f"Successfully revoked {result['revoked_count']} tokens for "
                     f"{result['users_count']} users in tenant '{result['tenant_name']}'",
-                    MessageType.SUCCESS
+                    MessageType.SUCCESS,
                 )
             else:
                 styler.print_clean_message("Tenant not found", MessageType.ERROR)
@@ -275,9 +245,7 @@ def revoke_tenant_tokens(
 
 
 @app.command("all")
-def revoke_all_tokens(
-    force: bool = typer.Option(False, "--force", "-f", help="Skip confirmation prompt")
-):
+def revoke_all_tokens(force: bool = typer.Option(False, "--force", "-f", help="Skip confirmation prompt")):
     """Revoke ALL JWT tokens across the entire system (all tenants and admins)."""
 
     async def _revoke_all():
@@ -303,17 +271,15 @@ def revoke_all_tokens(
                 total_users += len(users)
 
             system_overview = {
-                "Total Tenants" : str(len(tenants)),
-                "Total Users"   : str(total_users),
-                "Total Admins"  : str(len(admins)),
-                "Total Accounts": str(total_users + len(admins))
+                "Total Tenants": str(len(tenants)),
+                "Total Users": str(total_users),
+                "Total Admins": str(len(admins)),
+                "Total Accounts": str(total_users + len(admins)),
             }
             styler.print_clean_table(system_overview, "System Overview")
 
             if not force:
-                styler.console.print(
-                    "\n[bold red]DANGER:[/bold red] This will revoke ALL active JWT tokens system-wide!"
-                )
+                styler.console.print("\n[bold red]DANGER:[/bold red] This will revoke ALL active JWT tokens system-wide!")
                 styler.console.print(
                     f"[red]This affects {total_users + len(admins)} accounts across {len(tenants)} tenants[/red]"
                 )
@@ -323,10 +289,7 @@ def revoke_all_tokens(
                     styler.print_clean_message("System-wide token revocation cancelled", MessageType.WARNING)
                     return
 
-                if not Confirm.ask(
-                    "This action cannot be undone. Proceed with system-wide token revocation?",
-                    default=False
-                ):
+                if not Confirm.ask("This action cannot be undone. Proceed with system-wide token revocation?", default=False):
                     styler.print_clean_message("System-wide token revocation cancelled", MessageType.WARNING)
                     return
 
@@ -334,10 +297,10 @@ def revoke_all_tokens(
             result = await service.revoke_all_tokens()
 
             revocation_summary = {
-                "Tokens Revoked"   : str(result['revoked_count']),
-                "Users Affected"   : str(result['user_count']),
-                "Admins Affected"  : str(result['admin_count']),
-                "Tenants Processed": str(result['tenant_count'])
+                "Tokens Revoked": str(result["revoked_count"]),
+                "Users Affected": str(result["user_count"]),
+                "Admins Affected": str(result["admin_count"]),
+                "Tenants Processed": str(result["tenant_count"]),
             }
             styler.print_clean_table(revocation_summary, "Revocation Summary")
 

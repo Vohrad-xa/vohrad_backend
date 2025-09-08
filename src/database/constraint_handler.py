@@ -12,9 +12,9 @@ class ConstraintViolationHandler:
     def __init__(self):
         # Dynamic mappings
         self._constraint_entity_mapping = {
-            r".*email.*"      : "User",
-            r".*subdomain.*"  : "Tenant",
-            r".*name.*"       : lambda ctx  : self._determine_entity_from_context(ctx),
+            r".*email.*": "User",
+            r".*subdomain.*": "Tenant",
+            r".*name.*": lambda ctx: self._determine_entity_from_context(ctx),
             r".*permissions.*": "Permission",
         }
 
@@ -29,8 +29,8 @@ class ConstraintViolationHandler:
     def handle_violation(self, error: IntegrityError, operation_context: Dict[str, Any]) -> Exception:
         """Handle database constraint violations."""
         constraint_name = self._extract_constraint_name(error)
-        error_str       = str(error.orig) if error.orig else str(error)
-        error_lower     = error_str.lower()
+        error_str = str(error.orig) if error.orig else str(error)
+        error_lower = error_str.lower()
 
         if "foreign key constraint" in error_lower or "violates foreign key" in error_lower:
             return self._handle_foreign_key_violation(error_lower, operation_context)
@@ -125,7 +125,7 @@ class ConstraintViolationHandler:
         for field in field_priority:
             if context.get(field):
                 display_name = self._context_field_mapping.get(field, field)
-                value        = str(context.get(field))
+                value = str(context.get(field))
 
                 if field == "resource" and context.get("action"):
                     return "resource and action", f"{value}:{context.get('action')}"

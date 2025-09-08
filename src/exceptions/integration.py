@@ -9,11 +9,11 @@ class IntegrationException(BaseAppException):
     """Base class for external system integration exceptions."""
 
     def __init__(
-    self,
-    message    : str,
-    error_code : str,
-    status_code: int = status.HTTP_502_BAD_GATEWAY,
-    details    : Optional[Dict[str, Any]] = None,
+        self,
+        message    : str,
+        error_code : str,
+        status_code: int = status.HTTP_502_BAD_GATEWAY,
+        details    : Optional[Dict[str, Any]] = None,
     ):
         super().__init__(message, error_code, status_code, details)
 
@@ -93,10 +93,10 @@ class MessageQueueException(IntegrationException):
 
     def __init__(
         self,
-    queue_name: str,
-    operation : str,
-    message_id: Optional[str] = None,
-    details   : Optional[Dict[str, Any]] = None,
+        queue_name: str,
+        operation : str,
+        message_id: Optional[str] = None,
+        details   : Optional[Dict[str, Any]] = None,
     ):
         error_details = {"queue_name": queue_name, "operation": operation}
         if message_id:

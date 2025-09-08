@@ -8,16 +8,13 @@ from uuid import UUID
 class UserLoginRequest(BaseModel):
     """User login request schema with automatic tenant resolution."""
     email    : EmailStr
-    password : str = Field(..., min_length=1, description="User password")
-    tenant_id: Optional[UUID] = Field(
-        None,
-        description = "Optional tenant UUID - auto-resolved from subdomain if not provided"
-    )
+    password : str = Field(..., min_length=1, description = "User password")
+    tenant_id: Optional[UUID] = Field(None, description="Auto-resolved from subdomain if not provided")
 
 
 class AdminLoginRequest(BaseModel):
     """Global admin login request schema."""
-    email   : EmailStr
+    email: EmailStr
     password: str = Field(..., min_length=1, description="Admin password")
 
 

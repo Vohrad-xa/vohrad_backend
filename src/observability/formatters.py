@@ -11,6 +11,7 @@ import typing
 
 class ColoredConsoleFormatter(logging.Formatter):
     """Colored formatter for development console output with clear visual distinction."""
+
     COLORS: typing.ClassVar[dict[str, str]] = {
         "DEBUG"   : "\033[36m",  # Cyan - for debugging info
         "INFO"    : "\033[32m",  # Green - for normal operations
@@ -96,9 +97,7 @@ class DetailedFileFormatter(logging.Formatter):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.format_string = (
-            "[%(asctime)s] [%(name)s] %(levelname)-8s [%(filename)s:%(lineno)d] %(funcName)s() - %(message)s"
-        )
+        self.format_string = "[%(asctime)s] [%(name)s] %(levelname)-8s [%(filename)s:%(lineno)d] %(funcName)s() - %(message)s"
         self.date_format = "%Y-%m-%dT%H:%M:%S%z"
 
     def format(self, record: logging.LogRecord) -> str:

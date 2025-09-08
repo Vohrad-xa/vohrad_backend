@@ -8,6 +8,7 @@ from typing import Optional
 
 class JWTSettings(BaseSettings):
     """JWT-specific configuration settings."""
+
     # Token expiration settings
     ACCESS_TOKEN_EXPIRE_MINUTES: int = Field(default=30, description="Access token expiration in minutes")
     REFRESH_TOKEN_EXPIRE_DAYS  : int = Field(default=7, description="Refresh token expiration in days")
@@ -40,12 +41,14 @@ class JWTSettings(BaseSettings):
 
     class Config:
         """JWT-specific configuration settings."""
+
         env_prefix     = "JWT_"
         case_sensitive = True
 
 
 class JWTConfig:
     """JWT configuration manager providing centralized settings access."""
+
     def __init__(self):
         self._settings     = None
         self._app_settings = get_settings()
@@ -60,10 +63,7 @@ class JWTConfig:
     @property
     def access_token_expire_minutes(self) -> int:
         """Get access token expiration in minutes."""
-        return getattr(
-            self._app_settings,
-            'ACCESS_TOKEN_EXPIRE_MINUTES', None
-        ) or self.settings.ACCESS_TOKEN_EXPIRE_MINUTES
+        return getattr(self._app_settings, "ACCESS_TOKEN_EXPIRE_MINUTES", None) or self.settings.ACCESS_TOKEN_EXPIRE_MINUTES
 
     @property
     def refresh_token_expire_days(self) -> int:

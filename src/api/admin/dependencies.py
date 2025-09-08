@@ -12,35 +12,24 @@ from web import PaginationParams
 
 
 async def get_admin_context(
-    current_user: AuthenticatedUser = Depends(get_current_admin),
-    db: AsyncSession = Depends(get_admin_db_session)
+    current_user: AuthenticatedUser = Depends(get_current_admin), db: AsyncSession = Depends(get_admin_db_session)
 ) -> AdminContext:
     """Create admin context with authentication and tenant switching capability."""
-    tenant_id = getattr(db, '_tenant_id', None)
-    tenant_schema = getattr(db, '_tenant_schema', None)
+    tenant_id = getattr(db, "_tenant_id", None)
+    tenant_schema = getattr(db, "_tenant_schema", None)
 
     # Validate admin tenant permissions
     authorization_service = AuthorizationService()
-    has_tenant_permission = await authorization_service.user_has_permission(
-        current_user.user_id,
-        "tenant",
-        "*"
-    )
+    has_tenant_permission = await authorization_service.user_has_permission(current_user.user_id, "tenant", "*")
 
     if not has_tenant_permission:
         raise AuthorizationException("tenant", "access")
 
-    return AdminContext(
-        user=current_user,
-        db_session=db,
-        tenant_id=tenant_id,
-        tenant_schema=tenant_schema
-    )
+    return AdminContext(user=current_user, db_session=db, tenant_id=tenant_id, tenant_schema=tenant_schema)
 
 
 def get_admin_params(
-    pagination: PaginationParams = Depends(),
-    context: AdminContext = Depends(get_admin_context)
+    pagination: PaginationParams = Depends(), context: AdminContext = Depends(get_admin_context)
 ) -> tuple[PaginationParams, AdminContext]:
     """Get pagination and admin context in single dependency."""
     return pagination, context

@@ -11,8 +11,9 @@ from uuid import uuid4
 
 class JWTEngine:
     """Pure JWT operations with zero business logic coupling."""
+
     def __init__(self):
-        self.jwt_config  = get_jwt_config()
+        self.jwt_config = get_jwt_config()
         self.key_manager = get_key_manager()
 
     @property
@@ -47,18 +48,14 @@ class JWTEngine:
         # Add standard claims following RFC 7519
         standard_payload = {
             **payload,
-            "iss": self._issuer,         # Issuer
-            "aud": self._audience,       # Audience
+            "iss": self._issuer,  # Issuer
+            "aud": self._audience,  # Audience
             "iat": int(now.timestamp()),  # Issued at
             "nbf": int(now.timestamp()),  # Not before
-            "jti": str(uuid4()),         # JWT ID for tracking
+            "jti": str(uuid4()),  # JWT ID for tracking
         }
 
-        return jwt.encode(
-            standard_payload,
-            self._signing_key,
-            algorithm = self._algorithm
-        )
+        return jwt.encode(standard_payload, self._signing_key, algorithm=self._algorithm)
 
     def decode_token(self, token: str, verify_exp: bool = True) -> Dict[str, Any]:
         """Decode and validate JWT token."""
@@ -68,10 +65,10 @@ class JWTEngine:
             payload = jwt.decode(
                 token,
                 self._verify_key,
-                algorithms = [self._algorithm],
-                audience   = self._audience,
-                issuer     = self._issuer,
-                options    = options
+                algorithms=[self._algorithm],
+                audience=self._audience,
+                issuer=self._issuer,
+                options=options,
             )
 
             return payload
@@ -94,7 +91,7 @@ class JWTEngine:
         try:
             # Extract claims without signature verification
             claims = jwt.decode(token, options={"verify_signature": False})
-            exp    = claims.get("exp")
+            exp = claims.get("exp")
             if not exp:
                 return True
             return datetime.now(timezone.utc).timestamp() > exp

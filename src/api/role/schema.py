@@ -27,6 +27,7 @@ class RoleCreate(BaseCreateSchema):
         if len(v.strip()) > ValidationConstraints.MAX_ROLE_LENGTH:
             raise ValueError(ValidationMessages.ROLE_TOO_LONG)
         from security.policy import is_reserved_role
+
         if is_reserved_role(v):
             raise ValueError(f"Role name '{v}' is reserved for system roles")
 
@@ -44,7 +45,7 @@ class RoleCreate(BaseCreateSchema):
     @classmethod
     def validate_role_scope(cls, v, info):
         """Basic roles must be global scope only."""
-        role_type = info.data.get('role_type') if hasattr(info, 'data') and info.data else None
+        role_type = info.data.get("role_type") if hasattr(info, "data") and info.data else None
 
         if role_type == RoleType.BASIC and v != RoleScope.GLOBAL:
             raise ValueError("Basic roles can only have global scope")
@@ -55,10 +56,10 @@ class RoleCreate(BaseCreateSchema):
 class RoleUpdate(BaseUpdateSchema):
     """Schema for updating role - all fields optional."""
 
-    name       : Optional[str] = None
-    description: Optional[str] = None
+    name       : Optional[str]  = None
+    description: Optional[str]  = None
     is_active  : Optional[bool] = None
-    etag       : Optional[str] = None
+    etag       : Optional[str]  = None
 
     @field_validator("name")
     @classmethod

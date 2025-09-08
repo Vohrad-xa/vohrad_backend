@@ -5,14 +5,15 @@ Revises: 5ef3b50c709c
 Create Date: 2025-08-26 21:20:10.930235
 
 """
+
 from alembic import op
 import sqlalchemy as sa
 from typing import Sequence, Union
 from uuid import uuid4
 
 # revision identifiers, used by Alembic.
-revision: str = 'c40f35611940'
-down_revision: Union[str, None] = '5ef3b50c709c'
+revision: str = "c40f35611940"
+down_revision: Union[str, None] = "5ef3b50c709c"
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
 
@@ -20,9 +21,7 @@ depends_on: Union[str, Sequence[str], None] = None
 def get_tenant_schemas():
     """Get list of existing tenant schemas"""
     connection = op.get_bind()
-    result = connection.execute(
-        sa.text("SELECT tenant_schema_name FROM shared.tenants WHERE tenant_schema_name != 'shared'")
-    )
+    result = connection.execute(sa.text("SELECT tenant_schema_name FROM shared.tenants WHERE tenant_schema_name != 'shared'"))
     return [row[0] for row in result]
 
 
@@ -34,10 +33,13 @@ def create_auth_tables_for_schema(schema_name: str, user_table_name: str):
         sa.Column("name", sa.String(length=50), nullable=False),
         sa.Column("description", sa.Text(), nullable=True),
         sa.Column("is_active", sa.Boolean(), nullable=False, server_default=sa.text("true")),
-        sa.Column("role_type", sa.Enum(
-            "BASIC", "PREDEFINED", "CUSTOM", name="role_type_enum"), nullable=False, server_default="PREDEFINED"),
-        sa.Column("role_scope", sa.Enum(
-            "GLOBAL", "TENANT", name="role_scope_enum"), nullable=False, server_default="TENANT"),
+        sa.Column(
+            "role_type",
+            sa.Enum("BASIC", "PREDEFINED", "CUSTOM", name="role_type_enum"),
+            nullable=False,
+            server_default="PREDEFINED",
+        ),
+        sa.Column("role_scope", sa.Enum("GLOBAL", "TENANT", name="role_scope_enum"), nullable=False, server_default="TENANT"),
         sa.Column("is_mutable", sa.Boolean(), nullable=False, server_default=sa.text("false")),
         sa.Column("permissions_mutable", sa.Boolean(), nullable=False, server_default=sa.text("false")),
         sa.Column("managed_by", sa.String(length=50), nullable=True),
@@ -84,18 +86,8 @@ def create_auth_tables_for_schema(schema_name: str, user_table_name: str):
     op.create_index(f"idx_permissions_resource_{schema_name}", "permissions", ["resource"], schema=schema_name)
     op.create_index(f"idx_assignments_user_id_{schema_name}", "assignments", ["user_id"], schema=schema_name)
     op.create_index(f"idx_assignments_role_id_{schema_name}", "assignments", ["role_id"], schema=schema_name)
-    op.create_index(
-        f"idx_permissions_resource_action_{schema_name}",
-        "permissions",
-        ["resource", "action"],
-        schema=schema_name
-    )
-    op.create_index(
-        f"idx_permissions_role_resource_{schema_name}",
-        "permissions",
-        ["role_id", "resource"],
-        schema=schema_name
-    )
+    op.create_index(f"idx_permissions_resource_action_{schema_name}", "permissions", ["resource", "action"], schema=schema_name)
+    op.create_index(f"idx_permissions_role_resource_{schema_name}", "permissions", ["role_id", "resource"], schema=schema_name)
     op.create_index(f"idx_roles_active_name_{schema_name}", "roles", ["is_active", "name"], schema=schema_name)
 
 

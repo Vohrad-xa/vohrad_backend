@@ -1,10 +1,11 @@
-"""Enterprise-grade key management utilities for encryption and JWT operations."""
+"""Key management utilities for encryption and JWT operations."""
 
 import base64
 from config.settings import get_settings
 from cryptography.fernet import Fernet
-from cryptography.hazmat.primitives import serialization
+from cryptography.hazmat.primitives import hashes, serialization
 from cryptography.hazmat.primitives.asymmetric import rsa
+from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
 import os
 from pathlib import Path
 import secrets
@@ -22,7 +23,7 @@ class KeyManager:
     def jwt_private_key(self) -> bytes:
         """Get JWT private key for RS256 signing."""
         if self.settings.JWT_PRIVATE_KEY_PATH and os.path.exists(self.settings.JWT_PRIVATE_KEY_PATH):
-            with open(self.settings.JWT_PRIVATE_KEY_PATH, 'rb') as key_file:
+            with open(self.settings.JWT_PRIVATE_KEY_PATH, "rb") as key_file:
                 return key_file.read()
         else:
             # Generate RSA key pair if not found (development only)
@@ -35,7 +36,7 @@ class KeyManager:
     def jwt_public_key(self) -> bytes:
         """Get JWT public key for RS256 verification."""
         if self.settings.JWT_PUBLIC_KEY_PATH and os.path.exists(self.settings.JWT_PUBLIC_KEY_PATH):
-            with open(self.settings.JWT_PUBLIC_KEY_PATH, 'rb') as key_file:
+            with open(self.settings.JWT_PUBLIC_KEY_PATH, "rb") as key_file:
                 return key_file.read()
         else:
             # Generate RSA key pair if not found (development only)
@@ -47,7 +48,7 @@ class KeyManager:
     @property
     def jwt_secret_key(self) -> Union[str, bytes]:
         """Get JWT signing key (RS256 uses private key, HS256 uses secret)."""
-        if self.settings.JWT_ALGORITHM.startswith('RS') or self.settings.JWT_ALGORITHM.startswith('ES'):
+        if self.settings.JWT_ALGORITHM.startswith("RS") or self.settings.JWT_ALGORITHM.startswith("ES"):
             return self.jwt_private_key
         else:
             if not self.settings.SECRET_KEY:
@@ -57,7 +58,7 @@ class KeyManager:
     @property
     def jwt_verify_key(self) -> Union[str, bytes]:
         """Get JWT verification key (RS256 uses public key, HS256 uses secret)."""
-        if self.settings.JWT_ALGORITHM.startswith('RS') or self.settings.JWT_ALGORITHM.startswith('ES'):
+        if self.settings.JWT_ALGORITHM.startswith("RS") or self.settings.JWT_ALGORITHM.startswith("ES"):
             return self.jwt_public_key
         else:
             if not self.settings.SECRET_KEY:
@@ -72,7 +73,7 @@ class KeyManager:
     def get_encryption_key(self) -> bytes:
         """Get or generate encryption key for sensitive data."""
         if self._encryption_key is None:
-            if hasattr(self.settings, 'ENCRYPTION_KEY') and self.settings.ENCRYPTION_KEY:
+            if hasattr(self.settings, "ENCRYPTION_KEY") and self.settings.ENCRYPTION_KEY:
                 # Use provided encryption key
                 try:
                     self._encryption_key = base64.urlsafe_b64decode(self.settings.ENCRYPTION_KEY)
@@ -86,11 +87,8 @@ class KeyManager:
 
     def _derive_encryption_key(self) -> bytes:
         """Derive encryption key from SECRET_KEY using secure method."""
-        from cryptography.hazmat.primitives import hashes
-        from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
-
         # Use fixed salt for deterministic key derivation
-        # In production, consider using a configurable salt
+        # In production: configurable salt
         salt = b"vohrad_encryption_salt_v1"
 
         kdf = PBKDF2HMAC(
@@ -109,13 +107,13 @@ class KeyManager:
 
     def encrypt_sensitive_data(self, data: str) -> str:
         """Encrypt sensitive data like PII, tokens, etc."""
-        fernet          = self.create_fernet()
+        fernet = self.create_fernet()
         encrypted_bytes = fernet.encrypt(data.encode())
         return base64.urlsafe_b64encode(encrypted_bytes).decode()
 
     def decrypt_sensitive_data(self, encrypted_data: str) -> str:
         """Decrypt sensitive data."""
-        fernet          = self.create_fernet()
+        fernet = self.create_fernet()
         encrypted_bytes = base64.urlsafe_b64decode(encrypted_data.encode())
         decrypted_bytes = fernet.decrypt(encrypted_bytes)
         return decrypted_bytes.decode()
@@ -126,13 +124,13 @@ class KeyManager:
         dev_keys_dir.mkdir(exist_ok=True)
 
         private_key_path = dev_keys_dir / "jwt_private.pem"
-        public_key_path  = dev_keys_dir / "jwt_public.pem"
+        public_key_path = dev_keys_dir / "jwt_public.pem"
 
         if private_key_path.exists() and public_key_path.exists():
             # Load existing keys
-            with open(private_key_path, 'rb') as f:
+            with open(private_key_path, "rb") as f:
                 private_key_bytes = f.read()
-            with open(public_key_path, 'rb') as f:
+            with open(public_key_path, "rb") as f:
                 public_key_bytes = f.read()
             return private_key_bytes, public_key_bytes
 
@@ -146,20 +144,19 @@ class KeyManager:
         private_key_bytes = private_key.private_bytes(
             encoding             = serialization.Encoding.PEM,
             format               = serialization.PrivateFormat.PKCS8,
-            encryption_algorithm = serialization.NoEncryption()
+            encryption_algorithm = serialization.NoEncryption(),
         )
 
         # Serialize public key
-        public_key       = private_key.public_key()
+        public_key = private_key.public_key()
         public_key_bytes = public_key.public_bytes(
-            encoding = serialization.Encoding.PEM,
-            format   = serialization.PublicFormat.SubjectPublicKeyInfo
+            encoding=serialization.Encoding.PEM, format=serialization.PublicFormat.SubjectPublicKeyInfo
         )
 
         # Save keys to files
-        with open(private_key_path, 'wb') as f:
+        with open(private_key_path, "wb") as f:
             f.write(private_key_bytes)
-        with open(public_key_path, 'wb') as f:
+        with open(public_key_path, "wb") as f:
             f.write(public_key_bytes)
 
         return private_key_bytes, public_key_bytes
@@ -181,15 +178,14 @@ class KeyManager:
         private_pem = private_key.private_bytes(
             encoding             = serialization.Encoding.PEM,
             format               = serialization.PrivateFormat.PKCS8,
-            encryption_algorithm = serialization.NoEncryption()
-        ).decode('utf-8')
+            encryption_algorithm = serialization.NoEncryption(),
+        ).decode("utf-8")
 
         # Serialize public key
         public_key = private_key.public_key()
         public_pem = public_key.public_bytes(
-            encoding=serialization.Encoding.PEM,
-            format=serialization.PublicFormat.SubjectPublicKeyInfo
-        ).decode('utf-8')
+            encoding=serialization.Encoding.PEM, format=serialization.PublicFormat.SubjectPublicKeyInfo
+        ).decode("utf-8")
 
         return private_pem, public_pem
 
@@ -205,13 +201,9 @@ class KeyManager:
             "secret_key_configured": bool(self.settings.SECRET_KEY),
             "secret_key_length"    : len(self.settings.SECRET_KEY) if self.settings.SECRET_KEY else 0,
             "secret_key_strength"  : "strong"
-            if (
-                self.settings.SECRET_KEY
-                and len(self.settings.SECRET_KEY) >= 64
-                and not self.settings.SECRET_KEY.isalnum()
-            )
+            if (self.settings.SECRET_KEY and len(self.settings.SECRET_KEY) >= 64 and not self.settings.SECRET_KEY.isalnum())
             else "weak",
-            "encryption_key_configured": bool(getattr(self.settings, 'ENCRYPTION_KEY', None)),
+            "encryption_key_configured": bool(getattr(self.settings, "ENCRYPTION_KEY", None)),
             "jwt_algorithm"            : self.settings.JWT_ALGORITHM,
             "environment"              : self.settings.ENVIRONMENT,
         }

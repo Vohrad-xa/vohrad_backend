@@ -24,9 +24,9 @@ class ValidationConstraints:
     MAX_ACTION_LENGTH  : Final[int] = 50
 
     # Tenant fields
-    MAX_TENANT_NAME_LENGTH: Final[int] = 100
-    MIN_TENANT_NAME_LENGTH: Final[int] = 2
-    MAX_DESCRIPTION_LENGTH: Final[int] = 500
+    MAX_TENANT_NAME_LENGTH: Final[int]  = 100
+    MIN_TENANT_NAME_LENGTH: Final[int]  = 2
+    MAX_DESCRIPTION_LENGTH: Final[int]  = 500
     MIN_SUBDOMAIN_LENGTH  : Final[int] = 1
 
     # Password requirements

@@ -2,7 +2,4 @@
 
 from commands import CLIEnvironment, CLIFileUtils
 
-__all__ = [
-    "CLIEnvironment",
-    "CLIFileUtils"
-]
+__all__ = ["CLIEnvironment", "CLIFileUtils"]

@@ -4,11 +4,12 @@ from config.jwt import get_jwt_config
 from datetime import datetime, timedelta, timezone
 from pydantic import BaseModel, Field, field_validator
 from typing import Any, Optional
-from uuid import UUID
+from uuid import UUID, uuid4
 
 
 class TokenSubject(BaseModel):
     """Token subject information."""
+
     user_id  : UUID
     email    : str
     tenant_id: Optional[UUID] = None
@@ -19,13 +20,13 @@ class AccessTokenPayload(BaseModel):
     """Access token payload following RFC 7519."""
 
     # RFC 7519 registered claims
-    sub: str                    # Subject (user_id)
-    iss: str                    # Issuer
-    aud: str                    # Audience
-    exp: int                    # Expiration time
-    iat: int                    # Issued at
-    nbf: int                    # Not before
-    jti: str                    # JWT ID
+    sub: str  # Subject (user_id)
+    iss: str  # Issuer
+    aud: str  # Audience
+    exp: int  # Expiration time
+    iat: int  # Issued at
+    nbf: int  # Not before
+    jti: str  # JWT ID
 
     # Custom claims
     email     : str
@@ -60,13 +61,13 @@ class RefreshTokenPayload(BaseModel):
     """Refresh token payload with minimal claims for security."""
 
     # RFC 7519 registered claims
-    sub: str                    # Subject (user_id)
-    iss: str                    # Issuer
-    aud: str                    # Audience
-    exp: int                    # Expiration time
-    iat: int                    # Issued at
-    nbf: int                    # Not before
-    jti: str                    # JWT ID
+    sub: str  # Subject (user_id)
+    iss: str  # Issuer
+    aud: str  # Audience
+    exp: int  # Expiration time
+    iat: int  # Issued at
+    nbf: int  # Not before
+    jti: str  # JWT ID
 
     # Custom claims
     tenant_id : Optional[str] = None
@@ -86,6 +87,7 @@ class RefreshTokenPayload(BaseModel):
 
 class AccessToken(BaseModel):
     """Access token with metadata."""
+
     token     : str
     payload   : AccessTokenPayload
     expires_at: datetime
@@ -104,6 +106,7 @@ class AccessToken(BaseModel):
 
 class RefreshToken(BaseModel):
     """Refresh token with metadata."""
+
     token     : str
     payload   : RefreshTokenPayload
     expires_at: datetime
@@ -122,6 +125,7 @@ class RefreshToken(BaseModel):
 
 class TokenPair(BaseModel):
     """Access and refresh token pair."""
+
     access_token : AccessToken
     refresh_token: RefreshToken
     token_type   : str = "Bearer"
@@ -143,12 +147,13 @@ class TokenPair(BaseModel):
             "refresh_token"     : self.refresh_token.token,
             "token_type"        : self.token_type,
             "expires_in"        : self.expires_in,
-            "refresh_expires_in": self.refresh_expires_in
+            "refresh_expires_in": self.refresh_expires_in,
         }
 
 
 class AuthenticatedUser(BaseModel):
     """Authenticated user context from token."""
+
     user_id  : UUID
     email    : str
     tenant_id: Optional[UUID] = None
@@ -165,71 +170,55 @@ class AuthenticatedUser(BaseModel):
     """Factory functions for creating token payloads"""
 
 
-def create_user_access_payload(
-    user_id  : UUID,
-    email    : str,
-    tenant_id: UUID,
-    user_version: float | None = None
-) -> dict[str, Any]:
+def create_user_access_payload(user_id: UUID, email: str, tenant_id: UUID, user_version: float | None = None) -> dict[str, Any]:
     """Create access token payload for tenant user."""
-    from uuid import uuid4
     jwt_config = get_jwt_config()
-    now = datetime.now(timezone.utc)
-    expires = now + timedelta(minutes=jwt_config.access_token_expire_minutes)
+    now        = datetime.now(timezone.utc)
+    expires    = now + timedelta(minutes=jwt_config.access_token_expire_minutes)
 
     return {
-        "sub"       : str(user_id),
-        "iss"       : jwt_config.issuer,
-        "aud"       : jwt_config.audience,
-        "exp"       : int(expires.timestamp()),
-        "iat"       : int(now.timestamp()),
-        "nbf"       : int(now.timestamp()),
-        "jti"       : str(uuid4()),
-        "email"     : email,
-        "tenant_id" : str(tenant_id),
-        "user_type" : "user",
-        "token_type": "access",
-        "user_version": user_version
+        "sub"         : str(user_id),
+        "iss"         : jwt_config.issuer,
+        "aud"         : jwt_config.audience,
+        "exp"         : int(expires.timestamp()),
+        "iat"         : int(now.timestamp()),
+        "nbf"         : int(now.timestamp()),
+        "jti"         : str(uuid4()),
+        "email"       : email,
+        "tenant_id"   : str(tenant_id),
+        "user_type"   : "user",
+        "token_type"  : "access",
+        "user_version": user_version,
     }
 
 
-def create_admin_access_payload(
-    admin_id: UUID,
-    email   : str,
-    user_version: float | None = None
-) -> dict[str, Any]:
+def create_admin_access_payload(admin_id: UUID, email: str, user_version: float | None = None) -> dict[str, Any]:
     """Create access token payload for global admin."""
-    from uuid import uuid4
     jwt_config = get_jwt_config()
-    now = datetime.now(timezone.utc)
-    expires = now + timedelta(minutes=jwt_config.access_token_expire_minutes)
+    now        = datetime.now(timezone.utc)
+    expires    = now + timedelta(minutes=jwt_config.access_token_expire_minutes)
 
     return {
-        "sub"       : str(admin_id),
-        "iss"       : jwt_config.issuer,
-        "aud"       : jwt_config.audience,
-        "exp"       : int(expires.timestamp()),
-        "iat"       : int(now.timestamp()),
-        "nbf"       : int(now.timestamp()),
-        "jti"       : str(uuid4()),
-        "email"     : email,
-        "tenant_id" : None,
-        "user_type" : "admin",
-        "token_type": "access",
-        "user_version": user_version
+        "sub"         : str(admin_id),
+        "iss"         : jwt_config.issuer,
+        "aud"         : jwt_config.audience,
+        "exp"         : int(expires.timestamp()),
+        "iat"         : int(now.timestamp()),
+        "nbf"         : int(now.timestamp()),
+        "jti"         : str(uuid4()),
+        "email"       : email,
+        "tenant_id"   : None,
+        "user_type"   : "admin",
+        "token_type"  : "access",
+        "user_version": user_version,
     }
 
 
-def create_refresh_payload(
-    user_id  : UUID,
-    tenant_id: Optional[UUID] = None,
-    user_type: str = "user"
-) -> dict[str, Any]:
+def create_refresh_payload(user_id: UUID, tenant_id: Optional[UUID] = None, user_type: str = "user") -> dict[str, Any]:
     """Create refresh token payload."""
-    from uuid import uuid4
     jwt_config = get_jwt_config()
-    now = datetime.now(timezone.utc)
-    expires = now + timedelta(days=7)
+    now        = datetime.now(timezone.utc)
+    expires    = now + timedelta(days=7)
 
     return {
         "sub"       : str(user_id),
@@ -241,5 +230,5 @@ def create_refresh_payload(
         "jti"       : str(uuid4()),
         "tenant_id" : str(tenant_id) if tenant_id else None,
         "user_type" : user_type,
-        "token_type": "refresh"
+        "token_type": "refresh",
     }

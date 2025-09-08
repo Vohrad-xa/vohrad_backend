@@ -11,6 +11,8 @@ ignore = [
     "B008",
     # Asymmetric alignment preservation
     "E203", "E221", "E241", "E251",
+    "E303", "E304",
+
 ]
 
 [lint.pydocstyle]

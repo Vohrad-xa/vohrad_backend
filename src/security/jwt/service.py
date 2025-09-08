@@ -26,24 +26,20 @@ from security.password import verify_password
 
 class AuthJWTService:
     """JWT service for authentication operations."""
-    def __init__(self):
-        self.jwt_engine            = JWTEngine()
-        self.revocation_service    = get_jwt_revocation_service()
-        self.tenant_schema_service = get_tenant_schema_resolver()
-        self.user_cache            = UserCache()
 
-    async def authenticate_user(
-        self,
-      email    : str,
-      password : str,
-      tenant_id: UUID
-    ) -> tuple :
+    def __init__(self):
+        self.jwt_engine = JWTEngine()
+        self.revocation_service = get_jwt_revocation_service()
+        self.tenant_schema_service = get_tenant_schema_resolver()
+        self.user_cache = UserCache()
+
+    async def authenticate_user(self, email: str, password: str, tenant_id: UUID) -> tuple:
         """Authenticate tenant user using proper service patterns."""
         from api.tenant.service import TenantService
         from api.user.service import UserService
 
         tenant_service = TenantService()
-        user_service   = UserService()
+        user_service = UserService()
 
         # Get tenant from shared schema using proper service layer
         async with with_default_db() as shared_db:
@@ -67,11 +63,7 @@ class AuthJWTService:
             await self.user_cache.cache_user(user, tenant_id)
             return user, tenant
 
-    async def authenticate_admin(
-        self,
-    email   : str,
-    password: str
-    ):
+    async def authenticate_admin(self, email: str, password: str):
         """Authenticate global admin using proper SQLAlchemy patterns."""
         from api.admin.models import Admin
         from sqlalchemy import select
@@ -79,7 +71,7 @@ class AuthJWTService:
         async with with_default_db() as shared_db:
             result = await shared_db.execute(
                 select(Admin).where(
-                    Admin.email     == email,
+                    Admin.email == email,
                     Admin.is_active,
                 )
             )
@@ -96,80 +88,43 @@ class AuthJWTService:
         user_version = user.tokens_valid_after.timestamp() if user.tokens_valid_after else user.created_at.timestamp()
 
         access_payload = create_user_access_payload(
-            user_id      = user.id,
-            email        = user.email,
-            tenant_id    = user.tenant_id,
-            user_version = user_version
+            user_id=user.id, email=user.email, tenant_id=user.tenant_id, user_version=user_version
         )
 
         access_token_str = self.jwt_engine.encode_token(access_payload)
         access_expires   = self.jwt_engine.create_expiry()
 
-        access_token = AccessToken(
-            token      = access_token_str,
-            payload    = access_payload,
-            expires_at = access_expires
-        )
+        access_token = AccessToken(token=access_token_str, payload=access_payload, expires_at=access_expires)
 
-        refresh_payload = create_refresh_payload(
-            user_id   = user.id,
-            tenant_id = user.tenant_id,
-            user_type = "user"
-        )
+        refresh_payload = create_refresh_payload(user_id=user.id, tenant_id=user.tenant_id, user_type="user")
 
         refresh_token_str = self.jwt_engine.encode_token(refresh_payload)
-        refresh_expires   = self.jwt_engine.create_expiry(days=7)
+        refresh_expires = self.jwt_engine.create_expiry(days=7)
 
-        refresh_token = RefreshToken(
-            token      = refresh_token_str,
-            payload    = refresh_payload,
-            expires_at = refresh_expires
-        )
+        refresh_token = RefreshToken(token=refresh_token_str, payload=refresh_payload, expires_at=refresh_expires)
 
-        return TokenPair(
-            access_token  = access_token,
-            refresh_token = refresh_token
-        )
+        return TokenPair(access_token=access_token, refresh_token=refresh_token)
 
     async def create_admin_tokens(self, admin) -> TokenPair:
         """Create tokens for admin."""
         # Calculate user_version from tokens_valid_after or fallback to created_at
         user_version = admin.tokens_valid_after.timestamp() if admin.tokens_valid_after else admin.created_at.timestamp()
 
-        access_payload = create_admin_access_payload(
-            admin_id     = admin.id,
-            email        = admin.email,
-            user_version = user_version
-        )
+        access_payload = create_admin_access_payload(admin_id=admin.id, email=admin.email, user_version=user_version)
 
         access_token_str = self.jwt_engine.encode_token(access_payload)
-        access_expires   = self.jwt_engine.create_expiry()
+        access_expires = self.jwt_engine.create_expiry()
 
-        access_token = AccessToken(
-            token      = access_token_str,
-            payload    = access_payload,
-            expires_at = access_expires
-        )
+        access_token = AccessToken(token=access_token_str, payload=access_payload, expires_at=access_expires)
 
-        refresh_payload = create_refresh_payload(
-            user_id   = admin.id,
-            tenant_id = None,
-            user_type = "admin"
-        )
+        refresh_payload = create_refresh_payload(user_id=admin.id, tenant_id=None, user_type="admin")
 
         refresh_token_str = self.jwt_engine.encode_token(refresh_payload)
-        refresh_expires   = self.jwt_engine.create_expiry(days=7)
+        refresh_expires = self.jwt_engine.create_expiry(days=7)
 
-        refresh_token = RefreshToken(
-            token      = refresh_token_str,
-            payload    = refresh_payload,
-            expires_at = refresh_expires
-        )
+        refresh_token = RefreshToken(token=refresh_token_str, payload=refresh_payload, expires_at=refresh_expires)
 
-        return TokenPair(
-            access_token  = access_token,
-            refresh_token = refresh_token
-        )
+        return TokenPair(access_token=access_token, refresh_token=refresh_token)
 
     async def validate_access_token(self, token: str, request_subdomain: Optional[str] = None) -> AuthenticatedUser:
         """Validate token and return user context with enterprise tenant-subdomain validation."""
@@ -192,6 +147,7 @@ class AuthJWTService:
 
                 # Get tenant details from JWT tenant_id for validation
                 from api.tenant.service import TenantService
+
                 tenant_service = TenantService()
 
                 async with with_default_db() as shared_db:
@@ -215,7 +171,7 @@ class AuthJWTService:
             user_id   = UUID(payload["sub"]),
             email     = payload["email"],
             tenant_id = UUID(payload["tenant_id"]) if payload.get("tenant_id") else None,
-            user_type = payload["user_type"]
+            user_type = payload["user_type"],
         )
 
     async def refresh_access_token(self, refresh_token: str) -> TokenPair:
@@ -234,7 +190,7 @@ class AuthJWTService:
             from api.user.service import UserService
 
             tenant_service = TenantService()
-            user_service   = UserService()
+            user_service = UserService()
 
             # Get tenant using service layer
             async with with_default_db() as shared_db:
@@ -264,7 +220,7 @@ class AuthJWTService:
             async with with_default_db() as shared_db:
                 result = await shared_db.execute(
                     select(Admin).where(
-                        Admin.id        == user_id,
+                        Admin.id == user_id,
                         Admin.is_active,
                     )
                 )
@@ -279,24 +235,17 @@ class AuthJWTService:
 
     async def login_user(self, login_request, tenant=None) -> TokenPair:
         """Complete user login flow with optional tenant object."""
-        if tenant         :
+        if tenant:
             effective_tenant_id = tenant.tenant_id
         else:
             effective_tenant_id = login_request.tenant_id
 
-        user, _tenant = await self.authenticate_user(
-            login_request.email,
-            login_request.password,
-            effective_tenant_id
-        )
+        user, _tenant = await self.authenticate_user(login_request.email, login_request.password, effective_tenant_id)
         return await self.create_user_tokens(user)
 
     async def login_admin(self, login_request) -> TokenPair:
         """Complete admin login flow."""
-        admin = await self.authenticate_admin(
-            login_request.email,
-            login_request.password
-        )
+        admin = await self.authenticate_admin(login_request.email, login_request.password)
         return await self.create_admin_tokens(admin)
 
     async def refresh_token(self, refresh_token: str) -> TokenPair:

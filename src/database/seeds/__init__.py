@@ -1,1 +1,1 @@
-# Seeds package
+"""Database seed utilities."""

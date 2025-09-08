@@ -13,9 +13,9 @@ class RequestLoggingMiddleware(BaseHTTPMiddleware):
 
     def __init__(self, app, exclude_paths: set | None = None):
         super().__init__(app)
-        self.logger          = get_logger("vohrad.requests")
+        self.logger = get_logger("vohrad.requests")
         self.security_logger = get_security_logger()
-        self.exclude_paths   = exclude_paths or {
+        self.exclude_paths = exclude_paths or {
             "/health",
             "/metrics",
             "/status",
@@ -33,40 +33,24 @@ class RequestLoggingMiddleware(BaseHTTPMiddleware):
         if any(request.url.path.startswith(path) for path in self.exclude_paths):
             return await call_next(request)
 
-        start_time     = time.time()
+        start_time = time.time()
         correlation_id = self._get_or_create_correlation_id(request)
-        tenant_id      = self._extract_tenant_id(request)
+        tenant_id = self._extract_tenant_id(request)
 
         PerformanceTracker.start_request(correlation_id, None, tenant_id)
 
-        self._log_request_start(
-            request,
-            correlation_id,
-            tenant_id
-        )
+        self._log_request_start(request, correlation_id, tenant_id)
 
         try:
-            response    = await call_next(request)
+            response = await call_next(request)
             duration_ms = round((time.time() - start_time) * 1000, 2)
-            self._log_request_completion(
-                request,
-                response,
-                correlation_id,
-                duration_ms,
-                tenant_id
-            )
+            self._log_request_completion(request, response, correlation_id, duration_ms, tenant_id)
             response.headers["X-Correlation-ID"] = correlation_id
             return response
 
         except Exception as exc:
             duration_ms = round((time.time() - start_time) * 1000, 2)
-            self._log_request_error(
-                request,
-                exc,
-                correlation_id,
-                duration_ms,
-                tenant_id
-            )
+            self._log_request_error(request, exc, correlation_id, duration_ms, tenant_id)
             raise
 
         finally:
@@ -110,7 +94,7 @@ class RequestLoggingMiddleware(BaseHTTPMiddleware):
         tenant_id     : str,
     ):
         """Log successful request completion."""
-        log_level                = "info"
+        log_level = "info"
         if response.status_code >= 400:
             log_level = "warning" if response.status_code < 500 else "error"
 
@@ -138,7 +122,7 @@ class RequestLoggingMiddleware(BaseHTTPMiddleware):
                     "method"        : request.method,
                     "path"          : request.url.path,
                     "status_code"   : response.status_code,
-                        "tenant_id"     : tenant_id,
+                    "tenant_id"     : tenant_id,
                     "client_ip"     : self._get_client_ip(request),
                     "event_type"    : "sensitive_access",
                 },
@@ -148,14 +132,7 @@ class RequestLoggingMiddleware(BaseHTTPMiddleware):
         if self._is_auth_endpoint(request.url.path):
             self._log_auth_event(request, response, correlation_id, tenant_id)
 
-    def _log_request_error(
-        self,
-        request       : Request,
-        exc           : Exception,
-        correlation_id: str,
-        duration_ms   : float,
-        tenant_id     : str
-    ):
+    def _log_request_error(self, request: Request, exc: Exception, correlation_id: str, duration_ms: float, tenant_id: str):
         """Log request error."""
         self.logger.error(
             "Request failed",
@@ -195,33 +172,15 @@ class RequestLoggingMiddleware(BaseHTTPMiddleware):
 
     def _is_sensitive_endpoint(self, path: str) -> bool:
         """Check if endpoint involves sensitive operations."""
-        sensitive_patterns = [
-            "/login",
-            "/logout",
-            "/password",
-            "/reset",
-            "/admin/",
-            "/users/",
-            "/tenants/"
-        ]
+        sensitive_patterns = ["/login", "/logout", "/password", "/reset", "/admin/", "/users/", "/tenants/"]
         return any(pattern in path.lower() for pattern in sensitive_patterns)
 
     def _is_auth_endpoint(self, path: str) -> bool:
         """Check if endpoint is authentication-related."""
-        auth_patterns = [
-            "/auth/login",
-            "/auth/logout",
-            "/auth/refresh"
-        ]
+        auth_patterns = ["/auth/login", "/auth/logout", "/auth/refresh"]
         return any(pattern in path.lower() for pattern in auth_patterns)
 
-    def _log_auth_event(
-        self,
-        request       : Request,
-        response      : Response,
-        correlation_id: str,
-        tenant_id     : str
-    ):
+    def _log_auth_event(self, request: Request, response: Response, correlation_id: str, tenant_id: str):
         """Log authentication events with structured audit data."""
         path = request.url.path.lower()
         client_ip = self._get_client_ip(request)
@@ -229,16 +188,16 @@ class RequestLoggingMiddleware(BaseHTTPMiddleware):
         # Determine event type and result
         if "/login" in path:
             event_type = "auth.login.success" if response.status_code == 200 else "auth.login.failure"
-            result     = "success" if response.status_code            == 200 else "failure"
+            result = "success" if response.status_code == 200 else "failure"
         elif "/logout" in path:
             event_type = "auth.logout"
-            result     = "success"
+            result = "success"
         elif "/refresh" in path:
             event_type = "auth.token.refreshed" if response.status_code == 200 else "auth.token.refresh_failed"
-            result     = "success" if response.status_code              == 200 else "failure"
+            result = "success" if response.status_code == 200 else "failure"
         else:
             event_type = "auth.access"
-            result     = "success" if response.status_code < 400 else "failure"
+            result = "success" if response.status_code < 400 else "failure"
 
         # Calculate risk score
         risk_score = 1

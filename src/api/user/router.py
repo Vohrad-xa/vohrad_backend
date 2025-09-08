@@ -1,12 +1,23 @@
+"""User router."""
+
 from api.common.base_router import BaseRouterMixin
 from api.common.context_dependencies import get_tenant_context
 from api.permission.dependencies import RequireRoleManagement, require_permission
 from api.role.schema import RoleResponse
 from api.user.schema import UserCreate, UserPasswordUpdate, UserResponse, UserRoleAssignRequest, UserUpdate
 from api.user.service import user_service
+from exceptions import user_not_found
 from fastapi import APIRouter, Depends, Query, status
 from uuid import UUID
-from web import DeletedResponse, PaginationParams, ResponseFactory, pagination_params
+from web import (
+    CreatedResponse,
+    DeletedResponse,
+    PaginatedResponse,
+    PaginationParams,
+    ResponseFactory,
+    SuccessResponse,
+    pagination_params,
+)
 
 routes = APIRouter(
     tags=["users"],
@@ -14,11 +25,15 @@ routes = APIRouter(
 )
 
 
-@routes.post("/", status_code=status.HTTP_201_CREATED)
+@routes.post(
+    "/",
+    status_code=status.HTTP_201_CREATED,
+    response_model=CreatedResponse[UserResponse],
+)
 async def create_user(
     user_data: UserCreate,
     context=Depends(get_tenant_context),
-    _authorized: bool = Depends(require_permission('user', 'create')),
+    _authorized: bool = Depends(require_permission("user", "create")),
 ):
     """Create new user"""
     _, tenant, db = context
@@ -26,7 +41,7 @@ async def create_user(
     return ResponseFactory.transform_and_respond(user, UserResponse, "created")
 
 
-@routes.get("/search")
+@routes.get("/search", response_model=SuccessResponse[PaginatedResponse[UserResponse]])
 async def search_users(
     q: str = Query(..., min_length=2, description="Search term"),
     pagination: PaginationParams = Depends(pagination_params),
@@ -38,7 +53,7 @@ async def search_users(
     return BaseRouterMixin.create_paginated_response(users, total, pagination, UserResponse)
 
 
-@routes.get("/email/{email}")
+@routes.get("/email/{email}", response_model=SuccessResponse[UserResponse])
 async def get_user_by_email(
     email: str,
     context=Depends(get_tenant_context),
@@ -47,13 +62,11 @@ async def get_user_by_email(
     _, tenant, db = context
     user = await user_service.get_user_by_email(db, email, tenant)
     if not user:
-        from exceptions import user_not_found
-
         raise user_not_found(email)
     return ResponseFactory.transform_and_respond(user, UserResponse)
 
 
-@routes.get("/{user_id}")
+@routes.get("/{user_id}", response_model=SuccessResponse[UserResponse])
 async def get_user(
     user_id: UUID,
     context=Depends(get_tenant_context),
@@ -64,7 +77,7 @@ async def get_user(
     return ResponseFactory.transform_and_respond(user, UserResponse)
 
 
-@routes.get("/")
+@routes.get("/", response_model=SuccessResponse[PaginatedResponse[UserResponse]])
 async def get_users(
     pagination: PaginationParams = Depends(pagination_params),
     context=Depends(get_tenant_context),
@@ -75,12 +88,12 @@ async def get_users(
     return BaseRouterMixin.create_paginated_response(users, total, pagination, UserResponse)
 
 
-@routes.put("/{user_id}")
+@routes.put("/{user_id}", response_model=SuccessResponse[UserResponse])
 async def update_user(
-    user_id  : UUID,
+    user_id: UUID,
     user_data: UserUpdate,
     context=Depends(get_tenant_context),
-    _authorized: bool = Depends(require_permission('user', 'update')),
+    _authorized: bool = Depends(require_permission("user", "update")),
 ):
     """Update user"""
     _, tenant, db = context
@@ -88,12 +101,12 @@ async def update_user(
     return ResponseFactory.transform_and_respond(user, UserResponse)
 
 
-@routes.put("/{user_id}/password")
+@routes.put("/{user_id}/password", response_model=SuccessResponse[UserResponse])
 async def update_user_password(
-    user_id      : UUID,
+    user_id: UUID,
     password_data: UserPasswordUpdate,
     context=Depends(get_tenant_context),
-    _authorized: bool = Depends(require_permission('user', 'update')),
+    _authorized: bool = Depends(require_permission("user", "update")),
 ):
     """Update user password"""
     _, tenant, db = context
@@ -101,11 +114,11 @@ async def update_user_password(
     return ResponseFactory.transform_and_respond(user, UserResponse)
 
 
-@routes.put("/{user_id}/verify-email")
+@routes.put("/{user_id}/verify-email", response_model=SuccessResponse[UserResponse])
 async def verify_user_email(
     user_id: UUID,
     context=Depends(get_tenant_context),
-    _authorized: bool = Depends(require_permission('user', 'update')),
+    _authorized: bool = Depends(require_permission("user", "update")),
 ):
     """Mark user email as verified"""
     _, tenant, db = context
@@ -117,7 +130,7 @@ async def verify_user_email(
 async def delete_user(
     user_id: UUID,
     context=Depends(get_tenant_context),
-    _authorized: bool = Depends(require_permission('user', 'delete')),
+    _authorized: bool = Depends(require_permission("user", "delete")),
 ):
     """Remove user"""
     _, tenant, db = context
@@ -125,8 +138,7 @@ async def delete_user(
     return DeletedResponse()
 
 
-# User Role Management - Enterprise Pattern
-@routes.get("/{user_id}/roles")
+@routes.get("/{user_id}/roles", response_model=SuccessResponse[list[RoleResponse]])
 async def get_user_roles(
     user_id: UUID,
     context=Depends(get_tenant_context),
@@ -137,7 +149,11 @@ async def get_user_roles(
     return ResponseFactory.transform_and_respond(roles, RoleResponse)
 
 
-@routes.post("/{user_id}/roles", status_code=status.HTTP_201_CREATED)
+@routes.post(
+    "/{user_id}/roles",
+    status_code=status.HTTP_201_CREATED,
+    response_model=SuccessResponse[dict],
+)
 async def assign_role_to_user(
     user_id: UUID,
     request: UserRoleAssignRequest,
@@ -146,12 +162,9 @@ async def assign_role_to_user(
 ):
     """Assign role to user"""
     current_user, tenant, db = context
-    assignment = await user_service.assign_role_to_user(
-        db, user_id, request.role_id, current_user.user_id, tenant
-    )
+    assignment = await user_service.assign_role_to_user(db, user_id, request.role_id, current_user.user_id, tenant)
     return ResponseFactory.success(
-        data={"user_id": str(assignment.user_id), "role_id": str(assignment.role_id)},
-        message="Role assigned successfully"
+        data={"user_id": str(assignment.user_id), "role_id": str(assignment.role_id)}, message="Role assigned successfully"
     )
 
 

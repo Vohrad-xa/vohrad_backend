@@ -1,6 +1,9 @@
+"""Database session helpers and dependencies."""
+
 from .engine import async_engine
 from contextlib import asynccontextmanager
 from domain.subdomain import SubdomainExtractor
+from exceptions import ExceptionFactory, tenant_not_found
 from fastapi import Depends, Header, Query, Request
 from sqlalchemy.ext.asyncio import AsyncSession
 from typing import Optional
@@ -18,9 +21,7 @@ def get_sub_domain_from_request(req: Request) -> str:
 @asynccontextmanager
 async def with_default_db():
     """Get a database connection for shared schema operations"""
-    connectable = async_engine.execution_options(
-        schema_translate_map={"tenant_default": "shared"}
-    )
+    connectable = async_engine.execution_options(schema_translate_map={"tenant_default": "shared"})
     try:
         db = AsyncSession(autocommit=False, autoflush=False, bind=connectable)
         yield db
@@ -31,9 +32,7 @@ async def with_default_db():
 @asynccontextmanager
 async def with_tenant_db(tenant_schema: Optional[str]):
     """Get a database connection for the given tenant schema"""
-    connectable = async_engine.execution_options(
-        schema_translate_map={"tenant_default": tenant_schema}
-    )
+    connectable = async_engine.execution_options(schema_translate_map={"tenant_default": tenant_schema})
     try:
         db = AsyncSession(autocommit=False, autoflush=False, bind=connectable)
         yield db
@@ -60,15 +59,11 @@ async def get_tenant_db_session(tenant_schema_name=Depends(get_sub_domain_from_r
 
 async def get_admin_db_session(
     tenant_context_id: Optional[UUID] = Query(
-        None,
-        alias       = "tenant_id",
-        description = "Tenant ID to manage (for admin context switching)"
-        ),
-    x_tenant_id: Optional[str] = Header(None, description="Alternative tenant ID via header")
+        None, alias="tenant_id", description="Tenant ID to manage (for admin context switching)"
+    ),
+    x_tenant_id: Optional[str] = Header(None, description="Alternative tenant ID via header"),
 ):
     """Admin database session with tenant context switching."""
-    from exceptions import ExceptionFactory, tenant_not_found
-
     # Parse tenant ID from query param or header
     target_tenant_id = tenant_context_id
     if not target_tenant_id and x_tenant_id:

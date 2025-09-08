@@ -1,3 +1,5 @@
+"""User schemas."""
+
 from api.common.schemas import BaseResponseSchema
 from api.common.validators import CommonValidators
 from datetime import date, datetime
@@ -9,17 +11,17 @@ from uuid import UUID
 class UserBase(BaseModel):
     """Base user schema"""
 
-    first_name   : Optional[str] = None
-    last_name    : Optional[str] = None
-    role         : Optional[str] = None
-    email        : EmailStr
+    first_name: Optional[str] = None
+    last_name: Optional[str] = None
+    role: Optional[str] = None
+    email: EmailStr
     date_of_birth: Optional[date] = None
-    address      : Optional[str] = None
-    city         : Optional[str] = None
-    province     : Optional[str] = None
-    postal_code  : Optional[str] = None
-    country      : Optional[str] = None
-    phone_number : Optional[str] = None
+    address: Optional[str] = None
+    city: Optional[str] = None
+    province: Optional[str] = None
+    postal_code: Optional[str] = None
+    country: Optional[str] = None
+    phone_number: Optional[str] = None
 
     @field_validator("first_name")
     @classmethod
@@ -56,17 +58,17 @@ class UserCreate(UserBase):
 class UserUpdate(BaseModel):
     """Schema for updating user"""
 
-    first_name    : Optional[str]      = None
-    last_name     : Optional[str]      = None
-    role          : Optional[str]      = None
-    email         : Optional[EmailStr] = None
-    date_of_birth : Optional[date]     = None
-    address       : Optional[str]      = None
-    city          : Optional[str]      = None
-    province      : Optional[str]      = None
-    postal_code   : Optional[str]      = None
-    country       : Optional[str]      = None
-    phone_number  : Optional[str]      = None
+    first_name: Optional[str] = None
+    last_name: Optional[str] = None
+    role: Optional[str] = None
+    email: Optional[EmailStr] = None
+    date_of_birth: Optional[date] = None
+    address: Optional[str] = None
+    city: Optional[str] = None
+    province: Optional[str] = None
+    postal_code: Optional[str] = None
+    country: Optional[str] = None
+    phone_number: Optional[str] = None
 
     @field_validator("first_name")
     @classmethod
@@ -93,7 +95,7 @@ class UserPasswordUpdate(BaseModel):
     """Schema for updating user password"""
 
     current_password: str
-    new_password    : str
+    new_password: str
     confirm_password: str
 
     @field_validator("new_password")
@@ -112,22 +114,23 @@ class UserPasswordUpdate(BaseModel):
 class UserResponse(BaseResponseSchema):
     """Schema for user response"""
 
-    id               : UUID
-    tenant_id        : Optional[UUID]
-    first_name       : Optional[str] = None
-    last_name        : Optional[str] = None
-    role             : Optional[str] = None
-    email            : str
+    id: UUID
+    tenant_id: Optional[UUID]
+    first_name: Optional[str] = None
+    last_name: Optional[str] = None
+    role: Optional[str] = None
+    email: str
     email_verified_at: Optional[datetime] = None
-    date_of_birth    : Optional[date]     = None
-    address          : Optional[str]      = None
-    city             : Optional[str]      = None
-    province         : Optional[str]      = None
-    postal_code      : Optional[str]      = None
-    country          : Optional[str]      = None
-    phone_number     : Optional[str]      = None
+    date_of_birth: Optional[date] = None
+    address: Optional[str] = None
+    city: Optional[str] = None
+    province: Optional[str] = None
+    postal_code: Optional[str] = None
+    country: Optional[str] = None
+    phone_number: Optional[str] = None
 
 
 class UserRoleAssignRequest(BaseModel):
-    """Schema for role assignment request - following established patterns."""
+    """Schema for role assignment request."""
+
     role_id: UUID

@@ -26,22 +26,14 @@ def upgrade() -> None:
         sa.Column("tenant_schema_name", sa.String(length=256), nullable=False, comment="the name of the tenant"),
         sa.Column("sub_domain", sa.String(length=256), nullable=False, comment="The schema for the database"),
         sa.Column(
-            "current_status",
-            sa.Enum("active", "inactive", name="status", schema="shared", inherit_schema=True),
-            nullable=False
+            "current_status", sa.Enum("active", "inactive", name="status", schema="shared", inherit_schema=True), nullable=False
         ),
         sa.PrimaryKeyConstraint("tenant_id", name=op.f("pk_tenants")),
         sa.UniqueConstraint("tenant_schema_name", name=op.f("uq_tenants_schema")),
         sa.UniqueConstraint("sub_domain", name=op.f("uq_tenants_host")),
         schema="shared",
     )
-    op.create_index(
-        op.f("ix_tenants_tenant_schema_name"),
-        "tenants",
-        ["tenant_schema_name"],
-        unique=True,
-        schema="shared"
-    )
+    op.create_index(op.f("ix_tenants_tenant_schema_name"), "tenants", ["tenant_schema_name"], unique=True, schema="shared")
 
 
 def downgrade() -> None:

@@ -17,7 +17,9 @@ class PerformanceTracker:
 
     @staticmethod
     def start_request(
-        correlation_id: Optional[str] = None, user_id: Optional[str] = None, tenant_id: Optional[str] = None
+        correlation_id: Optional[str] = None,
+        user_id       : Optional[str] = None,
+        tenant_id     : Optional[str] = None
     ) -> str:
         """Start request timing and set correlation context."""
         if not correlation_id:

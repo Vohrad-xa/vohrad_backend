@@ -18,7 +18,7 @@ async def health_check():
 async def cache_statistics():
     """Get tenant cache performance statistics."""
     tenant_service = get_tenant_schema_resolver()
-    stats          = await tenant_service.get_cache_performance()
+    stats = await tenant_service.get_cache_performance()
     return ResponseFactory.success({"cache_type": "tenant_schema", "statistics": stats})
 
 

@@ -41,14 +41,21 @@ class CommonValidators:
         return v
 
     @staticmethod
-    def validate_role_field(v: Optional[str], max_length: int = ValidationConstraints.DEFAULT_ROLE_LENGTH) -> Optional[str]:
+    def validate_role_field(
+        v         : Optional[str],
+        max_length: int = ValidationConstraints.DEFAULT_ROLE_LENGTH
+    ) -> Optional[str]:
         """Validate role fields with configurable max length."""
         if v is not None and len(v) > max_length:
             raise ValueError(f"Role must be {max_length} characters or less")
         return v
 
     @staticmethod
-    def validate_text_field_length(v: Optional[str], max_length: int, field_name: str = "Field") -> Optional[str]:
+    def validate_text_field_length(
+        v         : Optional[str],
+        max_length: int,
+        field_name: str = "Field"
+    ) -> Optional[str]:
         """Generic text field length validation."""
         if v is not None and len(v) > max_length:
             raise ValueError(f"{field_name} must be {max_length} characters or less")

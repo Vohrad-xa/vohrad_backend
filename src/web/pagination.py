@@ -1,3 +1,5 @@
+"""Pagination params, response model, and helpers."""
+
 from constants import PaginationDefaults
 from fastapi import Query
 import math
@@ -23,6 +25,7 @@ class PaginationParams(BaseModel):
 
 class PaginatedResponse(BaseModel, Generic[T]):
     """Generic paginated response model"""
+
     items: List[T] = Field(description="List of items for current page")
     total: int = Field(description="Total number of items")
     page: int = Field(description="Current page number")
@@ -34,6 +37,7 @@ class PaginatedResponse(BaseModel, Generic[T]):
 
 class PaginationUtil:
     """Utility class for handling pagination logic"""
+
     @staticmethod
     def paginate_query_result(items: List[T], total: int, page: int, size: int) -> PaginatedResponse[T]:
         total_pages = math.ceil(total / size) if total > 0 else 0

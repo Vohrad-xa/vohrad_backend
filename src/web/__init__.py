@@ -15,5 +15,4 @@ __all__ = [
     "SuccessResponse",
     "get_if_match_header",
     "pagination_params",
-
 ]

@@ -11,6 +11,7 @@ from .schema import (
 )
 from api.tenant.dependencies import get_current_tenant
 from api.tenant.models import Tenant
+from config.keys import get_key_manager
 from fastapi import APIRouter, Depends
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from security.jwt import AuthenticatedUser, get_auth_jwt_service
@@ -127,8 +128,6 @@ async def auth_status():
 )
 async def security_status():
     """Get security configuration status and key validation information."""
-    from config.keys import get_key_manager
-
     key_manager = get_key_manager()
     validation_result = key_manager.validate_keys()
 

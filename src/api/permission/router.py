@@ -1,4 +1,4 @@
-"""Permission router with CRUD operations and search functionality."""
+"""Permission router."""
 
 from api.common.base_router import BaseRouterMixin
 from api.common.context_dependencies import get_tenant_context
@@ -8,9 +8,12 @@ from api.permission.service import permission_service
 from fastapi import APIRouter, Depends, Query, status
 from uuid import UUID
 from web import (
+    CreatedResponse,
     DeletedResponse,
+    PaginatedResponse,
     PaginationParams,
     ResponseFactory,
+    SuccessResponse,
     get_if_match_header,
     pagination_params,
 )
@@ -21,7 +24,11 @@ routes = APIRouter(
 )
 
 
-@routes.post("/", status_code=status.HTTP_201_CREATED)
+@routes.post(
+    "/",
+    status_code    = status.HTTP_201_CREATED,
+    response_model = CreatedResponse[PermissionResponse],
+)
 async def create_permission(
     permission_data: PermissionCreate,
     context=Depends(get_tenant_context),
@@ -33,11 +40,14 @@ async def create_permission(
     return ResponseFactory.transform_and_respond(permission, PermissionResponse, "created")
 
 
-@routes.get("/search")
+@routes.get(
+    "/search",
+    response_model = SuccessResponse[PaginatedResponse[PermissionResponse]],
+)
 async def search_permissions(
     q: str = Query(..., min_length=1, description="Search term"),
     pagination: PaginationParams = Depends(pagination_params),
-    context=Depends(get_tenant_context),
+    context = Depends(get_tenant_context),
 ):
     """Search permissions by resource or action"""
     _, _tenant, db = context
@@ -45,10 +55,13 @@ async def search_permissions(
     return BaseRouterMixin.create_paginated_response(permissions, total, pagination, PermissionResponse)
 
 
-@routes.get("/role/{role_id}")
+@routes.get(
+    "/role/{role_id}",
+    response_model = SuccessResponse[list[PermissionResponse]],
+)
 async def get_role_permissions(
     role_id: UUID,
-    context=Depends(get_tenant_context),
+    context = Depends(get_tenant_context),
 ):
     """Get all permissions for a specific role"""
     _, _tenant, db = context
@@ -57,10 +70,13 @@ async def get_role_permissions(
     return ResponseFactory.success(data=permission_responses)
 
 
-@routes.get("/resource/{resource}")
+@routes.get(
+    "/resource/{resource}",
+    response_model = SuccessResponse[list[PermissionResponse]],
+)
 async def get_permissions_by_resource(
     resource: str,
-    context=Depends(get_tenant_context),
+    context = Depends(get_tenant_context),
 ):
     """Get all permissions for a specific resource"""
     _, _tenant, db = context
@@ -69,10 +85,13 @@ async def get_permissions_by_resource(
     return ResponseFactory.success(data=permission_responses)
 
 
-@routes.get("/{permission_id}")
+@routes.get(
+    "/{permission_id}",
+    response_model = SuccessResponse[PermissionResponse],
+)
 async def get_permission(
     permission_id: UUID,
-    context=Depends(get_tenant_context),
+    context = Depends(get_tenant_context),
 ):
     """Get permission by ID"""
     _, _tenant, db = context
@@ -80,10 +99,13 @@ async def get_permission(
     return ResponseFactory.transform_and_respond(permission, PermissionResponse)
 
 
-@routes.get("/")
+@routes.get(
+    "/",
+    response_model = SuccessResponse[PaginatedResponse[PermissionResponse]],
+)
 async def get_permissions(
     pagination: PaginationParams = Depends(pagination_params),
-    context=Depends(get_tenant_context),
+    context = Depends(get_tenant_context),
 ):
     """Get paginated list of permissions"""
     _, _tenant, db = context
@@ -91,11 +113,14 @@ async def get_permissions(
     return BaseRouterMixin.create_paginated_response(permissions, total, pagination, PermissionResponse)
 
 
-@routes.put("/{permission_id}")
+@routes.put(
+    "/{permission_id}",
+    response_model = SuccessResponse[PermissionResponse],
+)
 async def update_permission(
-    permission_id: UUID,
+    permission_id  : UUID,
     permission_data: PermissionUpdate,
-    context=Depends(get_tenant_context),
+    context = Depends(get_tenant_context),
     _authorized: bool = Depends(RequireRoleManagement),
 ):
     """Update permission"""
@@ -107,7 +132,7 @@ async def update_permission(
 @routes.delete("/{permission_id}", response_model=DeletedResponse)
 async def delete_permission(
     permission_id: UUID,
-    context=Depends(get_tenant_context),
+    context = Depends(get_tenant_context),
     _authorized: bool = Depends(RequireRoleManagement),
     if_match: str | None = Depends(get_if_match_header),
 ):

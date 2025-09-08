@@ -1,3 +1,5 @@
+"""Tenant model (shared schema)."""
+
 from database import Base
 import sqlalchemy as sa
 from sqlalchemy.sql import func
@@ -5,7 +7,7 @@ from uuid import uuid4
 
 
 class Tenant(Base):
-    __tablename__  = "tenants"
+    __tablename__ = "tenants"
     __table_args__ = (
         sa.Index("idx_tenants_sub_domain", "sub_domain", unique=True),
         sa.Index("idx_tenants_tenant_schema_name", "tenant_schema_name", unique=True),

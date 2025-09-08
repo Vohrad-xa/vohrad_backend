@@ -17,8 +17,7 @@ def get_authenticated_context(
 
 
 def get_tenant_context(
-    auth_context=Depends(get_authenticated_context),
-    db: AsyncSession = Depends(get_tenant_db_session)
+    auth_context=Depends(get_authenticated_context), db: AsyncSession = Depends(get_tenant_db_session)
 ) -> Tuple[AuthenticatedUser, object, AsyncSession]:
     """Get authenticated user, tenant, and tenant database session."""
     current_user, tenant = auth_context
@@ -26,8 +25,7 @@ def get_tenant_context(
 
 
 def get_shared_context(
-    auth_context=Depends(get_authenticated_context),
-    db: AsyncSession = Depends(get_default_db_session)
+    auth_context=Depends(get_authenticated_context), db: AsyncSession = Depends(get_default_db_session)
 ) -> Tuple[AuthenticatedUser, object, AsyncSession]:
     """Get authenticated user, tenant, and shared database session."""
     current_user, tenant = auth_context

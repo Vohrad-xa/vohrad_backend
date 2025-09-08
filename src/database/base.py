@@ -1,3 +1,5 @@
+"""SQLAlchemy declarative base and default schema."""
+
 import sqlalchemy as sa
 from sqlalchemy.orm import DeclarativeBase
 

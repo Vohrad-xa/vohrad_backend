@@ -85,11 +85,11 @@ class LRUCache(CacheInterface):
             hit_rate = (self._hits / total_requests * 100) if total_requests > 0 else 0
 
             return {
-                "type": "LRU",
-                "size": len(self._cache),
-                "max_size": self.max_size,
-                "hits": self._hits,
-                "misses": self._misses,
+                "type"            : "LRU",
+                "size"            : len(self._cache),
+                "max_size"        : self.max_size,
+                "hits"            : self._hits,
+                "misses"          : self._misses,
                 "hit_rate_percent": round(hit_rate, 2),
-                "ttl_seconds": self.default_ttl,
+                "ttl_seconds"     : self.default_ttl,
             }

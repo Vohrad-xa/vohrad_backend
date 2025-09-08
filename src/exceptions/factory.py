@@ -11,11 +11,11 @@ class ExceptionFactory:
 
     @staticmethod
     def create(
-      error_def          : ErrorDefinition,
-      details            : Optional[Dict[str, Any]] = None,
-      context            : Optional[str] = None,
-      correlation_id     : Optional[str] = None,
-      use_context_as_message: bool = False,
+        error_def             : ErrorDefinition,
+        details               : Optional[Dict[str, Any]] = None,
+        context               : Optional[str] = None,
+        correlation_id        : Optional[str] = None,
+        use_context_as_message: bool = False,
     ) -> BaseAppException:
         """Create standardized exception from error definition."""
         if use_context_as_message and context:
@@ -38,8 +38,8 @@ class ExceptionFactory:
         """Create entity not found exception."""
         return ExceptionFactory.create(
             ErrorRegistry.ENTITY_NOT_FOUND,
-            details = {"entity_type": entity_type, "identifier": str(identifier) if identifier else None},
-            context = f"{entity_type} not found",
+            details                = {"entity_type": entity_type, "identifier": str(identifier) if identifier else None},
+            context                = f"{entity_type} not found",
             use_context_as_message = True,
         )
 
@@ -99,9 +99,7 @@ class ExceptionFactory:
         )
 
     @staticmethod
-    def external_service_error(
-      service            : str, operation: str, details: Optional[Dict[str, Any]] = None
-    ) -> BaseAppException:
+    def external_service_error(service: str, operation: str, details: Optional[Dict[str, Any]] = None) -> BaseAppException:
         """Create external service error exception."""
         return ExceptionFactory.create(
             ErrorRegistry.EXTERNAL_SERVICE_ERROR,

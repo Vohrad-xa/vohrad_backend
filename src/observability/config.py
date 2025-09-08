@@ -9,6 +9,7 @@ from typing import Any, Dict
 
 class LoggingConfig:
     """Logging configuration manager for different environments."""
+
     def __init__(self, settings: Dict[str, Any]):
         self.settings    = settings
         self.environment = settings.get("ENVIRONMENT", "development")
@@ -34,11 +35,11 @@ class LoggingConfig:
     def _base_config(self) -> Dict[str, Any]:
         """Base configuration shared across all environments."""
         return {
-            "version"                 : 1,
+            "version": 1,
             "disable_existing_loggers": False,
-            "formatters"              : {
+            "formatters": {
                 "colored": {"()": "observability.formatters.ColoredConsoleFormatter"},
-                "simple" : {
+                "simple": {
                     "format" : "[%(asctime)s] [%(name)s] %(levelname)-8s %(message)s",
                     "datefmt": "%H:%M:%S",
                 },
@@ -46,7 +47,7 @@ class LoggingConfig:
                 "json"    : {"()": "observability.formatters.EnterpriseJSONFormatter"},
             },
             "filters": {
-                "smart_filter"          : {"()": "observability.filters.SmartFilter"},
+                "smart_filter": {"()": "observability.filters.SmartFilter"},
                 "smart_filter_for_files": {"()": "observability.filters.SmartFilter", "filter_for_files": True},
             },
         }
@@ -163,7 +164,7 @@ class LoggingConfig:
                     },
                 },
                 "loggers": {
-                    "root"  : {"level": "WARNING", "handlers": ["console"]},
+                    "root": {"level": "WARNING", "handlers": ["console"]},
                     "vohrad": {
                         "level"    : self.log_level,
                         "handlers" : ["console", "file", "error_file"],
@@ -194,8 +195,8 @@ class LoggingConfig:
                     }
                 },
                 "loggers": {
-                    "root"  : {"level" : "ERROR", "handlers" : ["console"]},
-                    "vohrad": {"level" : "WARNING", "handlers" : ["console"], "propagate": False},
+                    "root": {"level": "ERROR", "handlers": ["console"]},
+                    "vohrad": {"level": "WARNING", "handlers": ["console"], "propagate": False},
                 },
             }
         )
@@ -205,7 +206,7 @@ class LoggingConfig:
     def _apply_smart_filters(self):
         """Apply smart filters to reduce noise across all relevant loggers."""
         smart_filter = SmartFilter()
-        root_logger  = logging.getLogger()
+        root_logger = logging.getLogger()
 
         for handler in root_logger.handlers:
             handler.addFilter(smart_filter)

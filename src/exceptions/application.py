@@ -10,11 +10,11 @@ class ApplicationException(BaseAppException):
 
     def __init__(
         self,
-    message    : str,
-    error_code : str,
-    status_code: int = status.HTTP_400_BAD_REQUEST,
-    details    : Optional[Dict[str, Any]] = None,
-    )          :
+        message    : str,
+        error_code : str,
+        status_code: int = status.HTTP_400_BAD_REQUEST,
+        details    : Optional[Dict[str, Any]] = None,
+    ):
         super().__init__(message, error_code, status_code, details)
 
 

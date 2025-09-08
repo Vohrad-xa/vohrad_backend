@@ -24,10 +24,7 @@ class TokenGenerator:
         from sqlalchemy import select
 
         async with with_default_db() as db:
-            result = await db.execute(
-                select(Admin).where(Admin.is_active)
-                .order_by(Admin.email)
-            )
+            result = await db.execute(select(Admin).where(Admin.is_active).order_by(Admin.email))
             admins = result.scalars().all()
 
             return [
@@ -36,7 +33,7 @@ class TokenGenerator:
                     "email": admin.email,
                     "role": admin.role,
                     "name": f"{admin.first_name or ''} {admin.last_name or ''}".strip() or "N/A",
-                    "type": "admin"
+                    "type": "admin",
                 }
                 for admin in admins
             ]
@@ -49,19 +46,14 @@ class TokenGenerator:
 
         # Get all tenants
         async with with_default_db() as db:
-            result = await db.execute(
-                select(Tenant).where(Tenant.status == "active")
-                .order_by(Tenant.sub_domain)
-            )
+            result = await db.execute(select(Tenant).where(Tenant.status == "active").order_by(Tenant.sub_domain))
             tenants = result.scalars().all()
 
         users_by_tenant = {}
 
         for tenant in tenants:
             async with with_tenant_db(tenant.tenant_schema_name) as tenant_db:
-                result = await tenant_db.execute(
-                    select(User).order_by(User.email)
-                )
+                result = await tenant_db.execute(select(User).order_by(User.email))
                 users = result.scalars().all()
 
                 users_by_tenant[tenant.sub_domain] = [
@@ -72,7 +64,7 @@ class TokenGenerator:
                         "name": f"{user.first_name or ''} {user.last_name or ''}".strip() or "N/A",
                         "tenant_id": user.tenant_id,
                         "tenant_name": tenant.sub_domain,
-                        "type": "user"
+                        "type": "user",
                     }
                     for user in users
                 ]
@@ -96,14 +88,7 @@ class TokenGenerator:
 
         # Add admins
         for admin in admins:
-            table.add_row(
-                str(index),
-                "Admin",
-                admin["email"],
-                admin["name"],
-                admin["role"],
-                "Global"
-            )
+            table.add_row(str(index), "Admin", admin["email"], admin["name"], admin["role"], "Global")
             all_items.append(admin)
             index += 1
 
@@ -111,14 +96,7 @@ class TokenGenerator:
         for tenant_name, users in users_by_tenant.items():
             if users:  # Only show tenants that have users
                 for user in users:
-                    table.add_row(
-                        str(index),
-                        "User",
-                        user["email"],
-                        user["name"],
-                        user["role"],
-                        tenant_name
-                    )
+                    table.add_row(str(index), "User", user["email"], user["name"], user["role"], tenant_name)
                     all_items.append(user)
                     index += 1
 
@@ -129,20 +107,16 @@ class TokenGenerator:
     async def generate_token_for_selection(self, selected_item: dict, expires_in_days: Optional[int] = None) -> str:
         """Generate JWT token for the selected user or admin."""
         if selected_item["type"] == "admin":
-            payload = create_admin_access_payload(
-                admin_id=selected_item["id"],
-                email=selected_item["email"]
-            )
+            payload = create_admin_access_payload(admin_id=selected_item["id"], email=selected_item["email"])
         else:
             payload = create_user_access_payload(
-                user_id=selected_item["id"],
-                email=selected_item["email"],
-                tenant_id=selected_item["tenant_id"]
+                user_id=selected_item["id"], email=selected_item["email"], tenant_id=selected_item["tenant_id"]
             )
 
         # Override expiration if custom days specified
         if expires_in_days is not None:
             from datetime import datetime, timedelta, timezone
+
             now = datetime.now(timezone.utc)
             custom_expires = now + timedelta(days=expires_in_days)
             payload["exp"] = int(custom_expires.timestamp())
@@ -153,17 +127,9 @@ class TokenGenerator:
 @app.command("generate")
 def generate_token(
     expires_in_days: Optional[int] = typer.Option(
-        None,
-        "--expires-in",
-        "-e",
-        help="Token expiration time in days (default: 1 day)"
+        None, "--expires-in", "-e", help="Token expiration time in days (default: 1 day)"
     ),
-    show_payload: bool = typer.Option(
-        False,
-        "--show-payload",
-        "-p",
-        help="Show the token payload for debugging"
-    )
+    show_payload: bool = typer.Option(False, "--show-payload", "-p", help="Show the token payload for debugging"),
 ):
     """Generate JWT token by selecting from available users and admins."""
 
@@ -192,16 +158,11 @@ def generate_token(
             # Get user selection
             styler.console.print("\n")
             try:
-                selection = IntPrompt.ask(
-                    "Select a user/admin by number",
-                    default=1,
-                    show_default=True
-                )
+                selection = IntPrompt.ask("Select a user/admin by number", default=1, show_default=True)
 
                 if selection < 1 or selection > len(all_items):
                     styler.print_clean_message(
-                        f"Invalid selection. Please choose between 1 and {len(all_items)}.",
-                        MessageType.ERROR
+                        f"Invalid selection. Please choose between 1 and {len(all_items)}.", MessageType.ERROR
                     )
                     return
 
@@ -216,11 +177,7 @@ def generate_token(
             if expires_in_days is None:
                 styler.console.print("\n")
                 try:
-                    final_expires_in_days = IntPrompt.ask(
-                        "Token validity duration in days",
-                        default=1,
-                        show_default=True
-                    )
+                    final_expires_in_days = IntPrompt.ask("Token validity duration in days", default=1, show_default=True)
 
                     if final_expires_in_days <= 0:
                         styler.print_clean_message("Duration must be greater than 0 days.", MessageType.ERROR)
@@ -232,8 +189,7 @@ def generate_token(
 
             # Generate token
             styler.print_clean_message(
-                f"Generating token for {selected_item['email']} ({selected_item['type']})...",
-                MessageType.INFO
+                f"Generating token for {selected_item['email']} ({selected_item['type']})...", MessageType.INFO
             )
             token = await generator.generate_token_for_selection(selected_item, final_expires_in_days)
 
@@ -246,7 +202,7 @@ def generate_token(
                 "User Type": selected_item["type"].title(),
                 "Email": selected_item["email"],
                 "Role": selected_item["role"],
-                "Expires In": f"{final_expires_in_days} days"
+                "Expires In": f"{final_expires_in_days} days",
             }
 
             if selected_item["type"] == "user":

@@ -15,6 +15,7 @@ except ImportError:
 
 class MessageType(Enum):
     """Message types for consistent styling."""
+
     SUCCESS = "success"
     ERROR = "error"
     WARNING = "warning"
@@ -30,31 +31,11 @@ class CLIStyler:
         self.console = console or Console()
 
         self.colors = {
-            MessageType.SUCCESS: {
-                "border": "dim white",
-                "title": "Success",
-                "text": "white"
-            },
-            MessageType.ERROR: {
-                "border": "dim white",
-                "title": "Error",
-                "text": "white"
-            },
-            MessageType.WARNING: {
-                "border": "dim white",
-                "title": "Warning",
-                "text": "white"
-            },
-            MessageType.INFO: {
-                "border": "dim white",
-                "title": "Information",
-                "text": "white"
-            },
-            MessageType.STEP: {
-                "border": "dim white",
-                "title": "Step",
-                "text": "white"
-            }
+            MessageType.SUCCESS: {"border": "dim white", "title": "Success", "text": "white"},
+            MessageType.ERROR: {"border": "dim white", "title": "Error", "text": "white"},
+            MessageType.WARNING: {"border": "dim white", "title": "Warning", "text": "white"},
+            MessageType.INFO: {"border": "dim white", "title": "Information", "text": "white"},
+            MessageType.STEP: {"border": "dim white", "title": "Step", "text": "white"},
         }
 
     def print_clean_message(self, message: str, message_type: MessageType = MessageType.INFO) -> None:
@@ -64,7 +45,7 @@ class CLIStyler:
             MessageType.ERROR: "red",
             MessageType.WARNING: "yellow",
             MessageType.INFO: "blue",
-            MessageType.STEP: "cyan"
+            MessageType.STEP: "cyan",
         }
 
         type_prefix = {
@@ -72,7 +53,7 @@ class CLIStyler:
             MessageType.ERROR: "ERROR:",
             MessageType.WARNING: "WARNING:",
             MessageType.INFO: "INFO:",
-            MessageType.STEP: "STEP:"
+            MessageType.STEP: "STEP:",
         }
 
         color = type_colors.get(message_type, "white")
@@ -105,7 +86,7 @@ class CLIStyler:
         table.add_column("Value", style="white")
 
         for key, value in data.items():
-            formatted_key = key.replace('_', ' ').title()
+            formatted_key = key.replace("_", " ").title()
             table.add_row(formatted_key, value)
 
         self.console.print(table)
@@ -166,8 +147,9 @@ class CLIFileUtils:
         os.chmod(file_path, 0o600)
 
     @staticmethod
-    def handle_key_output(key_name: str, key_value: str, to_file: Optional[str] = None,
-                         show: bool = False, styler: Optional[CLIStyler] = None) -> None:
+    def handle_key_output(
+        key_name: str, key_value: str, to_file: Optional[str] = None, show: bool = False, styler: Optional[CLIStyler] = None
+    ) -> None:
         """Handle key output with production-safe patterns."""
         if styler is None:
             styler = CLIStyler()
