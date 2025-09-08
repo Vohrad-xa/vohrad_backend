@@ -9,11 +9,11 @@ Invariants:
 from api.common import BaseService
 from api.permission.models import Permission
 from api.permission.schema import PermissionCreate, PermissionUpdate
-from api.role.models import Role
-from api.role.service import role_service
-from database.constraint_handler import constraint_handler
+from api.role import Role, role_service
+from constants import RoleType
+from database import constraint_handler
 from exceptions import ExceptionFactory
-from security.policy import is_restricted_perm
+from security.policy import is_allowed_for_custom_role, is_restricted_perm
 from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -53,10 +53,24 @@ class PermissionService(BaseService[Permission, PermissionCreate, PermissionUpda
 
     async def create_permission(self, db: AsyncSession, permission_data: PermissionCreate) -> Permission:
         try:  # Enforce role permissions mutability
-            await self._validate_role_permissions_mutable(db, permission_data.role_id)
+            role = await self._validate_role_permissions_mutable(db, permission_data.role_id)
 
             # Enforce restricted permission patterns
             self._assert_not_restricted(permission_data.resource, permission_data.action)
+
+            # Validate against support-level registry for CUSTOM roles
+            if role.role_type == RoleType.CUSTOM:
+                allowed, reason = is_allowed_for_custom_role(permission_data.resource, permission_data.action)
+                if not allowed:
+                    raise ExceptionFactory.business_rule(
+                        reason or "Permission not permitted for custom roles",
+                        {
+                            "role_id"  : str(role.id),
+                            "role_name": role.name,
+                            "resource" : permission_data.resource,
+                            "action"   : permission_data.action,
+                        },
+                    )
 
             permission_dict = permission_data.model_dump()
             permission = Permission(**permission_dict)
@@ -99,7 +113,7 @@ class PermissionService(BaseService[Permission, PermissionCreate, PermissionUpda
         permission_id  : UUID,
         permission_data: PermissionUpdate,
     ) -> Permission:
-        """Update permission with ETag. Raises BaseAppException on ETag mismatch, immutability, or restricted pair."""
+        """Updating permission. Raises BaseAppException on ETag mismatch, immutability, or restricted pair."""
         existing      = await self.get_by_id(db, permission_id)
         update_data   = permission_data.model_dump(exclude_unset=True)
         provided_etag = update_data.pop("etag", None)
