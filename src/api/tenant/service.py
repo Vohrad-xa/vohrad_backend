@@ -4,7 +4,9 @@ from api.common import BaseService
 from api.tenant.models import Tenant
 from api.tenant.schema import TenantCreate, TenantUpdate
 from database.constraint_handler import constraint_handler
+from datetime import time as dtime
 from exceptions import tenant_not_found
+from security.policy.time_utils import time_to_minutes
 from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -71,6 +73,11 @@ class TenantService(BaseService[Tenant, TenantCreate, TenantUpdate]):
 
         try:
             update_data = tenant_data.model_dump(exclude_unset=True)
+            # Normalize time fields to minutes since midnight
+            if "business_hour_start" in update_data and isinstance(update_data["business_hour_start"], dtime):
+                update_data["business_hour_start"] = time_to_minutes(update_data["business_hour_start"])
+            if "business_hour_end" in update_data and isinstance(update_data["business_hour_end"], dtime):
+                update_data["business_hour_end"] = time_to_minutes(update_data["business_hour_end"])
             for field, value in update_data.items():
                 setattr(tenant, field, value)
 
@@ -104,7 +111,14 @@ class TenantService(BaseService[Tenant, TenantCreate, TenantUpdate]):
     ) -> Tenant:
         """Update tenant using instance."""
         try:
+            # Merge the tenant instance into the current session
+            tenant = await db.merge(tenant)
             update_data = tenant_data.model_dump(exclude_unset=True)
+            # Normalize time fields to minutes since midnight
+            if "business_hour_start" in update_data and isinstance(update_data["business_hour_start"], dtime):
+                update_data["business_hour_start"] = time_to_minutes(update_data["business_hour_start"])
+            if "business_hour_end" in update_data and isinstance(update_data["business_hour_end"], dtime):
+                update_data["business_hour_end"] = time_to_minutes(update_data["business_hour_end"])
             for field, value in update_data.items():
                 setattr(tenant, field, value)
 

@@ -24,6 +24,7 @@ TENANT_ROLES = [
         "role_scope"         : RoleScope.TENANT.name,
         "permissions_mutable": False,
         "permissions"        : [
+            ("tenant", "manage"),
             ("role", "manage"),
             ("permission", "manage"),
             ("user", "create"),

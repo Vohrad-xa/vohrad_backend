@@ -52,12 +52,12 @@ class AuthorizationService:
     ) -> bool:
         """Return True if user has permission."""
         permissions = await self._get_user_permissions(user_id, tenant_id)
-        # Apply conditional access using tenant-aware timezone and working hours if available
-        current_hour, bh_start, bh_end = await self._get_time_policy_params(tenant_id)
+        # Apply conditional access using tenant-aware timezone and working hours (minutes-of-day)
+        current_minute, bh_start, bh_end = await self._get_time_policy_params(tenant_id)
         permissions = apply_conditional_access(
             permissions,
             resource,
-            current_hour=current_hour,
+            current_hour=current_minute,
             business_hour_start=bh_start,
             business_hour_end=bh_end,
         )
@@ -67,11 +67,11 @@ class AuthorizationService:
         return any(pattern in permissions for pattern in required_patterns)
 
     async def _get_time_policy_params(self, tenant_id: Optional[UUID]) -> tuple[int, int | None, int | None]:
-        """Return current hour in tenant TZ and tenant-specific business hours if set.
+        """Return current minute-of-day in tenant TZ and tenant-specific business hours (minutes).
 
         Fallbacks:
         - Timezone: UTC if missing/invalid.
-        - Business hours: (None, None) if not set (policy will use SecurityDefaults).
+        - Business hours: (None, None) if not set (policy will use SecurityDefaults, in hours, converted to minutes).
         """
         tz_name : Optional[str] = None
         bh_start: int | None = None
@@ -94,7 +94,20 @@ class AuthorizationService:
         except Exception:
             tzinfo = timezone.utc
 
-        return datetime.now(tzinfo).hour, bh_start, bh_end
+        now = datetime.now(tzinfo)
+        current_minute = now.hour * 60 + now.minute
+
+        # Normalize business hours: values <= 23 are treated as hours; 0..1439 treated as minutes
+        def normalize(v: Optional[int]) -> Optional[int]:
+            if v is None:
+                return None
+            if 0 <= v <= 23:
+                return v * 60
+            if 0 <= v <= 1439:
+                return v
+            return None
+
+        return current_minute, normalize(bh_start), normalize(bh_end)
 
     async def require_permission(
         self,

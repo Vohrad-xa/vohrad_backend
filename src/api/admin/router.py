@@ -4,7 +4,7 @@ from .dependencies import get_admin_params
 from .service import admin_service
 from api.permission import PermissionResponse, permission_service
 from api.role import RoleResponse, role_service
-from api.tenant import TenantResponse, tenant_service
+from api.tenant import TenantResponse, TenantUpdate, tenant_service
 from api.user.schema import UserResponse
 from api.user.service import user_service
 from fastapi import APIRouter, Depends, Query
@@ -18,8 +18,8 @@ from web import (
 )
 
 routes = APIRouter(
-    tags=["admin"],
-    prefix="/admin",
+    tags   = ["admin"],
+    prefix = "/admin",
 )
 
 
@@ -32,10 +32,7 @@ async def list_all_tenants(params = Depends(get_admin_params)):
     )
 
 
-@routes.get(
-    "/users",
-    response_model=SuccessResponse[PaginatedResponse[Any]],
-)
+@routes.get("/users", response_model=SuccessResponse[PaginatedResponse[Any]])
 async def list_users(
     params = Depends(get_admin_params),
     scope: Optional[str] = Query(None)
@@ -82,6 +79,18 @@ async def list_all_permissions(
         PermissionResponse,
         scope=scope
     )
+
+
+@routes.put("/tenants/{tenant_id}", response_model=SuccessResponse[TenantResponse])
+async def update_tenant(
+    tenant_id: UUID,
+    tenant_data: TenantUpdate,
+    params = Depends(get_admin_params)
+) -> SuccessResponse[TenantResponse]:
+    """Update tenant by ID (admin access only)."""
+    _, context = params
+    updated_tenant = await tenant_service.update_tenant_by_id(context.db_session, tenant_id, tenant_data)
+    return ResponseFactory.transform_and_respond(updated_tenant, TenantResponse)
 
 
 @routes.delete("/tenants/{tenant_id}", response_model = DeletedResponse)

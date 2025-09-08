@@ -1,6 +1,7 @@
 """Centralized RBAC and access policy utilities."""
 
 from __future__ import annotations
+from .time_utils import is_within_window
 from constants.defaults import SecurityDefaults
 from datetime import datetime
 from typing import Set, Tuple
@@ -50,17 +51,13 @@ def apply_conditional_access(
     if current_hour is None:
         current_hour = datetime.now().hour
     start = (
-        business_hour_start
-        if business_hour_start is not None
-        else SecurityDefaults.BUSINESS_HOUR_START
+        business_hour_start if business_hour_start is not None else SecurityDefaults.BUSINESS_HOUR_START * 60
     )
     end = (
-        business_hour_end
-        if business_hour_end is not None
-        else SecurityDefaults.BUSINESS_HOUR_END
+        business_hour_end if business_hour_end is not None else SecurityDefaults.BUSINESS_HOUR_END * 60
     )
 
-    if not (start <= current_hour <= end):
+    if not is_within_window(current_hour, start, end):
         permissions = {p for p in permissions if not p.endswith(".delete")}
 
     if resource:
