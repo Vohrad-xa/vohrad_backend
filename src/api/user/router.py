@@ -4,7 +4,14 @@ from api.common.base_router import BaseRouterMixin
 from api.common.context_dependencies import get_tenant_context
 from api.permission.dependencies import RequireManager, RequireRoleManagement, require_permission
 from api.role.schema import RoleResponse
-from api.user.schema import UserCreate, UserPasswordUpdate, UserResponse, UserRoleAssignRequest, UserUpdate
+from api.user.schema import (
+    BulkRoleAssignmentRequest,
+    UserCreate,
+    UserPasswordUpdate,
+    UserResponse,
+    UserRoleAssignRequest,
+    UserUpdate,
+)
 from api.user.service import user_service
 from exceptions import user_not_found
 from fastapi import APIRouter, Depends, Query, status
@@ -28,8 +35,8 @@ routes = APIRouter(
 
 @routes.post(
     "/",
-    status_code=status.HTTP_201_CREATED,
-    response_model=CreatedResponse[UserResponse],
+    status_code    = status.HTTP_201_CREATED,
+    response_model = CreatedResponse[UserResponse],
 )
 async def create_user(
     user_data: UserCreate,
@@ -157,8 +164,8 @@ async def get_user_roles(
 
 @routes.post(
     "/{user_id}/roles",
-    status_code=status.HTTP_201_CREATED,
-    response_model=SuccessResponse[dict],
+    status_code    = status.HTTP_201_CREATED,
+    response_model = SuccessResponse[dict],
 )
 async def assign_role_to_user(
     user_id: UUID,
@@ -185,3 +192,23 @@ async def revoke_role_from_user(
     _, tenant, db = context
     await user_service.revoke_role_from_user(db, user_id, role_id, tenant)
     return ResponseFactory.deleted("role")
+
+
+@routes.post(
+    "/roles/bulk",
+    status_code    = status.HTTP_201_CREATED,
+    response_model = SuccessResponse[dict],
+)
+async def bulk_assign_roles(
+    payload: BulkRoleAssignmentRequest,
+    context=Depends(get_tenant_context),
+    _authorized: bool = Depends(RequireRoleManagement),
+):
+    """Assign roles to multiple users in a single request."""
+    current_user, tenant, db = context
+    pairs = [(item.user_id, item.role_id) for item in payload.assignments]
+    created_count = await user_service.assign_roles_bulk(db, pairs, current_user.user_id, tenant)
+    return ResponseFactory.success(
+        data    = {"assigned": created_count, "total": len(pairs)},
+        message = f"{created_count} role assignment(s) processed successfully",
+    )

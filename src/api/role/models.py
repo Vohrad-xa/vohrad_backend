@@ -39,6 +39,7 @@ class Role(Base):
     created_at  = sa.Column(sa.DateTime(timezone=True), nullable=False, server_default=func.now())
     updated_at  = sa.Column(sa.DateTime(timezone=True), nullable=False, server_default=func.now())
     permissions = relationship("Permission", back_populates="role", lazy="selectin")
+    assignments = relationship("Assignment", back_populates="role", lazy="selectin")
 
     @validates("role_type")
     def validate_mutability(self, key, role_type):

@@ -15,10 +15,11 @@ from database.cache import UserCache
 from database.constraint_handler import constraint_handler
 from exceptions import ExceptionFactory, invalid_credentials
 from middleware import hash_password, verify_password
-from sqlalchemy import and_, func, select
+from sqlalchemy import func, select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
-from typing import Any, Optional
+from sqlalchemy.orm import selectinload
+from typing import Any, NoReturn, Optional
 from uuid import UUID
 
 
@@ -153,9 +154,8 @@ class UserService(BaseService[User, UserCreate, UserUpdate]):
     async def assign_role_to_user(
         self, db: AsyncSession, user_id: UUID, role_id: UUID, assigned_by: UUID, tenant: Tenant
     ) -> Assignment:
-        """Assign role to user."""
+        """Assign role to user via ORM association (concise + DRY)."""
         try:
-            # Block assignment for deprecated or disabled roles
             role = await db.get(Role, role_id)
             if not role:
                 raise ExceptionFactory.not_found("Role", role_id)
@@ -164,41 +164,103 @@ class UserService(BaseService[User, UserCreate, UserUpdate]):
                     "Role cannot be assigned due to lifecycle stage",
                     {"role_id": str(role_id), "stage": str(role.stage)},
                 )
-            assignment = Assignment(user_id=user_id, role_id=role_id, assigned_by=assigned_by)
-            db.add(assignment)
+
+            user = await self.get_by_id(db, user_id)
+            user.assignments.append(Assignment(role=role, assigned_by=assigned_by))
+            user.role = role.name
             await db.commit()
-            await db.refresh(assignment)
-            return assignment
+            return user.assignments[-1]
 
         except IntegrityError as e:
             await db.rollback()
             await self._handle_integrity_error(
                 e,
-                {
-                    "operation": "assign_role_to_user",
-                    "user_id": user_id,
-                    "role_id": role_id,
-                },
+                {"operation": "assign_role_to_user", "user_id": user_id, "role_id": role_id},
             )
 
 
     async def revoke_role_from_user(self, db: AsyncSession, user_id: UUID, role_id: UUID, tenant: Tenant) -> None:
-        """Revoke role from user."""
-        query = select(Assignment).where(and_(Assignment.user_id == user_id, Assignment.role_id == role_id))
-        result = await db.execute(query)
-        assignment = result.scalar_one_or_none()
-
+        user = (
+            await db.execute(
+                select(User).where(User.id == user_id).options(selectinload(User.assignments))
+            )
+        ).scalar_one_or_none()
+        if not user:
+            raise ExceptionFactory.not_found("User", user_id)
+        assignment = next((a for a in user.assignments if a.role_id == role_id), None)
         if not assignment:
             raise ExceptionFactory.not_found("Assignment", f"user {user_id} role {role_id}")
-
-        await db.delete(assignment)
+        user.assignments.remove(assignment)
+        user.role = None
         await db.commit()
 
 
-    async def _handle_integrity_error(self, error: IntegrityError, operation_context: dict[str, Any]) -> None:
+    async def _handle_integrity_error(self, error: IntegrityError, operation_context: dict[str, Any]) -> NoReturn:
         """Map database constraints to domain exceptions."""
         exception = constraint_handler.handle_violation(error, operation_context)
         raise exception
+
+
+    async def assign_roles_bulk(
+        self,
+        db         : AsyncSession,
+        assignments: list[tuple[UUID, UUID]],
+        assigned_by: UUID,
+        tenant     : Tenant,
+    ) -> int:
+        """Replace users' current roles with provided roles in one transaction."""
+        try:
+            target_roles: dict[UUID, UUID] = {user_id: role_id for user_id, role_id in assignments}
+            # Validate all roles upfront and cache names
+            role_ids = set(target_roles.values())
+            if role_ids:
+                result = await db.execute(select(Role).where(Role.id.in_(list(role_ids))))
+                roles = {r.id: r for r in result.scalars().all()}
+            else:
+                roles = {}
+
+            missing_role = next((rid for rid in role_ids if rid not in roles), None)
+            if missing_role is not None:
+                raise ExceptionFactory.not_found("Role", missing_role)
+            bad_role = next((r for r in roles.values() if r.stage in (RoleStage.DEPRECATED, RoleStage.DISABLED)), None)
+            if bad_role is not None:
+                raise ExceptionFactory.business_rule(
+                    "Role cannot be assigned due to lifecycle stage",
+                    {"role_id": str(bad_role.id), "stage": str(bad_role.stage)},
+                )
+
+            user_ids = list(target_roles.keys())
+            if user_ids:
+                result = await db.execute(
+                    select(User)
+                    .where(User.id.in_(user_ids))
+                    .options(selectinload(User.assignments))
+                )
+                users = {u.id: u for u in result.scalars().all()}
+            else:
+                users = {}
+
+            missing = [uid for uid in user_ids if uid not in users]
+            if missing:
+                raise ExceptionFactory.not_found("User", missing[0])
+
+            for user_id, role_id in target_roles.items():
+                user_obj             = users[user_id]
+                role_obj             = roles[role_id]
+                user_obj.assignments = [Assignment(role=role_obj, assigned_by=assigned_by)]
+                user_obj.role        = role_obj.name
+
+            await db.commit()
+            return len(target_roles)
+        except IntegrityError as e:
+            await db.rollback()
+            await self._handle_integrity_error(
+                e,
+                {
+                    "operation": "assign_roles_bulk",
+                    "count"    : len(assignments),
+                },
+            )
 
 
 user_service = UserService()

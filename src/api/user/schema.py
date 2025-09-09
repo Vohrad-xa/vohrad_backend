@@ -11,17 +11,17 @@ from uuid import UUID
 class UserBase(BaseModel):
     """Base user schema"""
 
-    first_name: Optional[str] = None
-    last_name: Optional[str] = None
-    role: Optional[str] = None
-    email: EmailStr
+    first_name   : Optional[str] = None
+    last_name    : Optional[str] = None
+    role         : Optional[str] = None
+    email        : EmailStr
     date_of_birth: Optional[date] = None
-    address: Optional[str] = None
-    city: Optional[str] = None
-    province: Optional[str] = None
-    postal_code: Optional[str] = None
-    country: Optional[str] = None
-    phone_number: Optional[str] = None
+    address      : Optional[str] = None
+    city         : Optional[str] = None
+    province     : Optional[str] = None
+    postal_code  : Optional[str] = None
+    country      : Optional[str] = None
+    phone_number : Optional[str] = None
 
     @field_validator("first_name")
     @classmethod
@@ -58,17 +58,17 @@ class UserCreate(UserBase):
 class UserUpdate(BaseModel):
     """Schema for updating user"""
 
-    first_name: Optional[str] = None
-    last_name: Optional[str] = None
-    role: Optional[str] = None
-    email: Optional[EmailStr] = None
-    date_of_birth: Optional[date] = None
-    address: Optional[str] = None
-    city: Optional[str] = None
-    province: Optional[str] = None
-    postal_code: Optional[str] = None
-    country: Optional[str] = None
-    phone_number: Optional[str] = None
+    first_name   : Optional[str]      = None
+    last_name    : Optional[str]      = None
+    role         : Optional[str]      = None
+    email        : Optional[EmailStr] = None
+    date_of_birth: Optional[date]     = None
+    address      : Optional[str]      = None
+    city         : Optional[str]      = None
+    province     : Optional[str]      = None
+    postal_code  : Optional[str]      = None
+    country      : Optional[str]      = None
+    phone_number : Optional[str]      = None
 
     @field_validator("first_name")
     @classmethod
@@ -114,23 +114,36 @@ class UserPasswordUpdate(BaseModel):
 class UserResponse(BaseResponseSchema):
     """Schema for user response"""
 
-    id: UUID
-    tenant_id: Optional[UUID]
-    first_name: Optional[str] = None
-    last_name: Optional[str] = None
-    role: Optional[str] = None
-    email: str
+    id               : UUID
+    tenant_id        : Optional[UUID]
+    first_name       : Optional[str] = None
+    last_name        : Optional[str] = None
+    role             : Optional[str] = None
+    email            : str
     email_verified_at: Optional[datetime] = None
-    date_of_birth: Optional[date] = None
-    address: Optional[str] = None
-    city: Optional[str] = None
-    province: Optional[str] = None
-    postal_code: Optional[str] = None
-    country: Optional[str] = None
-    phone_number: Optional[str] = None
+    date_of_birth    : Optional[date] = None
+    address          : Optional[str] = None
+    city             : Optional[str] = None
+    province         : Optional[str] = None
+    postal_code      : Optional[str] = None
+    country          : Optional[str] = None
+    phone_number     : Optional[str] = None
 
 
 class UserRoleAssignRequest(BaseModel):
     """Schema for role assignment request."""
 
     role_id: UUID
+
+
+class BulkRoleAssignmentItem(BaseModel):
+    """Single item for bulk role assignment."""
+
+    user_id: UUID
+    role_id: UUID
+
+
+class BulkRoleAssignmentRequest(BaseModel):
+    """Bulk role assignment payload."""
+
+    assignments: list[BulkRoleAssignmentItem]
