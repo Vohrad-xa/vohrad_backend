@@ -2,7 +2,7 @@
 
 from api.common.base_router import BaseRouterMixin
 from api.common.context_dependencies import get_tenant_context
-from api.permission.dependencies import RequireRoleManagement, require_permission
+from api.permission.dependencies import RequireManager, RequireRoleManagement, require_permission
 from api.role.schema import RoleResponse
 from api.user.schema import UserCreate, UserPasswordUpdate, UserResponse, UserRoleAssignRequest, UserUpdate
 from api.user.service import user_service
@@ -34,7 +34,7 @@ routes = APIRouter(
 async def create_user(
     user_data: UserCreate,
     context=Depends(get_tenant_context),
-    _authorized: bool = Depends(require_permission("user", "create")),
+    _authorized: bool = Depends(RequireManager),
 ):
     """Create new user"""
     _, tenant, db = context
@@ -47,6 +47,7 @@ async def search_users(
     q: str = Query(..., min_length=2, description="Search term"),
     pagination: PaginationParams = Depends(pagination_params),
     context=Depends(get_tenant_context),
+    _authorized: bool = Depends(RequireManager),
 ):
     """Search users by email, first name, or last name"""
     _, tenant, db = context
@@ -58,6 +59,7 @@ async def search_users(
 async def get_user_by_email(
     email: str,
     context=Depends(get_tenant_context),
+    _authorized: bool = Depends(require_permission("user", "read")),
 ):
     """Get user by email"""
     _, tenant, db = context
@@ -71,6 +73,7 @@ async def get_user_by_email(
 async def get_user(
     user_id: UUID,
     context=Depends(get_tenant_context),
+    _authorized: bool = Depends(require_permission("user", "read")),
 ):
     """Get user by ID"""
     _, tenant, db = context
@@ -82,6 +85,7 @@ async def get_user(
 async def get_users(
     pagination: PaginationParams = Depends(pagination_params),
     context=Depends(get_tenant_context),
+    _authorized: bool = Depends(RequireManager),
 ):
     """Get paginated list of users"""
     _, tenant, db = context
@@ -131,7 +135,7 @@ async def verify_user_email(
 async def delete_user(
     user_id: UUID,
     context=Depends(get_tenant_context),
-    _authorized: bool = Depends(require_permission("user", "delete")),
+    _authorized: bool = Depends(RequireManager),
 ):
     """Remove user"""
     _, tenant, db = context
@@ -143,6 +147,7 @@ async def delete_user(
 async def get_user_roles(
     user_id: UUID,
     context=Depends(get_tenant_context),
+    _authorized: bool = Depends(require_permission("user", "read")),
 ):
     """Get roles assigned to user"""
     _, tenant, db = context
