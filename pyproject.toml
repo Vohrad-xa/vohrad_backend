@@ -72,6 +72,9 @@ generate-jwt-keys = "python management/manage.py security generate-jwt-keys"
 seed-global-roles = "python management/manage.py security seed-global-roles"
 seed-tenant-roles = "python management/manage.py security seed-tenant-roles"
 
+# Permission registry CLI
+perm-registry = "python management/manage.py security perm-registry"
+
 # Tenant commands  
 create-tenant = "python management/manage.py tenant create_tenant"
 
