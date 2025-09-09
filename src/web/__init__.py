@@ -3,7 +3,7 @@
 from .headers import get_if_match_header
 from .pagination import PaginatedResponse, PaginationParams, PaginationUtil, pagination_params
 from .response_factory import ResponseFactory
-from .responses import CreatedResponse, DeletedResponse, SuccessResponse
+from .responses import CreatedResponse, DeletedResponse, SuccessResponse, UpdatedResponse
 
 __all__ = [
     "CreatedResponse",
@@ -13,6 +13,7 @@ __all__ = [
     "PaginationUtil",
     "ResponseFactory",
     "SuccessResponse",
+    "UpdatedResponse",
     "get_if_match_header",
     "pagination_params",
 ]

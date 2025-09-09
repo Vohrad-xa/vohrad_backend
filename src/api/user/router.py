@@ -16,12 +16,13 @@ from web import (
     PaginationParams,
     ResponseFactory,
     SuccessResponse,
+    UpdatedResponse,
     pagination_params,
 )
 
 routes = APIRouter(
-    tags=["users"],
-    prefix="/users",
+    tags   = ["users"],
+    prefix = "/users",
 )
 
 
@@ -38,7 +39,7 @@ async def create_user(
     """Create new user"""
     _, tenant, db = context
     user = await user_service.create_user(db, user_data, tenant)
-    return ResponseFactory.transform_and_respond(user, UserResponse, "created")
+    return ResponseFactory.created(user, response_model=UserResponse)
 
 
 @routes.get("/search", response_model=SuccessResponse[PaginatedResponse[UserResponse]])
@@ -63,7 +64,7 @@ async def get_user_by_email(
     user = await user_service.get_user_by_email(db, email, tenant)
     if not user:
         raise user_not_found(email)
-    return ResponseFactory.transform_and_respond(user, UserResponse)
+    return ResponseFactory.success(user, response_model=UserResponse)
 
 
 @routes.get("/{user_id}", response_model=SuccessResponse[UserResponse])
@@ -74,7 +75,7 @@ async def get_user(
     """Get user by ID"""
     _, tenant, db = context
     user = await user_service.get_user_by_id(db, user_id, tenant)
-    return ResponseFactory.transform_and_respond(user, UserResponse)
+    return ResponseFactory.success(user, response_model=UserResponse)
 
 
 @routes.get("/", response_model=SuccessResponse[PaginatedResponse[UserResponse]])
@@ -88,7 +89,7 @@ async def get_users(
     return BaseRouterMixin.create_paginated_response(users, total, pagination, UserResponse)
 
 
-@routes.put("/{user_id}", response_model=SuccessResponse[UserResponse])
+@routes.put("/{user_id}", response_model=UpdatedResponse[UserResponse])
 async def update_user(
     user_id: UUID,
     user_data: UserUpdate,
@@ -98,10 +99,10 @@ async def update_user(
     """Update user"""
     _, tenant, db = context
     user = await user_service.update_user(db, user_id, user_data, tenant)
-    return ResponseFactory.transform_and_respond(user, UserResponse)
+    return ResponseFactory.updated(user, response_model=UserResponse)
 
 
-@routes.put("/{user_id}/password", response_model=SuccessResponse[UserResponse])
+@routes.put("/{user_id}/password", response_model=UpdatedResponse[UserResponse])
 async def update_user_password(
     user_id: UUID,
     password_data: UserPasswordUpdate,
@@ -111,10 +112,10 @@ async def update_user_password(
     """Update user password"""
     _, tenant, db = context
     user = await user_service.update_user_password(db, user_id, password_data, tenant)
-    return ResponseFactory.transform_and_respond(user, UserResponse)
+    return ResponseFactory.updated(user, response_model=UserResponse)
 
 
-@routes.put("/{user_id}/verify-email", response_model=SuccessResponse[UserResponse])
+@routes.put("/{user_id}/verify-email", response_model=UpdatedResponse[UserResponse])
 async def verify_user_email(
     user_id: UUID,
     context=Depends(get_tenant_context),
@@ -123,7 +124,7 @@ async def verify_user_email(
     """Mark user email as verified"""
     _, tenant, db = context
     user = await user_service.verify_user_email(db, user_id, tenant)
-    return ResponseFactory.transform_and_respond(user, UserResponse)
+    return ResponseFactory.updated(user, response_model=UserResponse)
 
 
 @routes.delete("/{user_id}", response_model=DeletedResponse)
@@ -135,7 +136,7 @@ async def delete_user(
     """Remove user"""
     _, tenant, db = context
     await user_service.delete_user(db, user_id, tenant)
-    return ResponseFactory.deleted()
+    return ResponseFactory.deleted("user")
 
 
 @routes.get("/{user_id}/roles", response_model=SuccessResponse[list[RoleResponse]])
@@ -146,7 +147,7 @@ async def get_user_roles(
     """Get roles assigned to user"""
     _, tenant, db = context
     roles = await user_service.get_user_roles(db, user_id, tenant)
-    return ResponseFactory.transform_and_respond(roles, RoleResponse)
+    return ResponseFactory.success(roles, response_model=RoleResponse)
 
 
 @routes.post(
@@ -178,4 +179,4 @@ async def revoke_role_from_user(
     """Revoke role from user"""
     _, tenant, db = context
     await user_service.revoke_role_from_user(db, user_id, role_id, tenant)
-    return ResponseFactory.deleted("Role revoked successfully")
+    return ResponseFactory.deleted("role")

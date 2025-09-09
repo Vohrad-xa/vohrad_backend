@@ -15,6 +15,7 @@ from web import (
     PaginatedResponse,
     ResponseFactory,
     SuccessResponse,
+    UpdatedResponse,
 )
 
 routes = APIRouter(
@@ -81,7 +82,7 @@ async def list_all_permissions(
     )
 
 
-@routes.put("/tenants/{tenant_id}", response_model=SuccessResponse[TenantResponse])
+@routes.put("/tenants/{tenant_id}", response_model=UpdatedResponse[TenantResponse])
 async def update_tenant(
     tenant_id: UUID,
     tenant_data: TenantUpdate,
@@ -90,7 +91,7 @@ async def update_tenant(
     """Update tenant by ID (admin access only)."""
     _, context = params
     updated_tenant = await tenant_service.update_tenant_by_id(context.db_session, tenant_id, tenant_data)
-    return ResponseFactory.transform_and_respond(updated_tenant, TenantResponse)
+    return ResponseFactory.updated(updated_tenant, response_model=TenantResponse)
 
 
 @routes.delete("/tenants/{tenant_id}", response_model = DeletedResponse)
@@ -101,7 +102,7 @@ async def delete_tenant(
     """Delete tenant."""
     _, context = params
     await tenant_service.delete_tenant_by_id(context.db_session, tenant_id)
-    return ResponseFactory.deleted()
+    return ResponseFactory.deleted("tenant")
 
 
 @routes.get("/tenant-context", response_model = SuccessResponse[dict])

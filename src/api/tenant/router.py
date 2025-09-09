@@ -8,6 +8,7 @@ from fastapi import APIRouter, Depends
 from web import (
     ResponseFactory,
     SuccessResponse,
+    UpdatedResponse,
 )
 
 routes = APIRouter(
@@ -20,10 +21,10 @@ routes = APIRouter(
 async def get_current_tenant_endpoint(context=Depends(get_authenticated_context)):
     """Get the current tenant"""
     _user, tenant = context
-    return ResponseFactory.transform_and_respond(tenant, TenantResponse)
+    return ResponseFactory.success(tenant, response_model=TenantResponse)
 
 
-@routes.put("/settings", response_model=SuccessResponse[TenantResponse])
+@routes.put("/settings", response_model=UpdatedResponse[TenantResponse])
 async def update_tenant_settings(
     settings: TenantSettingsUpdate,
     context = Depends(get_shared_context),
@@ -36,4 +37,4 @@ async def update_tenant_settings(
     update = TenantUpdate(**data)
 
     updated = await tenant_service.update_tenant(db, tenant, update)
-    return ResponseFactory.transform_and_respond(updated, TenantResponse)
+    return ResponseFactory.updated(updated, response_model=TenantResponse)

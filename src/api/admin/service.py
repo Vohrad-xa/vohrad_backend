@@ -128,7 +128,7 @@ class AdminService(BaseService[Admin, Any, Any]):
                 from web import PaginationUtil
 
                 paginated_result = PaginationUtil.paginate_query_result([result], 1, pagination.page, pagination.size)
-                return ResponseFactory.paginated(paginated_result)
+                return ResponseFactory.success(paginated_result, response_model=response_class)
 
         # When in tenant context (with ?tenant_id=xyz), return normal paginated results
         service_kwargs = {k: v for k, v in kwargs.items() if k not in ["scope"]}

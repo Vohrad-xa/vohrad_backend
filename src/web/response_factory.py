@@ -1,9 +1,8 @@
 """Centralized response factory for consistent API responses."""
 
-from .pagination import PaginatedResponse
-from .responses import CreatedResponse, DeletedResponse, SuccessResponse
+from .responses import CreatedResponse, DeletedResponse, SuccessResponse, UpdatedResponse
 from pydantic import BaseModel
-from typing import List, Optional, Type, TypeVar, Union
+from typing import Any, List, Optional, Type, TypeVar, Union
 
 T = TypeVar("T", bound=BaseModel)
 
@@ -12,56 +11,110 @@ class ResponseFactory:
     """Factory class for creating consistent API responses."""
 
     @staticmethod
-    def success(data: Union[T, List[T]], message: Optional[str] = None) -> SuccessResponse[Union[T, List[T]]]:
-        """Create a success response with data."""
-        return SuccessResponse(data=data, message=message)
+    def success(
+        data: Union[T, List[T], object],
+        message: Optional[str] = None,
+        response_model: Optional[Type[T]] = None,
+    ) -> SuccessResponse[Any]:
+        """Create a success response with smart message generation."""
+        transformed_data = ResponseFactory._transform_data(data, response_model)
+
+        if message is None and response_model is not None:
+            message = ResponseFactory._generate_message(response_model, "retrieved", data)
+
+        return SuccessResponse(data=transformed_data, message=message)
 
     @staticmethod
-    def created(data: T, message: Optional[str] = None) -> CreatedResponse[T]:
-        """Create a success response for resource creation."""
-        if message:
-            return CreatedResponse(data=data, message=message)
-        else:
-            return CreatedResponse(data=data)
+    def created(
+        data: Union[T, object],
+        message: Optional[str] = None,
+        response_model: Optional[Type[T]] = None,
+    ) -> CreatedResponse[T]:
+        """Create a created response with smart message generation."""
+        transformed_data = ResponseFactory._transform_data(data, response_model)
+
+        if message is None and response_model is not None:
+            message = ResponseFactory._generate_message(response_model, "created")
+
+        if message is None:
+            return CreatedResponse(data=transformed_data)
+        return CreatedResponse(data=transformed_data, message=message)
 
     @staticmethod
-    def deleted(message: Optional[str] = None) -> DeletedResponse:
-        """Create a success response for resource deletion."""
-        if message:
+    def updated(
+        data: Union[T, object],
+        message: Optional[str] = None,
+        response_model: Optional[Type[T]] = None,
+    ) -> UpdatedResponse[T]:
+        """Create an updated response with smart message generation."""
+        transformed_data = ResponseFactory._transform_data(data, response_model)
+
+        if message is None and response_model is not None:
+            message = ResponseFactory._generate_message(response_model, "updated")
+
+        if message is None:
+            return UpdatedResponse(data=transformed_data)
+        return UpdatedResponse(data=transformed_data, message=message)
+
+    @staticmethod
+    def deleted(resource_name: Optional[str] = None) -> DeletedResponse:
+        """Create a deleted response."""
+        if resource_name:
+            message = f"{resource_name.capitalize()} deleted successfully"
             return DeletedResponse(message=message)
-        else:
-            return DeletedResponse()
+        return DeletedResponse()
 
     @staticmethod
-    def paginated(data: PaginatedResponse[T]) -> SuccessResponse[PaginatedResponse[T]]:
-        """Create a success response for paginated data."""
-        return SuccessResponse(data=data)
+    def _transform_data(data: Union[T, List[T], object], response_model: Optional[Type[T]]) -> Union[T, List[T], object]:
+        """Transform data using response model if provided."""
+        if response_model is None:
+            return data
 
-    @staticmethod
-    def transform_and_respond(
-        data: Union[object, List[object]], response_model: Type[T], response_type: str = "success"
-    ) -> Union[SuccessResponse[Union[T, List[T]]], CreatedResponse[T]]:
-        """Transform data to response model and create appropriate response.
+        if isinstance(data, BaseModel):
+            return data
 
-        Args:
-            data: Raw data object or list of objects
-            response_model: Pydantic model to transform to
-            response_type: "success" or "created"
-        """
         if isinstance(data, list):
-            transformed_data = [response_model.model_validate(item) for item in data]
-        else:
-            transformed_data = response_model.model_validate(data)
+            return [response_model.model_validate(item) for item in data]
 
-        if response_type == "created":
-            if isinstance(transformed_data, list):
-                # For created responses, we expect a single item, not a list
-                # If we have a list, take the first item or handle appropriately
-                if transformed_data:
-                    return ResponseFactory.created(transformed_data[0])
+        if hasattr(data, "items") and hasattr(data, "total"):
+            return data
+
+        return response_model.model_validate(data)
+
+    @staticmethod
+    def _extract_resource_name(response_model: Type[T]) -> str:
+        """Extract resource name from response model class name."""
+        name = response_model.__name__
+        if name.endswith("Response"):
+            name = name[:-8]
+        return name.lower()
+
+    @staticmethod
+    def _generate_message(response_model: Type[T], action: str, data: Union[T, List[T], None] = None) -> str:
+        """Generate contextual messages based on response model and action."""
+        resource_name = ResponseFactory._extract_resource_name(response_model)
+
+        if action == "retrieved":
+            # Handle paginated responses
+            if hasattr(data, "total") and hasattr(data, "items"):
+                total = data.total
+                if total == 0:
+                    return f"No {resource_name}s available"
+                elif total == 1:
+                    return f"{resource_name.capitalize()} retrieved successfully"
                 else:
-                    raise ValueError("Cannot create response from empty list")
+                    return f"{total} {resource_name}s retrieved successfully"
+            # Handle regular lists
+            elif isinstance(data, list):
+                if not data:
+                    return f"No {resource_name}s available"
+                elif len(data) == 1:
+                    return f"{resource_name.capitalize()} retrieved successfully"
+                else:
+                    return f"{len(data)} {resource_name}s retrieved successfully"
+            elif data is None:
+                return f"No {resource_name} available"
             else:
-                return ResponseFactory.created(transformed_data)
-        else:
-            return ResponseFactory.success(transformed_data)
+                return f"{resource_name.capitalize()} retrieved successfully"
+
+        return f"{resource_name.capitalize()} {action} successfully"

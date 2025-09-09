@@ -61,8 +61,6 @@ verify_ssl = true
 [tool.pdm.scripts]
 start = "uvicorn main:app --reload --app-dir ./src"
 manage = "python ./management/manage.py"
-format = "python management/commands/format.py directory src"
-format-check = "python management/commands/format.py directory src --check"
 
 # Security commands
 validate-keys = "python management/manage.py security validate-keys"

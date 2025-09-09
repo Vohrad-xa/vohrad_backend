@@ -37,7 +37,7 @@ async def create_permission(
     """Create new permission"""
     _, _tenant, db = context
     permission = await permission_service.create_permission(db, permission_data)
-    return ResponseFactory.transform_and_respond(permission, PermissionResponse, "created")
+    return ResponseFactory.created(permission, response_model=PermissionResponse)
 
 
 @routes.get(
@@ -66,8 +66,7 @@ async def get_role_permissions(
     """Get all permissions for a specific role"""
     _, _tenant, db = context
     permissions = await permission_service.get_role_permissions(db, role_id)
-    permission_responses = [PermissionResponse.model_validate(permission) for permission in permissions]
-    return ResponseFactory.success(data=permission_responses)
+    return ResponseFactory.success(data=permissions, response_model=PermissionResponse)
 
 
 @routes.get(
@@ -81,8 +80,7 @@ async def get_permissions_by_resource(
     """Get all permissions for a specific resource"""
     _, _tenant, db = context
     permissions = await permission_service.get_permissions_by_resource(db, resource)
-    permission_responses = [PermissionResponse.model_validate(permission) for permission in permissions]
-    return ResponseFactory.success(data=permission_responses)
+    return ResponseFactory.success(data=permissions, response_model=PermissionResponse)
 
 
 @routes.get(
@@ -96,7 +94,7 @@ async def get_permission(
     """Get permission by ID"""
     _, _tenant, db = context
     permission = await permission_service.get_permission_by_id(db, permission_id)
-    return ResponseFactory.transform_and_respond(permission, PermissionResponse)
+    return ResponseFactory.success(permission, response_model=PermissionResponse)
 
 
 @routes.get(
@@ -126,7 +124,7 @@ async def update_permission(
     """Update permission"""
     _, _tenant, db = context
     permission = await permission_service.update_permission(db, permission_id, permission_data)
-    return ResponseFactory.transform_and_respond(permission, PermissionResponse)
+    return ResponseFactory.updated(permission, response_model=PermissionResponse)
 
 
 @routes.delete("/{permission_id}", response_model=DeletedResponse)
@@ -139,4 +137,4 @@ async def delete_permission(
     """Remove permission"""
     _, _tenant, db = context
     await permission_service.delete_permission(db, permission_id, etag=if_match)
-    return ResponseFactory.deleted()
+    return ResponseFactory.deleted("permission")
