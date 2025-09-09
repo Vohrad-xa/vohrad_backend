@@ -135,7 +135,7 @@ async def delete_user(
     """Remove user"""
     _, tenant, db = context
     await user_service.delete_user(db, user_id, tenant)
-    return DeletedResponse()
+    return ResponseFactory.deleted()
 
 
 @routes.get("/{user_id}/roles", response_model=SuccessResponse[list[RoleResponse]])

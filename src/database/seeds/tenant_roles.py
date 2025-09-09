@@ -22,6 +22,7 @@ TENANT_ROLES = [
         "description"        : "Tenant manager with delegated administration",
         "role_type"          : RoleType.PREDEFINED.name,
         "role_scope"         : RoleScope.TENANT.name,
+        "managed_by"         : "manager",
         "permissions_mutable": False,
         "permissions"        : [
             ("tenant", "manage"),

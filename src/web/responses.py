@@ -9,9 +9,9 @@ T = TypeVar("T")
 class BaseResponse(BaseModel, Generic[T]):
     """Base response model with optional data and metadata."""
 
-    success: bool = Field(True, description="Whether the operation was successful")
-    message: Optional[str] = Field(None, description="Optional message")
-    data: Optional[T] = Field(None, description="Response data")
+    success : bool                     = Field(True, description="Whether the operation was successful")
+    message : Optional[str]            = Field(None, description="Optional message")
+    data    : Optional[T]              = Field(None, description="Response data")
     metadata: Optional[Dict[str, Any]] = Field(None, description="Optional metadata")
 
 
@@ -24,10 +24,10 @@ class SuccessResponse(BaseResponse[T]):
 class ErrorResponse(BaseModel):
     """Error response model."""
 
-    success: bool = Field(False, description="Operation failed")
-    error: str = Field(description="Error message")
-    error_type: Optional[str] = Field(None, description="Error type")
-    details: Optional[Dict[str, Any]] = Field(None, description="Additional error details")
+    success   : bool                     = Field(False, description="Operation failed")
+    error     : str                      = Field(description="Error message")
+    error_type: Optional[str]            = Field(None, description="Error type")
+    details   : Optional[Dict[str, Any]] = Field(None, description="Additional error details")
 
 
 class MessageResponse(BaseModel):

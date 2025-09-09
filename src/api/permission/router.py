@@ -139,4 +139,4 @@ async def delete_permission(
     """Remove permission"""
     _, _tenant, db = context
     await permission_service.delete_permission(db, permission_id, etag=if_match)
-    return DeletedResponse()
+    return ResponseFactory.deleted()

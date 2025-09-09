@@ -149,4 +149,4 @@ async def delete_role(
     """Remove role"""
     _, _tenant, db = context
     await role_service.delete_role(db, role_id, etag = if_match)
-    return DeletedResponse()
+    return ResponseFactory.deleted()

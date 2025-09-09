@@ -41,6 +41,8 @@ class RoleService(BaseService[Role, RoleCreate, RoleUpdate]):
                     "Only TENANT scope roles can be created via API"
                 )
 
+            role.managed_by = "manager"
+
             if str(role.role_type) in (RoleType.CUSTOM.value, str(RoleType.CUSTOM)) or role.role_type == RoleType.CUSTOM:
                 role.is_mutable = True
                 role.permissions_mutable = True
@@ -115,6 +117,7 @@ class RoleService(BaseService[Role, RoleCreate, RoleUpdate]):
                     "Role name is reserved and cannot be used",
                     {"role_id": str(role_id), "new_name": new_name},
                 )
+
 
         # Enforce stage changes only for CUSTOM roles
         if "stage" in update_data and role.role_type in (RoleType.BASIC, RoleType.PREDEFINED):

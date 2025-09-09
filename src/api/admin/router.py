@@ -101,7 +101,7 @@ async def delete_tenant(
     """Delete tenant."""
     _, context = params
     await tenant_service.delete_tenant_by_id(context.db_session, tenant_id)
-    return DeletedResponse()
+    return ResponseFactory.deleted()
 
 
 @routes.get("/tenant-context", response_model = SuccessResponse[dict])
