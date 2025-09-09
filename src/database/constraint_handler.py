@@ -10,7 +10,6 @@ class ConstraintViolationHandler:
     """Handles database constraint violations dynamically."""
 
     def __init__(self):
-        # Dynamic mappings
         self._constraint_entity_mapping = {
             r".*email.*": "User",
             r".*subdomain.*": "Tenant",
@@ -23,8 +22,9 @@ class ConstraintViolationHandler:
             "subdomain" : "subdomain",
             "sub_domain": "subdomain",
             "name"      : "name",
-            "resource"  : "resource and action",  # Special case for permissions
+            "resource"  : "resource and action",
         }
+
 
     def handle_violation(self, error: IntegrityError, operation_context: Dict[str, Any]) -> Exception:
         """Handle database constraint violations."""
@@ -40,6 +40,7 @@ class ConstraintViolationHandler:
 
         raise error
 
+
     def _handle_foreign_key_violation(self, error_str: str, context: Dict[str, Any]) -> Exception:
         """Handle foreign key violations."""
         if "role" in error_str or context.get("role_id"):
@@ -50,6 +51,7 @@ class ConstraintViolationHandler:
             return ExceptionFactory.not_found("User", str(context.get("user_id", "unknown")))
 
         return ExceptionFactory.not_found("Entity", "unknown")
+
 
     def _handle_unique_constraint_violation(
         self, constraint_name: Optional[str], error_str: str, context: Dict[str, Any]
@@ -66,6 +68,7 @@ class ConstraintViolationHandler:
         # Fallback analysis
         return self._analyze_error_message_dynamically(error_str, context)
 
+
     def _get_entity_from_constraint(self, constraint_name: str, context: Dict[str, Any]) -> Optional[str]:
         """Extract entity type from constraint name."""
         constraint_lower = constraint_name.lower()
@@ -77,6 +80,7 @@ class ConstraintViolationHandler:
                 return entity
         return None
 
+
     def _get_field_from_constraint(self, constraint_name: str, context: Dict[str, Any]) -> Optional[str]:
         """Extract field name from constraint."""
         constraint_lower = constraint_name.lower()
@@ -84,6 +88,7 @@ class ConstraintViolationHandler:
             if field_key in constraint_lower:
                 return field_display
         return None
+
 
     def _get_field_value_from_context(self, field_name: str, context: Dict[str, Any]) -> Optional[str]:
         """Extract field value from context."""
@@ -98,6 +103,7 @@ class ConstraintViolationHandler:
 
         return "unknown"
 
+
     def _determine_entity_from_context(self, context: Dict[str, Any]) -> str:
         """Extract entity type from operation context."""
         operation = context.get("operation", "")
@@ -111,12 +117,14 @@ class ConstraintViolationHandler:
             return "Permission"
         return "Entity"
 
+
     def _analyze_error_message_dynamically(self, error_str: str, context: Dict[str, Any]) -> Exception:
         """Fallback error message analysis."""
         entity_type = self._determine_entity_from_context(context)
         field_name, field_value = self._get_most_relevant_field(context)
 
         return ExceptionFactory.already_exists(entity_type, field_name, field_value)
+
 
     def _get_most_relevant_field(self, context: Dict[str, Any]) -> tuple[str, str]:
         """Extract most relevant field from context."""
@@ -133,6 +141,7 @@ class ConstraintViolationHandler:
                 return display_name, value
 
         return "field", "unknown"
+
 
     def _extract_constraint_name(self, error: IntegrityError) -> Optional[str]:
         """Extract constraint name from database error."""

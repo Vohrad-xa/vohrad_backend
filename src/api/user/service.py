@@ -29,8 +29,10 @@ class UserService(BaseService[User, UserCreate, UserUpdate]):
         super().__init__(User)
         self.user_cache = UserCache()
 
+
     def get_search_fields(self) -> list[str]:
         return ["email", "first_name", "last_name", "city"]
+
 
     async def create_user(self, db: AsyncSession, user_data: UserCreate, tenant: Tenant) -> User:
         try:
@@ -51,6 +53,7 @@ class UserService(BaseService[User, UserCreate, UserUpdate]):
                 e, {"operation": "create_user", "email": user_data.email, "tenant_id": tenant.tenant_id}
             )
 
+
     async def get_user_by_id(self, db: AsyncSession, user_id: UUID, tenant: Tenant) -> User:
         cached_user = await self.user_cache.get_user_by_id(user_id, tenant.tenant_id)
         if cached_user:
@@ -60,6 +63,7 @@ class UserService(BaseService[User, UserCreate, UserUpdate]):
         if user:
             await self.user_cache.cache_user(user, tenant.tenant_id)
         return user
+
 
     async def get_user_by_email(self, db: AsyncSession, email: str, tenant: Tenant) -> Optional[User]:
         cached_user = await self.user_cache.get_user_by_email(email, tenant.tenant_id)
@@ -71,11 +75,13 @@ class UserService(BaseService[User, UserCreate, UserUpdate]):
             await self.user_cache.cache_user(user, tenant.tenant_id)
         return user
 
+
     async def get_users_paginated(
         self, db: AsyncSession, page: int = 1, size: int = 20, tenant: Tenant = None
     ) -> tuple[list[User], int]:
         tenant_id = tenant.tenant_id if tenant else None
         return await self.get_multi(db, page, size, tenant_id)
+
 
     async def update_user(self, db: AsyncSession, user_id: UUID, user_data: UserUpdate, tenant: Tenant) -> User:
         # Cache invalidation requires old email if changed
@@ -91,6 +97,7 @@ class UserService(BaseService[User, UserCreate, UserUpdate]):
         await self.user_cache.cache_user(updated_user, tenant.tenant_id)
 
         return updated_user
+
 
     async def update_user_password(
         self, db: AsyncSession, user_id: UUID, password_data: UserPasswordUpdate, tenant: Tenant
@@ -108,6 +115,7 @@ class UserService(BaseService[User, UserCreate, UserUpdate]):
 
         return user
 
+
     async def delete_user(self, db: AsyncSession, user_id: UUID, tenant: Tenant) -> None:
         # Cache key requires email
         user = await self.get_by_id(db, user_id, tenant.tenant_id)
@@ -119,6 +127,7 @@ class UserService(BaseService[User, UserCreate, UserUpdate]):
         if user_email:
             await self.user_cache.invalidate_user(user_id, tenant.tenant_id, user_email)
 
+
     async def verify_user_email(self, db: AsyncSession, user_id: UUID, tenant: Tenant) -> User:
         """Mark user email as verified."""
         user = await self.get_user_by_id(db, user_id, tenant)
@@ -126,6 +135,7 @@ class UserService(BaseService[User, UserCreate, UserUpdate]):
         await db.commit()
         await db.refresh(user)
         return user
+
 
     async def search_users(
         self, db: AsyncSession, search_term: str, page: int = 1, size: int = 20, tenant: Tenant = None
@@ -137,8 +147,8 @@ class UserService(BaseService[User, UserCreate, UserUpdate]):
     async def get_user_roles(self, db: AsyncSession, user_id: UUID, tenant: Tenant) -> list[Role]:
         """Get roles assigned to user."""
         user = await self.get_by_id(db, user_id, tenant.tenant_id)
-        # Clean, enterprise-grade: use ORM relationships
         return user.roles
+
 
     async def assign_role_to_user(
         self, db: AsyncSession, user_id: UUID, role_id: UUID, assigned_by: UUID, tenant: Tenant
@@ -171,6 +181,7 @@ class UserService(BaseService[User, UserCreate, UserUpdate]):
                 },
             )
 
+
     async def revoke_role_from_user(self, db: AsyncSession, user_id: UUID, role_id: UUID, tenant: Tenant) -> None:
         """Revoke role from user."""
         query = select(Assignment).where(and_(Assignment.user_id == user_id, Assignment.role_id == role_id))
@@ -182,6 +193,7 @@ class UserService(BaseService[User, UserCreate, UserUpdate]):
 
         await db.delete(assignment)
         await db.commit()
+
 
     async def _handle_integrity_error(self, error: IntegrityError, operation_context: dict[str, Any]) -> None:
         """Map database constraints to domain exceptions."""
