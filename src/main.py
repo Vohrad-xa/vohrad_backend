@@ -13,6 +13,7 @@ from contextlib import asynccontextmanager
 from exceptions import BaseAppException
 from fastapi import FastAPI
 from fastapi.exceptions import RequestValidationError
+from fastapi.middleware.cors import CORSMiddleware
 from middleware import EnterpriseExceptionHandler
 from middleware.logging_middleware import RequestLoggingMiddleware
 from observability import get_logger, setup_logging
@@ -36,6 +37,13 @@ app = FastAPI(
     lifespan    = lifespan,
 )
 
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 app.add_middleware(
     AuthMiddleware,

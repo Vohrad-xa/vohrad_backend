@@ -59,7 +59,7 @@ url = "https://pypi.org/simple"
 verify_ssl = true
 
 [tool.pdm.scripts]
-start = "uvicorn main:app --reload --app-dir ./src"
+start = "uvicorn main:app --reload --app-dir ./src --host 0.0.0.0 --port 8000"
 manage = "python ./management/manage.py"
 
 # Security commands

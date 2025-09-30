@@ -11,6 +11,10 @@ class SubdomainExtractor:
     @staticmethod
     def from_request(request: Request) -> Optional[str]:
         """Extract subdomain from FastAPI request."""
+        # header added for development and testing purposes
+        subdomain = request.headers.get("x-tenant-subdomain")
+        if subdomain:
+            return subdomain
         try:
             host = request.headers.get("host", "")
             if not host:
