@@ -275,12 +275,21 @@ class AuthJWTService:
         try:
             payload = self.jwt_engine.decode_token(access_token)
             user_id = UUID(payload.get("sub"))
-
-            # Use Claims-Based revocation via updated blacklist service
-            await self.revocation_service.revoke_user_tokens(user_id, "user_logout")
-            return True
         except Exception:
             return True
+
+        # Claims-Based revocation via updated blacklist service
+        await self.revocation_service.revoke_user_tokens(user_id, "user_logout")
+
+        tenant_id_str = payload.get("tenant_id")
+        if tenant_id_str:
+            try:
+                tenant_id = UUID(tenant_id_str)
+                await self.user_cache.invalidate_user(user_id, tenant_id, payload.get("email"))
+            except Exception:
+                pass
+
+        return True
 
     async def logout_user_from_all_devices(self, user_id: UUID, reason: str = "logout_all_devices") -> int:
         """Logout user from all devices by revoking all their tokens."""
