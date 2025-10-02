@@ -3,8 +3,8 @@
 from api.common import BaseService
 from api.item.models import Item
 from api.item.schema import ItemCreate, ItemUpdate
-from api.tenant.models import Tenant
 from database.constraint_handler import constraint_handler
+from security.jwt import AuthenticatedUser
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 from typing import Any, NoReturn, Optional
@@ -22,58 +22,72 @@ class ItemService(BaseService[Item, ItemCreate, ItemUpdate]):
         return ["name", "code", "description", "barcode", "serial_number"]
 
 
-    async def get_item_by_id(self, db: AsyncSession, item_id: UUID, tenant: Tenant) -> Item:
+    async def create_item(self, db: AsyncSession, item_data: ItemCreate, current_user: AuthenticatedUser) -> Item:
+        """Create a new item."""
+        try:
+            item_dict            = item_data.model_dump()
+            item_dict["user_id"] = current_user.user_id
+            item                 = Item(**item_dict)
+            db.add(item)
+            await db.commit()
+            await db.refresh(item)
+            return item
+
+        except IntegrityError as e:
+            await db.rollback()
+            await self._handle_integrity_error(
+                e, {
+                    "operation"    : "create_item",
+                    "code"         : item_data.code,
+                    "serial_number": item_data.serial_number
+                   }
+            )
+
+
+    async def get_item_by_id(self, db: AsyncSession, item_id: UUID) -> Item:
         """Get item by ID."""
-        return await self.get_by_id(db, item_id, tenant.tenant_id)
+        return await self.get_by_id(db, item_id)
 
 
-    async def get_item_by_code(self, db: AsyncSession, code: str, tenant: Tenant) -> Optional[Item]:
+    async def get_item_by_code(self, db: AsyncSession, code: str) -> Optional[Item]:
         """Get item by code."""
-        return await self.get_by_field(db, "code", code, tenant.tenant_id)
+        return await self.get_by_field(db, "code", code)
 
 
-    async def get_item_by_barcode(self, db: AsyncSession, barcode: str, tenant: Tenant) -> Optional[Item]:
+    async def get_item_by_barcode(self, db: AsyncSession, barcode: str) -> Optional[Item]:
         """Get item by barcode."""
-        return await self.get_by_field(db, "barcode", barcode, tenant.tenant_id)
+        return await self.get_by_field(db, "barcode", barcode)
 
 
-    async def get_item_by_serial(self, db: AsyncSession, serial_number: str, tenant: Tenant) -> Optional[Item]:
+    async def get_item_by_serial(self, db: AsyncSession, serial_number: str) -> Optional[Item]:
         """Get item by serial number."""
-        return await self.get_by_field(db, "serial_number", serial_number, tenant.tenant_id)
+        return await self.get_by_field(db, "serial_number", serial_number)
 
 
-    async def get_items_paginated(
-        self, db: AsyncSession, page: int = 1, size: int = 20, tenant: Tenant = None
-    ) -> tuple[list[Item], int]:
+    async def get_items_paginated(self, db: AsyncSession, page: int = 1, size: int = 20) -> tuple[list[Item], int]:
         """Get paginated list of items."""
-        tenant_id = tenant.tenant_id if tenant else None
-        return await self.get_multi(db, page, size, tenant_id)
+        return await self.get_multi(db, page, size)
 
 
     async def search_items(
-        self, db: AsyncSession, search_term: str, page: int = 1, size: int = 20, tenant: Tenant = None
+        self, db: AsyncSession, search_term: str, page: int = 1, size: int = 20
     ) -> tuple[list[Item], int]:
         """Search items by name, code, description, barcode, or serial number."""
-        tenant_id = tenant.tenant_id if tenant else None
-        return await self.search(db, search_term, page, size, tenant_id)
+        return await self.search(db, search_term, page, size)
 
 
     async def get_items_by_tracking_mode(
-        self, db: AsyncSession, tracking_mode: str, page: int = 1, size: int = 20, tenant: Tenant = None
+        self, db: AsyncSession, tracking_mode: str, page: int = 1, size: int = 20
     ) -> tuple[list[Item], int]:
         """Get items filtered by tracking mode."""
-        tenant_id = tenant.tenant_id if tenant else None
         filters = Item.tracking_mode == tracking_mode
-        return await self.get_filtered(db, filters, page, size, tenant_id)
+        return await self.get_filtered(db, filters, page, size)
 
 
-    async def get_active_items(
-        self, db: AsyncSession, page: int = 1, size: int = 20, tenant: Tenant = None
-    ) -> tuple[list[Item], int]:
+    async def get_active_items(self, db: AsyncSession, page: int = 1, size: int = 20) -> tuple[list[Item], int]:
         """Get active items only."""
-        tenant_id = tenant.tenant_id if tenant else None
         filters = Item.is_active == True  # noqa: E712
-        return await self.get_filtered(db, filters, page, size, tenant_id)
+        return await self.get_filtered(db, filters, page, size)
 
 
     async def _handle_integrity_error(

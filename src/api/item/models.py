@@ -27,13 +27,14 @@ class Item(Base):
     TRACKING_ABSTRACT   = "abstract"
     TRACKING_STANDARD   = "standard"
     TRACKING_SERIALIZED = "serialized"
+
     id = sa.Column(PostgresUUID(as_uuid=True), primary_key=True, default=uuid4, nullable=False)
     name          = sa.Column(sa.String(100), nullable=False)
     code          = sa.Column(sa.String(50), nullable=False, unique=True)
     barcode       = sa.Column(sa.String, nullable=True)
     description   = sa.Column(sa.Text, nullable=True)
     tracking_mode = sa.Column(
-        sa.Enum(TRACKING_ABSTRACT, TRACKING_STANDARD, TRACKING_SERIALIZED, name="tracking_mode_enum"),
+        sa.String(),
         nullable=False,
         default=TRACKING_ABSTRACT,
     )
