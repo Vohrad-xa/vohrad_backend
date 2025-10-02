@@ -42,11 +42,16 @@ async def create_item(
 @routes.get("/", response_model=SuccessResponse[PaginatedResponse[ItemResponse]])
 async def get_items(
     pagination: PaginationParams = Depends(pagination_params),
+    filter: str = Query(None, description="OData filter expression"),
     context=Depends(get_tenant_context),
 ):
-    """Get paginated list of items"""
+    """Get paginated list of items with optional OData filtering"""
     _, _, db = context
-    items, total = await item_service.get_items_paginated(db, pagination.page, pagination.size)
+
+    if filter:
+        items, total = await item_service.get_items_with_filter(db, filter, pagination.page, pagination.size)
+    else:
+        items, total = await item_service.get_items_paginated(db, pagination.page, pagination.size)
     return BaseRouterMixin.create_paginated_response(items, total, pagination, ItemResponse)
 
 
