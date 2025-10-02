@@ -218,7 +218,7 @@ def create_refresh_payload(user_id: UUID, tenant_id: Optional[UUID] = None, user
     """Create refresh token payload."""
     jwt_config = get_jwt_config()
     now        = datetime.now(timezone.utc)
-    expires    = now + timedelta(days=7)
+    expires    = now + timedelta(days=jwt_config.refresh_token_expire_days)
 
     return {
         "sub"       : str(user_id),
