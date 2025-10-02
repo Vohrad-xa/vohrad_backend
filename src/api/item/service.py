@@ -109,6 +109,15 @@ class ItemService(BaseService[Item, ItemCreate, ItemUpdate]):
         await self.delete(db, item_id)
 
 
+    async def get_items_with_filter(
+        self, db: AsyncSession, filter_expression: str, page: int = 1, size: int = 20
+    ) -> tuple[list[Item], int]:
+        """Get items using OData filter expression with JSONB support."""
+        return await self.get_filtered(
+            db, filter_expression, page, size, jsonb_fields={"specifications": "specifications"}
+        )
+
+
     async def _handle_integrity_error(
         self, error: IntegrityError, operation_context: dict[str, Any]
     ) -> NoReturn:

@@ -30,6 +30,7 @@ dependencies = [
     "inquirer>=3.4.1",
     "annotated-types>=0.7.0",
     "asyncpg>=0.30.0",
+    "odata-query>=0.10.0",
 ]
 
 [dependency-groups]
