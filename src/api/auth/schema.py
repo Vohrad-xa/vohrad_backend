@@ -20,7 +20,7 @@ class AdminLoginRequest(BaseModel):
 
 class RefreshTokenRequest(BaseModel):
     """Token refresh request schema."""
-    refresh_token: str = Field(..., min_length=1, description="Valid refresh token")
+    refresh_token: Optional[str] = Field(None, description="Valid refresh token")
 
 
 class TokenResponse(BaseModel):
