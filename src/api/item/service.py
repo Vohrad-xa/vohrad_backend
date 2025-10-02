@@ -104,6 +104,11 @@ class ItemService(BaseService[Item, ItemCreate, ItemUpdate]):
             )
 
 
+    async def delete_item(self, db: AsyncSession, item_id: UUID) -> None:
+        """Delete an item."""
+        await self.delete(db, item_id)
+
+
     async def _handle_integrity_error(
         self, error: IntegrityError, operation_context: dict[str, Any]
     ) -> NoReturn:

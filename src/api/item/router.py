@@ -9,6 +9,7 @@ from fastapi import APIRouter, Depends, Query, status
 from uuid import UUID
 from web import (
     CreatedResponse,
+    DeletedResponse,
     PaginatedResponse,
     PaginationParams,
     ResponseFactory,
@@ -144,3 +145,14 @@ async def update_item(
     _, _, db = context
     item = await item_service.update_item(db, item_id, item_data)
     return ResponseFactory.updated(item, response_model=ItemResponse)
+
+
+@routes.delete("/{item_id}", response_model=DeletedResponse)
+async def delete_item(
+    item_id: UUID,
+    context=Depends(get_tenant_context),
+):
+    """Delete item"""
+    _, _, db = context
+    await item_service.delete_item(db, item_id)
+    return ResponseFactory.deleted("item")
