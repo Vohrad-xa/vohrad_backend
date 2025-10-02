@@ -3,6 +3,7 @@
 from api.admin.router import routes as admin_routes
 from api.auth import router as auth_routes
 from api.auth.middleware import AuthMiddleware
+from api.item.router import routes as item_routes
 from api.permission.router import routes as permission_routes
 from api.role.router import routes as role_routes
 from api.system.router import routes as system_routes
@@ -67,4 +68,5 @@ app.include_router(tenant_routes, prefix="/v1")
 app.include_router(user_routes, prefix="/v1")
 app.include_router(role_routes, prefix="/v1")
 app.include_router(permission_routes, prefix="/v1")
+app.include_router(item_routes, prefix="/v1")
 app.include_router(system_routes, prefix="/v1")
