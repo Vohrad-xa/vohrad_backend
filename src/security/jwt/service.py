@@ -101,7 +101,7 @@ class AuthJWTService:
         refresh_payload = create_refresh_payload(user_id=user.id, tenant_id=user.tenant_id, user_type="user")
 
         refresh_token_str = self.jwt_engine.encode_token(refresh_payload)
-        refresh_expires = self.jwt_engine.create_expiry(days=self.jwt_config.refresh_token_expire_days)
+        refresh_expires   = self.jwt_engine.create_expiry(days=self.jwt_config.refresh_token_expire_days)
 
         refresh_token = RefreshToken(token=refresh_token_str, payload=refresh_payload, expires_at=refresh_expires)
 
@@ -115,14 +115,14 @@ class AuthJWTService:
         access_payload = create_admin_access_payload(admin_id=admin.id, email=admin.email, user_version=user_version)
 
         access_token_str = self.jwt_engine.encode_token(access_payload)
-        access_expires = self.jwt_engine.create_expiry()
+        access_expires   = self.jwt_engine.create_expiry()
 
         access_token = AccessToken(token=access_token_str, payload=access_payload, expires_at=access_expires)
 
         refresh_payload = create_refresh_payload(user_id=admin.id, tenant_id=None, user_type="admin")
 
         refresh_token_str = self.jwt_engine.encode_token(refresh_payload)
-        refresh_expires = self.jwt_engine.create_expiry(days=self.jwt_config.refresh_token_expire_days)
+        refresh_expires   = self.jwt_engine.create_expiry(days=self.jwt_config.refresh_token_expire_days)
 
         refresh_token = RefreshToken(token=refresh_token_str, payload=refresh_payload, expires_at=refresh_expires)
 
