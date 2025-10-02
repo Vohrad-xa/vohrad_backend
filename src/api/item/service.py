@@ -90,6 +90,20 @@ class ItemService(BaseService[Item, ItemCreate, ItemUpdate]):
         return await self.get_filtered(db, filters, page, size)
 
 
+    async def update_item(self, db: AsyncSession, item_id: UUID, item_data: ItemUpdate) -> Item:
+        """Update an item."""
+        try:
+            return await self.update(db, item_id, item_data)
+        except IntegrityError as e:
+            await db.rollback()
+            await self._handle_integrity_error(
+                e, {
+                    "operation": "update_item",
+                    "item_id": str(item_id)
+                }
+            )
+
+
     async def _handle_integrity_error(
         self, error: IntegrityError, operation_context: dict[str, Any]
     ) -> NoReturn:

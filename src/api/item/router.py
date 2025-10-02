@@ -2,12 +2,20 @@
 
 from api.common.base_router import BaseRouterMixin
 from api.common.context_dependencies import get_tenant_context
-from api.item.schema import ItemCreate, ItemResponse
+from api.item.schema import ItemCreate, ItemResponse, ItemUpdate
 from api.item.service import item_service
 from exceptions import ExceptionFactory
 from fastapi import APIRouter, Depends, Query, status
 from uuid import UUID
-from web import CreatedResponse, PaginatedResponse, PaginationParams, ResponseFactory, SuccessResponse, pagination_params
+from web import (
+    CreatedResponse,
+    PaginatedResponse,
+    PaginationParams,
+    ResponseFactory,
+    SuccessResponse,
+    UpdatedResponse,
+    pagination_params,
+)
 
 routes = APIRouter(
     tags=["items"],
@@ -124,3 +132,15 @@ async def get_item(
     _, _, db = context
     item = await item_service.get_item_by_id(db, item_id)
     return ResponseFactory.success(item, response_model=ItemResponse)
+
+
+@routes.put("/{item_id}", response_model=UpdatedResponse[ItemResponse])
+async def update_item(
+    item_id: UUID,
+    item_data: ItemUpdate,
+    context=Depends(get_tenant_context),
+):
+    """Update item"""
+    _, _, db = context
+    item = await item_service.update_item(db, item_id, item_data)
+    return ResponseFactory.updated(item, response_model=ItemResponse)
