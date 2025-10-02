@@ -67,6 +67,9 @@ def upgrade(schema: str) -> None:
     op.create_index("idx_items_is_active", "items", ["is_active"], schema=schema)
     op.create_index("idx_items_created_at", "items", ["created_at"], schema=schema)
 
+    # GIN index for JSONB specifications
+    op.create_index("idx_items_specifications_gin", "items", ["specifications"], schema=schema, postgresql_using="gin")
+
 
 @for_each_tenant_schema
 def downgrade(schema: str) -> None:
@@ -74,6 +77,7 @@ def downgrade(schema: str) -> None:
     schema_quoted = preparer.format_schema(schema)
 
     # Drop indexes
+    op.drop_index("idx_items_specifications_gin", table_name="items", schema=schema)
     op.drop_index("idx_items_created_at", table_name="items", schema=schema)
     op.drop_index("idx_items_is_active", table_name="items", schema=schema)
     op.drop_index("idx_items_item_relation_id", table_name="items", schema=schema)
