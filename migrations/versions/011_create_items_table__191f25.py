@@ -39,7 +39,6 @@ def upgrade(schema: str) -> None:
         sa.Column("notes", sa.Text(), nullable=True),
         sa.Column("is_active", sa.Boolean(), nullable=False, server_default="true"),
         sa.Column("specifications", sa.dialects.postgresql.JSONB(astext_type=sa.Text()), nullable=True),
-        sa.Column("estimated_value", sa.Numeric(precision=10, scale=2), nullable=True),
         sa.Column("tracking_changed_at", sa.DateTime(timezone=True), nullable=True),
         sa.Column("tracking_change_reason", sa.Text(), nullable=True),
         sa.Column("user_id", sa.UUID(), nullable=True),

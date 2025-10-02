@@ -21,7 +21,6 @@ class ItemBase(BaseModel):
     notes                 : Optional[str] = None
     is_active             : bool = True
     specifications        : Optional[dict[str, Any]] = None
-    estimated_value       : Optional[Decimal] = None
     tracking_change_reason: Optional[str] = None
     user_id               : Optional[UUID] = None
     parent_item_id        : Optional[UUID] = None
@@ -41,11 +40,11 @@ class ItemBase(BaseModel):
             raise ValueError("Code must not exceed 50 characters")
         return v
 
-    @field_validator("price", "estimated_value")
+    @field_validator("price")
     @classmethod
-    def validate_price_fields(cls, v):
+    def validate_price(cls, v):
         if v is not None and v < 0:
-            raise ValueError("Price fields must be non-negative")
+            raise ValueError("Price must be non-negative")
         return v
 
 
@@ -68,7 +67,6 @@ class ItemUpdate(BaseModel):
     notes                 : Optional[str] = None
     is_active             : Optional[bool] = None
     specifications        : Optional[dict[str, Any]] = None
-    estimated_value       : Optional[Decimal] = None
     tracking_change_reason: Optional[str] = None
     user_id               : Optional[UUID] = None
     parent_item_id        : Optional[UUID] = None
@@ -88,11 +86,11 @@ class ItemUpdate(BaseModel):
             raise ValueError("Code must not exceed 50 characters")
         return v
 
-    @field_validator("price", "estimated_value")
+    @field_validator("price")
     @classmethod
-    def validate_price_fields(cls, v):
+    def validate_price(cls, v):
         if v is not None and v < 0:
-            raise ValueError("Price fields must be non-negative")
+            raise ValueError("Price must be non-negative")
         return v
 
 
@@ -110,7 +108,6 @@ class ItemResponse(BaseResponseSchema):
     notes                 : Optional[str] = None
     is_active             : bool
     specifications        : Optional[dict[str, Any]] = None
-    estimated_value       : Optional[Decimal] = None
     tracking_changed_at   : Optional[datetime] = None
     tracking_change_reason: Optional[str] = None
     user_id               : Optional[UUID] = None

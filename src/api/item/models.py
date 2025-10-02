@@ -3,6 +3,7 @@
 from database import Base
 import sqlalchemy as sa
 from sqlalchemy.dialects.postgresql import JSONB, UUID as PostgresUUID
+from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 from uuid import uuid4
 
@@ -43,7 +44,6 @@ class Item(Base):
     notes                  = sa.Column(sa.Text, nullable=True)
     is_active              = sa.Column(sa.Boolean, nullable=False, default=True)
     specifications         = sa.Column(JSONB, nullable=True)
-    estimated_value        = sa.Column(sa.Numeric(10, 2), nullable=True)
     tracking_changed_at    = sa.Column(sa.DateTime(timezone=True), nullable=True)
     tracking_change_reason = sa.Column(sa.Text, nullable=True)
     user_id                = sa.Column(PostgresUUID(as_uuid=True), sa.ForeignKey("users.id", ondelete="SET NULL"), nullable=True)
@@ -51,3 +51,7 @@ class Item(Base):
     item_relation_id       = sa.Column(PostgresUUID(as_uuid=True), sa.ForeignKey("items.id", ondelete="CASCADE"), nullable=True)
     created_at             = sa.Column(sa.DateTime(timezone=True), nullable=False, server_default=func.now())
     updated_at             = sa.Column(sa.DateTime(timezone=True), nullable=False, server_default=func.now(), onupdate=func.now())
+
+    # Relationships
+    parent = relationship("Item", remote_side="Item.id", foreign_keys=[parent_item_id], backref="children")
+    related_item = relationship("Item", remote_side="Item.id", foreign_keys=[item_relation_id], backref="item_relations")
