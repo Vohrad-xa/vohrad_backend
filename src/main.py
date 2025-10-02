@@ -10,6 +10,7 @@ from api.system.router import routes as system_routes
 from api.tenant.router import routes as tenant_routes
 from api.user.router import routes as user_routes
 from config.cors import install_cors
+from config.rate_limit import install_rate_limiting
 from config.settings import get_settings
 from contextlib import asynccontextmanager
 from exceptions import BaseAppException
@@ -57,6 +58,7 @@ app.add_middleware(
 app.add_middleware(RequestLoggingMiddleware)
 
 install_cors(app)
+install_rate_limiting(app)
 app.add_exception_handler(BaseAppException, EnterpriseExceptionHandler.base_app_exception_handler)
 app.add_exception_handler(RequestValidationError, EnterpriseExceptionHandler.validation_exception_handler)
 app.add_exception_handler(PydanticValidationError, EnterpriseExceptionHandler.pydantic_validation_exception_handler)

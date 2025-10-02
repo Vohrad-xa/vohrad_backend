@@ -1,6 +1,7 @@
 """Item schemas."""
 
 from api.common.schemas import BaseResponseSchema
+from api.common.validators import CommonValidators
 from datetime import datetime
 from decimal import Decimal
 from pydantic import BaseModel, field_validator
@@ -46,6 +47,11 @@ class ItemBase(BaseModel):
         if v is not None and v < 0:
             raise ValueError("Price must be non-negative")
         return v
+
+    @field_validator("specifications")
+    @classmethod
+    def validate_specifications(cls, v):
+        return CommonValidators.validate_jsonb_specifications(v)
 
 
 class ItemCreate(ItemBase):
