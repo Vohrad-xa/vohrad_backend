@@ -244,19 +244,27 @@ class BaseService(Generic[ModelType, CreateSchemaType, UpdateSchemaType], ABC):
 
     async def get_filtered(
         self,
-        db: AsyncSession,
+        db          : AsyncSession,
         filters,
-        page     : int = 1,
-        size     : int = 20,
-        tenant_id: Optional[UUID] = None,
+        page        : int = 1,
+        size        : int = 20,
+        tenant_id   : Optional[UUID] = None,
+        jsonb_fields: Optional[dict[str, str]] = None,
     ) -> tuple[list[ModelType], int]:
-        """Get filtered objects with pagination and optional tenant filtering."""
+        """Get filtered objects - supports SQLAlchemy filters or OData strings."""
         query = select(self.model)
 
         if tenant_id and hasattr(self.model, "tenant_id"):
             query = query.where(self.model.tenant_id == tenant_id)
 
         if filters is not None:
+            # Smart detection: string = OData, otherwise = SQLAlchemy filter
+            if isinstance(filters, str):
+                from utils.odata_parser import ODataToSQLAlchemy
+
+                parser = ODataToSQLAlchemy(self.model, jsonb_fields=jsonb_fields)
+                filters = parser.parse(filters)
+
             query = query.where(filters)
 
         total = await self._count_with_filters(db, tenant_id, filters=filters)
