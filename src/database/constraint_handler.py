@@ -15,14 +15,21 @@ class ConstraintViolationHandler:
             r".*subdomain.*": "Tenant",
             r".*name.*": lambda ctx: self._determine_entity_from_context(ctx),
             r".*permissions.*": "Permission",
+            r".*items.*": "Item",
+            r".*code.*": "Item",
+            r".*serial.*": "Item",
+            r".*barcode.*": "Item",
         }
 
         self._context_field_mapping = {
-            "email"     : "email",
-            "subdomain" : "subdomain",
-            "sub_domain": "subdomain",
-            "name"      : "name",
-            "resource"  : "resource and action",
+            "email"        : "email",
+            "subdomain"    : "subdomain",
+            "sub_domain"   : "subdomain",
+            "name"         : "name",
+            "resource"     : "resource and action",
+            "code"         : "code",
+            "serial_number": "serial_number",
+            "barcode"      : "barcode",
         }
 
 
@@ -90,14 +97,17 @@ class ConstraintViolationHandler:
         return None
 
 
-    def _get_field_value_from_context(self, field_name: str, context: Dict[str, Any]) -> Optional[str]:
+    def _get_field_value_from_context(self, field_name: Optional[str], context: Dict[str, Any]) -> Optional[str]:
         """Extract field value from context."""
+        if not field_name:
+            return "unknown"
+
         if field_name == "resource and action":
             resource = context.get("resource", "unknown")
             action   = context.get("action", "unknown")
             return f"{resource}:{action}"
 
-        for context_key in ["email", "subdomain", "sub_domain", "name"]:
+        for context_key in ["email", "subdomain", "sub_domain", "name", "code", "serial_number", "barcode"]:
             if context_key in field_name.lower() and context.get(context_key):
                 return str(context.get(context_key))
 
@@ -107,6 +117,8 @@ class ConstraintViolationHandler:
     def _determine_entity_from_context(self, context: Dict[str, Any]) -> str:
         """Extract entity type from operation context."""
         operation = context.get("operation", "")
+        if "item" in operation:
+            return "Item"
         if "user" in operation:
             return "User"
         if "role" in operation:
@@ -128,7 +140,7 @@ class ConstraintViolationHandler:
 
     def _get_most_relevant_field(self, context: Dict[str, Any]) -> tuple[str, str]:
         """Extract most relevant field from context."""
-        field_priority = ["email", "subdomain", "sub_domain", "name", "resource"]
+        field_priority = ["email", "subdomain", "sub_domain", "code", "serial_number", "barcode", "name", "resource"]
 
         for field in field_priority:
             if context.get(field):
