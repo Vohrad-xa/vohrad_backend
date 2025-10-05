@@ -36,18 +36,33 @@ class ODataToSQLAlchemy:
             op    = node.comparator
 
             if isinstance(left, ast.Attribute):
-                # JSONB path: specifications/cpu
+                # JSONB path: e.g., specifications/cpu
                 field_path = f"{left.owner.name}/{left.attr}"
                 parts = field_path.split('/')
 
                 if len(parts) == 2 and parts[0] in self.jsonb_fields:
                     jsonb_column = getattr(self.model_class, parts[0])
                     json_key = parts[1]
-                    right_val = right.val if hasattr(right, 'val') else str(right)
+
+                    # Determine Python type for JSONB value to match JSON type semantics
+                    if isinstance(right, ast.Boolean):
+                        right_val: object = right.val.lower() == 'true'
+                    elif hasattr(right, 'val'):
+                        # Try to coerce numbers when possible, else keep string
+                        val = right.val
+                        try:
+                            # Prefer int when exact; fallback to float
+                            right_val = int(val) if str(int(val)) == str(val) else float(val)
+                        except Exception:
+                            right_val = str(val)
+                    else:
+                        right_val = str(right)
 
                     if isinstance(op, ast.Eq):
-                        return jsonb_column[json_key].astext == str(right_val)
+                        # Use JSONB containment to leverage GIN indexes
+                        return jsonb_column.contains({json_key: right_val})
                     elif isinstance(op, ast.NotEq):
+                        # Fallback to extracted text inequality (no GIN acceleration)
                         return jsonb_column[json_key].astext != str(right_val)
 
             elif isinstance(left, ast.Identifier):

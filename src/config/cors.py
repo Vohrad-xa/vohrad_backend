@@ -1,12 +1,10 @@
 """Centralised CORS configuration utilities."""
 
+from .settings import get_settings
 from dataclasses import dataclass
-from typing import Iterable, Sequence
-
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-
-from .settings import get_settings
+from typing import Iterable, Sequence
 
 
 @dataclass(frozen=True)
@@ -21,7 +19,6 @@ class CORSConfig:
 
 def _dedupe(sequence: Iterable[str]) -> list[str]:
     """Preserve order while removing duplicates."""
-
     seen: set[str] = set()
     result: list[str] = []
     for item in sequence:
@@ -33,7 +30,6 @@ def _dedupe(sequence: Iterable[str]) -> list[str]:
 
 def get_cors_config() -> CORSConfig:
     """Build CORS configuration from application settings."""
-
     settings = get_settings()
     origins  = getattr(settings, 'CORS_ALLOWED_ORIGINS', None) or settings.CORS_ALLOW_ORIGINS or []
     return CORSConfig(allow_origins=origins)
@@ -41,7 +37,6 @@ def get_cors_config() -> CORSConfig:
 
 def install_cors(app: FastAPI) -> None:
     """Install the CORS middleware using centralised configuration."""
-
     config = get_cors_config()
     if not config.allow_origins:
         return

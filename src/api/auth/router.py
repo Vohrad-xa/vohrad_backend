@@ -12,13 +12,13 @@ from .schema import (
 from api.tenant.dependencies import get_current_tenant
 from api.tenant.models import Tenant
 from config.keys import get_key_manager
+from config.settings import get_settings
+from exceptions import AuthenticationException
 from fastapi import APIRouter, Depends, Request, Response
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from security.jwt import AuthenticatedUser, get_auth_jwt_service
 from security.jwt.tokens import TokenPair
 from web import ResponseFactory, SuccessResponse
-from config.settings import get_settings
-from exceptions import AuthenticationException
 
 settings = get_settings()
 REFRESH_COOKIE_NAME = settings.WEB_REFRESH_COOKIE_NAME
@@ -59,6 +59,7 @@ def _clear_refresh_cookie(response: Response) -> None:
         delete_kwargs["domain"] = settings.WEB_COOKIE_DOMAIN
 
     response.delete_cookie(REFRESH_COOKIE_NAME, **delete_kwargs)
+
 
 router = APIRouter(
     prefix = "/auth",

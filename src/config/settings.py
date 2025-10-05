@@ -4,7 +4,7 @@ from observability.logger import get_logger
 import os
 from pydantic import Field, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
-from typing import ClassVar, Optional, List
+from typing import ClassVar, List, Optional
 
 logger = get_logger()
 
