@@ -3,10 +3,14 @@
 from api.common import BaseService
 from api.item.models import Item
 from api.item.schema import ItemCreate, ItemUpdate
+from api.item_location.models import ItemLocation
 from database.constraint_handler import constraint_handler
+from exceptions import ExceptionFactory
 from security.jwt import AuthenticatedUser
+from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import selectinload
 from typing import Any, NoReturn, Optional
 from uuid import UUID
 
@@ -45,23 +49,54 @@ class ItemService(BaseService[Item, ItemCreate, ItemUpdate]):
 
 
     async def get_item_by_id(self, db: AsyncSession, item_id: UUID) -> Item:
-        """Get item by ID."""
-        return await self.get_by_id(db, item_id)
+        """Get item by ID with locations eager-loaded for detail views."""
+        # Eager-load junction + location for response composition
+        query = (
+            select(Item)
+            .where(Item.id == item_id)
+            .options(selectinload(Item.item_locations).selectinload(ItemLocation.location))
+        )
+        result = await db.execute(query)
+        item = result.scalar_one_or_none()
+        if not item:
+            raise ExceptionFactory.not_found("Item", item_id)
+        return item
 
 
     async def get_item_by_code(self, db: AsyncSession, code: str) -> Optional[Item]:
-        """Get item by code."""
-        return await self.get_by_field(db, "code", code)
+        """Get item by code with locations eager-loaded for detail views."""
+        query = (
+            select(Item)
+            .where(Item.code == code)
+            .options(selectinload(Item.item_locations).selectinload(ItemLocation.location))
+        )
+        result = await db.execute(query)
+        item = result.scalar_one_or_none()
+        return item
 
 
     async def get_item_by_barcode(self, db: AsyncSession, barcode: str) -> Optional[Item]:
-        """Get item by barcode."""
-        return await self.get_by_field(db, "barcode", barcode)
+        """Get item by barcode with locations eager-loaded for detail views."""
+        query = (
+            select(Item)
+            .where(Item.barcode == barcode)
+            .options(selectinload(Item.item_locations).selectinload(ItemLocation.location))
+        )
+        result = await db.execute(query)
+        item = result.scalar_one_or_none()
+        return item
 
 
     async def get_item_by_serial(self, db: AsyncSession, serial_number: str) -> Optional[Item]:
-        """Get item by serial number."""
-        return await self.get_by_field(db, "serial_number", serial_number)
+        """Get item by serial number with locations eager-loaded for detail views."""
+        query = (
+            select(Item)
+            .where(Item.serial_number == serial_number)
+            .options(selectinload(Item.item_locations).selectinload(ItemLocation.location))
+        )
+        result = await db.execute(query)
+        item = result.scalar_one_or_none()
+        return item
 
 
     async def get_items_paginated(self, db: AsyncSession, page: int = 1, size: int = 20) -> tuple[list[Item], int]:
