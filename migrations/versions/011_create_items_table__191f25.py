@@ -19,11 +19,7 @@ depends_on: Union[str, Sequence[str], None] = None
 
 @for_each_tenant_schema
 def upgrade(schema: str) -> None:
-    preparer = sa.sql.compiler.IdentifierPreparer(op.get_bind().dialect)
-    schema_quoted = preparer.format_schema(schema)
 
-    # Create tracking_mode enum type
-    op.execute(f"CREATE TYPE {schema_quoted}.tracking_mode_enum AS ENUM ('abstract', 'standard', 'serialized')")
 
     # Create items table
     op.create_table(
@@ -57,10 +53,8 @@ def upgrade(schema: str) -> None:
     )
 
     # Create indexes
-    op.create_index("idx_items_code", "items", ["code"], schema=schema)
     op.create_index("idx_items_barcode", "items", ["barcode"], schema=schema)
     op.create_index("idx_items_tracking_mode", "items", ["tracking_mode"], schema=schema)
-    op.create_index("idx_items_serial_number", "items", ["serial_number"], schema=schema)
     op.create_index("idx_items_user_id", "items", ["user_id"], schema=schema)
     op.create_index("idx_items_parent_item_id", "items", ["parent_item_id"], schema=schema)
     op.create_index("idx_items_item_relation_id", "items", ["item_relation_id"], schema=schema)
@@ -73,8 +67,6 @@ def upgrade(schema: str) -> None:
 
 @for_each_tenant_schema
 def downgrade(schema: str) -> None:
-    preparer = sa.sql.compiler.IdentifierPreparer(op.get_bind().dialect)
-    schema_quoted = preparer.format_schema(schema)
 
     # Drop indexes
     op.drop_index("idx_items_specifications_gin", table_name="items", schema=schema)
@@ -83,13 +75,8 @@ def downgrade(schema: str) -> None:
     op.drop_index("idx_items_item_relation_id", table_name="items", schema=schema)
     op.drop_index("idx_items_parent_item_id", table_name="items", schema=schema)
     op.drop_index("idx_items_user_id", table_name="items", schema=schema)
-    op.drop_index("idx_items_serial_number", table_name="items", schema=schema)
     op.drop_index("idx_items_tracking_mode", table_name="items", schema=schema)
     op.drop_index("idx_items_barcode", table_name="items", schema=schema)
-    op.drop_index("idx_items_code", table_name="items", schema=schema)
 
     # Drop items table
     op.drop_table("items", schema=schema)
-
-    # Drop tracking_mode enum type
-    op.execute(f"DROP TYPE IF EXISTS {schema_quoted}.tracking_mode_enum")
