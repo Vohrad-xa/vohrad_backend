@@ -21,10 +21,12 @@ class ItemService(BaseService[Item, ItemCreate, ItemUpdate]):
     def __init__(self):
         super().__init__(Item)
 
+    def _get_eager_load_options(self):
+        """Get eager loading options for item locations."""
+        return [selectinload(Item.item_locations).selectinload(ItemLocation.location)]
 
     def get_search_fields(self) -> list[str]:
         return ["name", "code", "description", "barcode", "serial_number"]
-
 
     async def create_item(self, db: AsyncSession, item_data: ItemCreate, current_user: AuthenticatedUser) -> Item:
         """Create a new item."""
@@ -50,53 +52,30 @@ class ItemService(BaseService[Item, ItemCreate, ItemUpdate]):
 
     async def get_item_by_id(self, db: AsyncSession, item_id: UUID) -> Item:
         """Get item by ID with locations eager-loaded for detail views."""
-        # Eager-load junction + location for response composition
-        query = (
-            select(Item)
-            .where(Item.id == item_id)
-            .options(selectinload(Item.item_locations).selectinload(ItemLocation.location))
-        )
+        query = select(Item).where(Item.id == item_id).options(*self._get_eager_load_options())
         result = await db.execute(query)
         item = result.scalar_one_or_none()
         if not item:
             raise ExceptionFactory.not_found("Item", item_id)
         return item
 
-
     async def get_item_by_code(self, db: AsyncSession, code: str) -> Optional[Item]:
         """Get item by code with locations eager-loaded for detail views."""
-        query = (
-            select(Item)
-            .where(Item.code == code)
-            .options(selectinload(Item.item_locations).selectinload(ItemLocation.location))
-        )
+        query = select(Item).where(Item.code == code).options(*self._get_eager_load_options())
         result = await db.execute(query)
-        item = result.scalar_one_or_none()
-        return item
-
+        return result.scalar_one_or_none()
 
     async def get_item_by_barcode(self, db: AsyncSession, barcode: str) -> Optional[Item]:
         """Get item by barcode with locations eager-loaded for detail views."""
-        query = (
-            select(Item)
-            .where(Item.barcode == barcode)
-            .options(selectinload(Item.item_locations).selectinload(ItemLocation.location))
-        )
+        query = select(Item).where(Item.barcode == barcode).options(*self._get_eager_load_options())
         result = await db.execute(query)
-        item = result.scalar_one_or_none()
-        return item
-
+        return result.scalar_one_or_none()
 
     async def get_item_by_serial(self, db: AsyncSession, serial_number: str) -> Optional[Item]:
         """Get item by serial number with locations eager-loaded for detail views."""
-        query = (
-            select(Item)
-            .where(Item.serial_number == serial_number)
-            .options(selectinload(Item.item_locations).selectinload(ItemLocation.location))
-        )
+        query = select(Item).where(Item.serial_number == serial_number).options(*self._get_eager_load_options())
         result = await db.execute(query)
-        item = result.scalar_one_or_none()
-        return item
+        return result.scalar_one_or_none()
 
 
     async def get_items_paginated(self, db: AsyncSession, page: int = 1, size: int = 20) -> tuple[list[Item], int]:
