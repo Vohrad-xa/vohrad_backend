@@ -2,7 +2,7 @@
 
 from api.common.base_router import BaseRouterMixin
 from api.common.context_dependencies import get_tenant_context
-from api.item.schema import ItemCreate, ItemResponse, ItemUpdate
+from api.item.schema import ItemCreate, ItemDetailResponse, ItemResponse, ItemUpdate
 from api.item.service import item_service
 from exceptions import ExceptionFactory
 from fastapi import APIRouter, Depends, Query, status
@@ -67,7 +67,7 @@ async def search_items(
     return BaseRouterMixin.create_paginated_response(items, total, pagination, ItemResponse)
 
 
-@routes.get("/code/{code}", response_model=SuccessResponse[ItemResponse])
+@routes.get("/code/{code}", response_model=SuccessResponse[ItemDetailResponse])
 async def get_item_by_code(
     code: str,
     context=Depends(get_tenant_context),
@@ -77,10 +77,10 @@ async def get_item_by_code(
     item = await item_service.get_item_by_code(db, code)
     if not item:
         raise ExceptionFactory.not_found("Item", code)
-    return ResponseFactory.success(item, response_model=ItemResponse)
+    return ResponseFactory.success(item, response_model=ItemDetailResponse)
 
 
-@routes.get("/barcode/{barcode}", response_model=SuccessResponse[ItemResponse])
+@routes.get("/barcode/{barcode}", response_model=SuccessResponse[ItemDetailResponse])
 async def get_item_by_barcode(
     barcode: str,
     context=Depends(get_tenant_context),
@@ -90,10 +90,10 @@ async def get_item_by_barcode(
     item = await item_service.get_item_by_barcode(db, barcode)
     if not item:
         raise ExceptionFactory.not_found("Item", barcode)
-    return ResponseFactory.success(item, response_model=ItemResponse)
+    return ResponseFactory.success(item, response_model=ItemDetailResponse)
 
 
-@routes.get("/serial/{serial_number}", response_model=SuccessResponse[ItemResponse])
+@routes.get("/serial/{serial_number}", response_model=SuccessResponse[ItemDetailResponse])
 async def get_item_by_serial(
     serial_number: str,
     context=Depends(get_tenant_context),
@@ -103,7 +103,7 @@ async def get_item_by_serial(
     item = await item_service.get_item_by_serial(db, serial_number)
     if not item:
         raise ExceptionFactory.not_found("Item", serial_number)
-    return ResponseFactory.success(item, response_model=ItemResponse)
+    return ResponseFactory.success(item, response_model=ItemDetailResponse)
 
 
 @routes.get("/tracking/{tracking_mode}", response_model=SuccessResponse[PaginatedResponse[ItemResponse]])
@@ -129,7 +129,7 @@ async def get_active_items(
     return BaseRouterMixin.create_paginated_response(items, total, pagination, ItemResponse)
 
 
-@routes.get("/{item_id}", response_model=SuccessResponse[ItemResponse])
+@routes.get("/{item_id}", response_model=SuccessResponse[ItemDetailResponse])
 async def get_item(
     item_id: UUID,
     context=Depends(get_tenant_context),
@@ -137,7 +137,7 @@ async def get_item(
     """Get item by ID"""
     _, _, db = context
     item = await item_service.get_item_by_id(db, item_id)
-    return ResponseFactory.success(item, response_model=ItemResponse)
+    return ResponseFactory.success(item, response_model=ItemDetailResponse)
 
 
 @routes.put("/{item_id}", response_model=UpdatedResponse[ItemResponse])

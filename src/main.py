@@ -4,6 +4,8 @@ from api.admin.router import routes as admin_routes
 from api.auth import router as auth_routes
 from api.auth.middleware import AuthMiddleware
 from api.item.router import routes as item_routes
+from api.item_location.models import ItemLocation  # noqa: F401
+from api.location.models import Location  # noqa: F401
 from api.permission.router import routes as permission_routes
 from api.role.router import routes as role_routes
 from api.system.router import routes as system_routes
