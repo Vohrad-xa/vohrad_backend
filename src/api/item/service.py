@@ -51,8 +51,8 @@ class ItemService(BaseService[Item, ItemCreate, ItemUpdate]):
         return item
 
 
-    async def reload_after_write(self, db: AsyncSession, obj_id: UUID, tenant_id: Optional[UUID] = None) -> Item:
-        """Reload item after write operations."""
+    async def reload_after_write(self, db: AsyncSession, obj_id: UUID) -> Item:
+        """Reload item after write operations with full graph."""
         return await self.get_item_for_detail(db, obj_id)
 
 

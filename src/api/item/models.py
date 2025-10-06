@@ -48,13 +48,13 @@ class Item(Base):
     updated_at             = sa.Column(sa.DateTime(timezone=True), nullable=False, server_default=func.now(), onupdate=func.now())
     parent                 = relationship("Item", remote_side="Item.id", foreign_keys=[parent_item_id], backref="children")
     item_locations         = relationship("ItemLocation", back_populates="item")
-    related_item           = relationship(
+    related_item = relationship(
         "Item",
         remote_side  = "Item.id",
         foreign_keys = [item_relation_id],
         backref      = "item_relations"
     )
-    locations              = relationship(
+    locations = relationship(
         "Location",
         secondary      = ItemLocation.__table__,
         back_populates = "items",

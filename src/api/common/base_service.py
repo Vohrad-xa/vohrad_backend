@@ -76,14 +76,12 @@ class BaseService(Generic[ModelType, CreateSchemaType, UpdateSchemaType], ABC):
             raise ExceptionFactory.not_found(self.model.__name__, obj_id)
         return obj
 
-    async def reload_after_write(
-        self, db: AsyncSession, obj_id: UUID, tenant_id: Optional[UUID] = None
-    ) -> ModelType:
+    async def reload_after_write(self, db: AsyncSession, obj_id: UUID) -> ModelType:
         """Standard post-write return path: re-fetch the saved object.
 
         For complex entities, override in the service to load the full graph.
         """
-        return await self.get_by_id(db, obj_id, tenant_id)
+        return await self.get_by_id(db, obj_id)
 
 
     async def get_multi(
