@@ -33,7 +33,7 @@ jobs:
       - name: Run Bandit security scan
         run: |
           pdm run bandit -r src/ -f json -o bandit-report.json || true
-          pdm run bandit -r src/ -ll --severity-level high
+          pdm run bandit -r src/ --severity-level high
 
       - name: Run pip-audit for dependency vulnerabilities
         run: |
