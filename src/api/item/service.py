@@ -7,7 +7,7 @@ from api.item_location.models import ItemLocation
 from database.constraint_handler import constraint_handler
 from exceptions import ExceptionFactory
 from security.jwt import AuthenticatedUser
-from sqlalchemy import or_, select
+from sqlalchemy import func, or_, select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
@@ -57,11 +57,24 @@ class ItemService(BaseService[Item, ItemCreate, ItemUpdate]):
 
 
     async def create_item(self, db: AsyncSession, item_data: ItemCreate, current_user: AuthenticatedUser) -> Item:
-        """Create a new item."""
+        """Create a new item with optional locations."""
         try:
-            item_dict = item_data.model_dump()
+            item_dict = item_data.model_dump(exclude={"locations"})
             item_dict["user_id"] = current_user.user_id
+
             item = Item(**item_dict)
+
+            # SQLAlchemy relationship-based location assignment
+            if item_data.locations:
+                item.item_locations = [
+                    ItemLocation(
+                        location_id=loc.location_id,
+                        quantity=loc.quantity,
+                        moved_date=func.now()
+                    )
+                    for loc in item_data.locations
+                ]
+
             db.add(item)
             await db.commit()
             await db.refresh(item)
@@ -80,7 +93,7 @@ class ItemService(BaseService[Item, ItemCreate, ItemUpdate]):
 
 
     async def update_item(self, db: AsyncSession, item_id: UUID, item_data: ItemUpdate) -> Item:
-        """Update an item and return the fully loaded entity."""
+        """Update an item."""
         try:
             updated = await self.update(db, item_id, item_data)
             return await self.reload_after_write(db, updated.id)

@@ -9,6 +9,13 @@ from typing import Any, Literal, Optional
 from uuid import UUID
 
 
+class ItemLocationInput(BaseModel):
+    """Input schema for item-location assignment."""
+
+    location_id: UUID
+    quantity   : Decimal = Field(ge=0, decimal_places=2, max_digits=10)
+
+
 class ItemBase(BaseModel):
     """Base item schema."""
 
@@ -57,7 +64,7 @@ class ItemBase(BaseModel):
 class ItemCreate(ItemBase):
     """Schema for creating item."""
 
-    pass
+    locations: Optional[list[ItemLocationInput]] = None
 
 
 class ItemUpdate(BaseModel):
