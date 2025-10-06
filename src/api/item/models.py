@@ -42,17 +42,16 @@ class Item(Base):
     tracking_changed_at    = sa.Column(sa.DateTime(timezone=True), nullable=True)
     tracking_change_reason = sa.Column(sa.Text, nullable=True)
     user_id                = sa.Column(PostgresUUID(as_uuid=True), sa.ForeignKey("users.id", ondelete="SET NULL"), nullable=True)
-    parent_item_id         = sa.Column(PostgresUUID(as_uuid=True), sa.ForeignKey("items.id", ondelete="CASCADE"), nullable=True)
-    item_relation_id       = sa.Column(PostgresUUID(as_uuid=True), sa.ForeignKey("items.id", ondelete="CASCADE"), nullable=True)
+    parent_item_id         = sa.Column(PostgresUUID(as_uuid=True), sa.ForeignKey("items.id", ondelete="SET NULL"), nullable=True)
+    item_relation_id       = sa.Column(PostgresUUID(as_uuid=True), sa.ForeignKey("items.id", ondelete="SET NULL"), nullable=True)
     created_at             = sa.Column(sa.DateTime(timezone=True), nullable=False, server_default=func.now())
     updated_at             = sa.Column(sa.DateTime(timezone=True), nullable=False, server_default=func.now(), onupdate=func.now())
-
-    parent         = relationship("Item", remote_side="Item.id", foreign_keys=[parent_item_id], backref="children")
-    related_item   = relationship("Item", remote_side="Item.id", foreign_keys=[item_relation_id], backref="item_relations")
-    item_locations = relationship("ItemLocation", back_populates="item")
-    locations      = relationship(
-        "Location",
-        secondary=ItemLocation.__table__,
-        back_populates="items",
-        viewonly=True,
-    )
+    parent       = relationship("Item", remote_side="Item.id", foreign_keys=[parent_item_id], backref="children")
+    related_item = relationship("Item", remote_side="Item.id", foreign_keys=[item_relation_id], backref="item_relations")
+    item_locations         = relationship("ItemLocation", back_populates="item")
+    locations              = relationship(
+                 "Location",
+                 secondary=ItemLocation.__table__,
+                 back_populates="items",
+                 viewonly=True,
+                )
