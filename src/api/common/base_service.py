@@ -26,7 +26,12 @@ UpdateSchemaType = TypeVar("UpdateSchemaType", bound=BaseModel)
 
 
 class BaseService(Generic[ModelType, CreateSchemaType, UpdateSchemaType], ABC):
-    """Base service class with common CRUD operations."""
+    """Base service class with common CRUD operations.
+
+    Note:
+        Intentionally avoids automatic eager loading. Use-case specific
+        services should apply relationship loading explicitly per method.
+    """
 
     def __init__(self, model: Type[ModelType]):
         self.model = model
@@ -71,6 +76,15 @@ class BaseService(Generic[ModelType, CreateSchemaType, UpdateSchemaType], ABC):
             raise ExceptionFactory.not_found(self.model.__name__, obj_id)
         return obj
 
+    async def reload_after_write(
+        self, db: AsyncSession, obj_id: Any, tenant_id: Optional[UUID] = None
+    ) -> ModelType:
+        """Standard post-write return path: re-fetch the saved object.
+
+        For complex entities, override in the service to load the full graph.
+        """
+        return await self.get_by_id(db, obj_id, tenant_id)
+
 
     async def get_multi(
         self, db: AsyncSession, page: int = 1, size: int = 20, tenant_id: Optional[UUID] = None
@@ -80,6 +94,7 @@ class BaseService(Generic[ModelType, CreateSchemaType, UpdateSchemaType], ABC):
 
         if tenant_id and hasattr(self.model, "tenant_id"):
             query = query.where(self.model.tenant_id == tenant_id)
+
         # Get total count using helper method
         total = await self._count_with_filters(db, tenant_id)
 
