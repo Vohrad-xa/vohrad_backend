@@ -6,6 +6,7 @@ from api.auth.middleware import AuthMiddleware
 from api.item.router import routes as item_routes
 from api.item_location.models import ItemLocation  # noqa: F401
 from api.location.models import Location  # noqa: F401
+from api.location.router import routes as location_routes
 from api.permission.router import routes as permission_routes
 from api.role.router import routes as role_routes
 from api.system.router import routes as system_routes
@@ -73,4 +74,5 @@ app.include_router(user_routes, prefix="/v1")
 app.include_router(role_routes, prefix="/v1")
 app.include_router(permission_routes, prefix="/v1")
 app.include_router(item_routes, prefix="/v1")
+app.include_router(location_routes, prefix="/v1")
 app.include_router(system_routes, prefix="/v1")
