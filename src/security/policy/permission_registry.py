@@ -25,6 +25,11 @@ PERMISSION_SUPPORT_REGISTRY: Dict[Tuple[str, str], PermissionSupportLevel] = {
     ("permission", "read")  : PermissionSupportLevel.SUPPORTED,
     ("permission", "manage"): PermissionSupportLevel.SUPPORTED,
     ("system", "read")      : PermissionSupportLevel.SUPPORTED,
+    ("item", "read")        : PermissionSupportLevel.SUPPORTED,
+    ("item", "create")      : PermissionSupportLevel.SUPPORTED,
+    ("item", "update")      : PermissionSupportLevel.SUPPORTED,
+    ("item", "delete")      : PermissionSupportLevel.SUPPORTED,
+    ("item", "manage")      : PermissionSupportLevel.SUPPORTED,
 }
 
 

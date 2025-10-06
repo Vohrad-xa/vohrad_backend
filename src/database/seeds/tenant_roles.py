@@ -31,6 +31,11 @@ TENANT_ROLES = [
             ("user", "create"),
             ("user", "read"),
             ("user", "update"),
+            ("item", "read"),
+            ("item", "create"),
+            ("item", "update"),
+            ("item", "delete"),
+            ("item", "manage"),
         ],
     },
     {
@@ -78,12 +83,44 @@ async def create_tenant_roles_for_schema(schema_name: str):
             for role_config in TENANT_ROLES:
                 quoted_schema = session.bind.dialect.identifier_preparer.quote_identifier(schema_name)
                 result = await session.execute(
-                    sa.text(f"SELECT COUNT(*) FROM {quoted_schema}.roles WHERE name = :name"), {"name": role_config["name"]}  # nosec B608
+                    sa.text(f"SELECT id FROM {quoted_schema}.roles WHERE name = :name"), {"name": role_config["name"]}  # nosec B608
                 )
-                exists = result.scalar() > 0
+                existing_role = result.scalar_one_or_none()
 
-                if exists:
-                    print(f"Role '{role_config['name']}' already exists in {schema_name}, skipping...")
+                if existing_role:
+                    print(f"Role '{role_config['name']}' already exists in {schema_name}, updating permissions...")
+                    role_id = existing_role
+
+                    # Get existing permissions
+                    perm_result = await session.execute(
+                        sa.text(f"SELECT resource, action FROM {quoted_schema}.permissions WHERE role_id = :role_id"),  # nosec B608
+                        {"role_id": role_id}
+                    )
+                    existing_perms = {(row[0], row[1]) for row in perm_result.fetchall()}
+
+                    # Add missing permissions
+                    added_count = 0
+                    for resource, action in role_config["permissions"]:
+                        if (resource, action) not in existing_perms:
+                            await session.execute(
+                                sa.text(f"""
+                                    INSERT INTO {quoted_schema}.permissions (id, role_id, resource, action, created_at)
+                                    VALUES (:id, :role_id, :resource, :action, :created_at)
+                                """),  # nosec B608
+                                {
+                                    "id"        : str(uuid4()),
+                                    "role_id"   : role_id,
+                                    "resource"  : resource,
+                                    "action"    : action,
+                                    "created_at": datetime.now(),
+                                },
+                            )
+                            added_count += 1
+
+                    if added_count > 0:
+                        print(f"  Added {added_count} new permissions to '{role_config['name']}'")
+                    else:
+                        print("  No new permissions to add")
                     continue
 
                 role_id = str(uuid4())

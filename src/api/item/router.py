@@ -6,6 +6,7 @@ from api.item.schema import ItemCreate, ItemDetailResponse, ItemResponse, ItemUp
 from api.item.service import item_service
 from api.item_location.schema import ItemLocationResponse, ItemLocationUpdate
 from api.item_location.service import item_location_service
+from api.permission.dependencies import RequireItemDelete, RequireItemUpdate
 from exceptions import ExceptionFactory
 from fastapi import APIRouter, Depends, Query, status
 from uuid import UUID
@@ -156,8 +157,9 @@ async def update_item(
 
 @routes.delete("/{item_id}", response_model=DeletedResponse)
 async def delete_item(
-    item_id: UUID,
+    item_id     : UUID,
     context=Depends(get_tenant_context),
+    _authorized: bool = Depends(RequireItemDelete),
 ):
     """Delete item"""
     _, _, db = context
@@ -171,6 +173,7 @@ async def update_item_location(
     location_id       : UUID,
     item_location_data: ItemLocationUpdate,
     context=Depends(get_tenant_context),
+    _authorized: bool = Depends(RequireItemUpdate),
 ):
     """Update item quantity at a specific location"""
     _, _, db = context
@@ -182,9 +185,10 @@ async def update_item_location(
 
 @routes.delete("/{item_id}/locations/{location_id}", response_model=DeletedResponse)
 async def delete_item_from_location(
-    item_id    : UUID,
-    location_id: UUID,
+    item_id     : UUID,
+    location_id : UUID,
     context=Depends(get_tenant_context),
+    _authorized: bool = Depends(RequireItemDelete),
 ):
     """Remove item from a specific location"""
     _, _, db = context
