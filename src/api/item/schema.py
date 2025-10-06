@@ -99,6 +99,11 @@ class ItemUpdate(BaseModel):
             raise ValueError("Price must be non-negative")
         return v
 
+    @field_validator("specifications")
+    @classmethod
+    def validate_specifications(cls, v):
+        return CommonValidators.validate_jsonb_specifications(v)
+
 
 class ItemLocationData(BaseModel):
     """Location summary for item responses (includes quantity)."""
@@ -110,7 +115,12 @@ class ItemLocationData(BaseModel):
 
 
 class ItemResponse(BaseResponseSchema):
-    """Schema for item response (list and create views)."""
+    """Schema for item response (list and create views).
+
+    Note:
+        item_locations field enables total_quantity computation (excluded from JSON).
+        Eagerly loaded by service to prevent N+1 queries.
+    """
 
     id                    : UUID
     name                  : str
@@ -128,6 +138,15 @@ class ItemResponse(BaseResponseSchema):
     user_id               : Optional[UUID] = None
     parent_item_id        : Optional[UUID] = None
     item_relation_id      : Optional[UUID] = None
+    item_locations        : Optional[list[Any]] = Field(default=None, exclude=True)
+
+    @computed_field  # type: ignore[misc]
+    @property
+    def total_quantity(self) -> Decimal:
+        """Total quantity across all locations."""
+        if not self.item_locations:
+            return Decimal("0")
+        return sum((il.quantity or Decimal("0") for il in self.item_locations), Decimal("0"))
 
 
 class ItemDetailResponse(ItemResponse):
