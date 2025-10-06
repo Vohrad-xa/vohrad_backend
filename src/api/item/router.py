@@ -4,6 +4,8 @@ from api.common.base_router import BaseRouterMixin
 from api.common.context_dependencies import get_tenant_context
 from api.item.schema import ItemCreate, ItemDetailResponse, ItemResponse, ItemUpdate
 from api.item.service import item_service
+from api.item_location.schema import ItemLocationResponse, ItemLocationUpdate
+from api.item_location.service import item_location_service
 from exceptions import ExceptionFactory
 from fastapi import APIRouter, Depends, Query, status
 from uuid import UUID
@@ -161,3 +163,30 @@ async def delete_item(
     _, _, db = context
     await item_service.delete_item(db, item_id)
     return ResponseFactory.deleted("item")
+
+
+@routes.put("/{item_id}/locations/{location_id}", response_model=UpdatedResponse[ItemLocationResponse])
+async def update_item_location(
+    item_id           : UUID,
+    location_id       : UUID,
+    item_location_data: ItemLocationUpdate,
+    context=Depends(get_tenant_context),
+):
+    """Update item quantity at a specific location"""
+    _, _, db = context
+    item_location = await item_location_service.update_by_item_and_location(
+        db, item_id, location_id, item_location_data
+    )
+    return ResponseFactory.updated(item_location, response_model=ItemLocationResponse)
+
+
+@routes.delete("/{item_id}/locations/{location_id}", response_model=DeletedResponse)
+async def delete_item_from_location(
+    item_id    : UUID,
+    location_id: UUID,
+    context=Depends(get_tenant_context),
+):
+    """Remove item from a specific location"""
+    _, _, db = context
+    await item_location_service.delete_by_item_and_location(db, item_id, location_id)
+    return ResponseFactory.deleted("item from location")

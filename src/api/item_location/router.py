@@ -21,11 +21,9 @@ routes = APIRouter(
 @routes.get("/", response_model=SuccessResponse[PaginatedResponse[ItemLocationResponse]])
 async def get_item_locations(
     pagination: PaginationParams = Depends(pagination_params),
-    context=Depends(get_tenant_context),
+    context = Depends(get_tenant_context),
 ):
     """Get paginated list of item locations"""
     _, _, db = context
-    item_locations, total = await item_location_service.get_item_locations_paginated(
-        db, pagination.page, pagination.size
-    )
+    item_locations, total = await item_location_service.get_item_locations(db, pagination.page, pagination.size)
     return BaseRouterMixin.create_paginated_response(item_locations, total, pagination, ItemLocationResponse)
