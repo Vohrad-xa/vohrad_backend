@@ -51,7 +51,7 @@ class ItemService(BaseService[Item, ItemCreate, ItemUpdate]):
         return item
 
 
-    async def reload_after_write(self, db: AsyncSession, obj_id: Any, tenant_id: Optional[UUID] = None) -> Item:
+    async def reload_after_write(self, db: AsyncSession, obj_id: UUID, tenant_id: Optional[UUID] = None) -> Item:
         """Reload item after write operations."""
         return await self.get_item_for_detail(db, obj_id)
 
@@ -100,7 +100,7 @@ class ItemService(BaseService[Item, ItemCreate, ItemUpdate]):
         await self.delete(db, item_id)
 
 
-    async def _get_detail_by_field(self, db: AsyncSession, field_name: str, value: Any) -> Optional[Item]:
+    async def _get_detail_by_field(self, db: AsyncSession, field_name: str, value: UUID | str) -> Optional[Item]:
         """Get item by field value."""
         field = getattr(Item, field_name)
         query = (

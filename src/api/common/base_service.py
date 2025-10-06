@@ -16,8 +16,8 @@ class DatabaseModel(Protocol):
     """Protocol for database models with common attributes."""
 
     __tablename__: str
-    id           : Any
-    tenant_id    : Optional[Any]
+    id           : UUID
+    tenant_id    : Optional[UUID]
 
 
 ModelType        = TypeVar("ModelType", bound=DatabaseModel)
@@ -60,7 +60,7 @@ class BaseService(Generic[ModelType, CreateSchemaType, UpdateSchemaType], ABC):
         return result.scalar()
 
 
-    async def get_by_id(self, db: AsyncSession, obj_id: Any, tenant_id: Optional[UUID] = None) -> ModelType:
+    async def get_by_id(self, db: AsyncSession, obj_id: UUID, tenant_id: Optional[UUID] = None) -> ModelType:
         """Get an object by ID with optional tenant filtering."""
         if hasattr(self.model, "tenant_id") and self.model.__tablename__ == "tenants":
             query = select(self.model).where(self.model.tenant_id == obj_id)
@@ -77,7 +77,7 @@ class BaseService(Generic[ModelType, CreateSchemaType, UpdateSchemaType], ABC):
         return obj
 
     async def reload_after_write(
-        self, db: AsyncSession, obj_id: Any, tenant_id: Optional[UUID] = None
+        self, db: AsyncSession, obj_id: UUID, tenant_id: Optional[UUID] = None
     ) -> ModelType:
         """Standard post-write return path: re-fetch the saved object.
 
@@ -171,7 +171,7 @@ class BaseService(Generic[ModelType, CreateSchemaType, UpdateSchemaType], ABC):
     async def update(
         self,
         db       : AsyncSession,
-        obj_id   : Any,
+        obj_id   : UUID,
         obj_data : UpdateSchemaType,
         tenant_id: Optional[UUID] = None
     ) -> ModelType:
@@ -203,7 +203,7 @@ class BaseService(Generic[ModelType, CreateSchemaType, UpdateSchemaType], ABC):
             )
 
 
-    async def delete(self, db: AsyncSession, obj_id: Any, tenant_id: Optional[UUID] = None) -> None:
+    async def delete(self, db: AsyncSession, obj_id: UUID, tenant_id: Optional[UUID] = None) -> None:
         """Delete an object."""
         obj = await self.get_by_id(db, obj_id, tenant_id)
 
@@ -234,7 +234,7 @@ class BaseService(Generic[ModelType, CreateSchemaType, UpdateSchemaType], ABC):
         field_name : str,
         field_value: Any,
         tenant_id  : Optional[UUID] = None,
-        exclude_id : Optional[Any] = None,
+        exclude_id : Optional[UUID] = None,
     ) -> bool:
         """Check if an object exists with the given field value."""
         if not hasattr(self.model, field_name):
