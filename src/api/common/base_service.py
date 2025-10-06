@@ -76,6 +76,7 @@ class BaseService(Generic[ModelType, CreateSchemaType, UpdateSchemaType], ABC):
             raise ExceptionFactory.not_found(self.model.__name__, obj_id)
         return obj
 
+
     async def reload_after_write(self, db: AsyncSession, obj_id: UUID) -> ModelType:
         """Standard post-write return path: re-fetch the saved object.
 
