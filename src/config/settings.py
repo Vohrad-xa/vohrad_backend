@@ -4,7 +4,7 @@ from observability.logger import get_logger
 import os
 from pydantic import Field, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
-from typing import ClassVar, Optional
+from typing import ClassVar, List, Optional
 
 logger = get_logger()
 
@@ -58,7 +58,23 @@ class Settings(BaseSettings):
     JWT_PUBLIC_KEY_PATH        : Optional[str] = Field(default=None, description="Path to JWT public key file")
     ACCESS_TOKEN_EXPIRE_MINUTES: int           = Field(default=30, description="Access token expiration time")
 
-    # Enterprise caching settings
+    # Web session cookie settings
+    WEB_REFRESH_COOKIE_NAME: str = Field(
+        default="vohrad_refresh_token",
+        description="Cookie name for web refresh token",
+    )
+    WEB_COOKIE_SECURE  : bool          = Field(default=False, description="Set secure flag on web cookies")
+    WEB_COOKIE_SAMESITE: str           = Field(default="lax", description="SameSite policy for web cookies")
+    WEB_COOKIE_DOMAIN  : Optional[str] = Field(default=None, description="Optional domain for web cookies")
+    WEB_COOKIE_PATH    : str           = Field(default="/", description="Cookie path for web cookies")
+    WEB_COOKIE_MAX_AGE_SECONDS: int    = Field(
+        default=12 * 60 * 60,
+        description="Maximum lifetime (in seconds) for web refresh cookie",
+    )
+
+    CORS_ALLOW_ORIGINS: List[str] = Field(default_factory=list, description="Allowed origins for CORS")
+
+    # Caching settings
     ENABLE_TENANT_CACHE  : bool = Field(default=True, description="Enable tenant schema caching")
     TENANT_CACHE_TTL     : int  = Field(default=3600, description="Tenant cache TTL in seconds")
     TENANT_CACHE_MAX_SIZE: int  = Field(default=1000, description="Maximum tenants to cache")
@@ -82,6 +98,14 @@ class Settings(BaseSettings):
         """Convert string debug values to boolean."""
         if isinstance(v, str):
             return v.lower() in ("true", "1", "on", "yes")
+        return v
+
+    @field_validator("CORS_ALLOW_ORIGINS", mode="before")
+    @classmethod
+    def parse_cors_origins(cls, v):
+        """Support comma-separated lists from environment variables."""
+        if isinstance(v, str):
+            return [origin.strip() for origin in v.split(",") if origin.strip()]
         return v
 
     @property

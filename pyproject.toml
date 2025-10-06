@@ -30,6 +30,10 @@ dependencies = [
     "inquirer>=3.4.1",
     "annotated-types>=0.7.0",
     "asyncpg>=0.30.0",
+    "odata-query>=0.10.0",
+    "bleach>=6.2.0",
+    "slowapi>=0.1.9",
+    "python-multipart>=0.0.20",
 ]
 
 [dependency-groups]
@@ -42,6 +46,7 @@ dev = [
     "autopep8>=2.3.2",
     "bandit[toml]>=1.8.6",
     "pip-audit>=2.9.0",
+    "types-bleach>=6.2.0.20250809",
 ]
 
 [tool.autopep8]
@@ -59,7 +64,7 @@ url = "https://pypi.org/simple"
 verify_ssl = true
 
 [tool.pdm.scripts]
-start = "uvicorn main:app --reload --app-dir ./src"
+start = "uvicorn main:app --reload --app-dir ./src --host 0.0.0.0 --port 8000"
 manage = "python ./management/manage.py"
 
 # Security commands

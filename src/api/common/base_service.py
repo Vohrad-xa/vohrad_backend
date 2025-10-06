@@ -16,8 +16,8 @@ class DatabaseModel(Protocol):
     """Protocol for database models with common attributes."""
 
     __tablename__: str
-    id           : Any
-    tenant_id    : Optional[Any]
+    id           : UUID
+    tenant_id    : Optional[UUID]
 
 
 ModelType        = TypeVar("ModelType", bound=DatabaseModel)
@@ -26,7 +26,12 @@ UpdateSchemaType = TypeVar("UpdateSchemaType", bound=BaseModel)
 
 
 class BaseService(Generic[ModelType, CreateSchemaType, UpdateSchemaType], ABC):
-    """Base service class with common CRUD operations."""
+    """Base service class with common CRUD operations.
+
+    Note:
+        Intentionally avoids automatic eager loading. Use-case specific
+        services should apply relationship loading explicitly per method.
+    """
 
     def __init__(self, model: Type[ModelType]):
         self.model = model
@@ -55,7 +60,7 @@ class BaseService(Generic[ModelType, CreateSchemaType, UpdateSchemaType], ABC):
         return result.scalar()
 
 
-    async def get_by_id(self, db: AsyncSession, obj_id: Any, tenant_id: Optional[UUID] = None) -> ModelType:
+    async def get_by_id(self, db: AsyncSession, obj_id: UUID, tenant_id: Optional[UUID] = None) -> ModelType:
         """Get an object by ID with optional tenant filtering."""
         if hasattr(self.model, "tenant_id") and self.model.__tablename__ == "tenants":
             query = select(self.model).where(self.model.tenant_id == obj_id)
@@ -72,6 +77,14 @@ class BaseService(Generic[ModelType, CreateSchemaType, UpdateSchemaType], ABC):
         return obj
 
 
+    async def reload_after_write(self, db: AsyncSession, obj_id: UUID) -> ModelType:
+        """Standard post-write return path: re-fetch the saved object.
+
+        For complex entities, override in the service to load the full graph.
+        """
+        return await self.get_by_id(db, obj_id)
+
+
     async def get_multi(
         self, db: AsyncSession, page: int = 1, size: int = 20, tenant_id: Optional[UUID] = None
     ) -> tuple[list[ModelType], int]:
@@ -80,6 +93,7 @@ class BaseService(Generic[ModelType, CreateSchemaType, UpdateSchemaType], ABC):
 
         if tenant_id and hasattr(self.model, "tenant_id"):
             query = query.where(self.model.tenant_id == tenant_id)
+
         # Get total count using helper method
         total = await self._count_with_filters(db, tenant_id)
 
@@ -156,7 +170,7 @@ class BaseService(Generic[ModelType, CreateSchemaType, UpdateSchemaType], ABC):
     async def update(
         self,
         db       : AsyncSession,
-        obj_id   : Any,
+        obj_id   : UUID,
         obj_data : UpdateSchemaType,
         tenant_id: Optional[UUID] = None
     ) -> ModelType:
@@ -188,7 +202,7 @@ class BaseService(Generic[ModelType, CreateSchemaType, UpdateSchemaType], ABC):
             )
 
 
-    async def delete(self, db: AsyncSession, obj_id: Any, tenant_id: Optional[UUID] = None) -> None:
+    async def delete(self, db: AsyncSession, obj_id: UUID, tenant_id: Optional[UUID] = None) -> None:
         """Delete an object."""
         obj = await self.get_by_id(db, obj_id, tenant_id)
 
@@ -219,7 +233,7 @@ class BaseService(Generic[ModelType, CreateSchemaType, UpdateSchemaType], ABC):
         field_name : str,
         field_value: Any,
         tenant_id  : Optional[UUID] = None,
-        exclude_id : Optional[Any] = None,
+        exclude_id : Optional[UUID] = None,
     ) -> bool:
         """Check if an object exists with the given field value."""
         if not hasattr(self.model, field_name):
@@ -244,19 +258,27 @@ class BaseService(Generic[ModelType, CreateSchemaType, UpdateSchemaType], ABC):
 
     async def get_filtered(
         self,
-        db: AsyncSession,
+        db          : AsyncSession,
         filters,
-        page     : int = 1,
-        size     : int = 20,
-        tenant_id: Optional[UUID] = None,
+        page        : int = 1,
+        size        : int = 20,
+        tenant_id   : Optional[UUID] = None,
+        jsonb_fields: Optional[dict[str, str]] = None,
     ) -> tuple[list[ModelType], int]:
-        """Get filtered objects with pagination and optional tenant filtering."""
+        """Get filtered objects - supports SQLAlchemy filters or OData strings."""
         query = select(self.model)
 
         if tenant_id and hasattr(self.model, "tenant_id"):
             query = query.where(self.model.tenant_id == tenant_id)
 
         if filters is not None:
+            # Smart detection: string = OData, otherwise = SQLAlchemy filter
+            if isinstance(filters, str):
+                from utils.odata_parser import ODataToSQLAlchemy
+
+                parser = ODataToSQLAlchemy(self.model, jsonb_fields=jsonb_fields)
+                filters = parser.parse(filters)
+
             query = query.where(filters)
 
         total = await self._count_with_filters(db, tenant_id, filters=filters)

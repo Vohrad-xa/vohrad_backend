@@ -33,12 +33,15 @@ jobs:
       - name: Run Bandit security scan
         run: |
           pdm run bandit -r src/ -f json -o bandit-report.json || true
-          pdm run bandit -r src/ -ll --severity-level high
+          pdm run bandit -r src/ --severity-level high
 
       - name: Run pip-audit for dependency vulnerabilities
         run: |
-          pdm run pip-audit --format=json --output=pip-audit-report.json || true
-          pdm run pip-audit --desc
+          echo "Running pip-audit to check for known vulnerabilities..."
+          # Temporarily ignore GHSA-4xh5-x5gv-qwph (pip 25.2 tarfile issue) until pip 25.3 is released
+          pdm run pip-audit --format=json --output=pip-audit-report.json --ignore-vuln GHSA-4xh5-x5gv-qwph || true
+          echo "Summary of vulnerabilities:"
+          pdm run pip-audit --desc --ignore-vuln GHSA-4xh5-x5gv-qwph
 
       - name: Upload security reports
         uses: actions/upload-artifact@v4

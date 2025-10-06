@@ -77,9 +77,8 @@ async def create_tenant_roles_for_schema(schema_name: str):
 
             for role_config in TENANT_ROLES:
                 quoted_schema = session.bind.dialect.identifier_preparer.quote_identifier(schema_name)
-                # nosec B608
                 result = await session.execute(
-                    sa.text(f"SELECT COUNT(*) FROM {quoted_schema}.roles WHERE name = :name"), {"name": role_config["name"]}
+                    sa.text(f"SELECT COUNT(*) FROM {quoted_schema}.roles WHERE name = :name"), {"name": role_config["name"]}  # nosec B608
                 )
                 exists = result.scalar() > 0
 
@@ -88,7 +87,6 @@ async def create_tenant_roles_for_schema(schema_name: str):
                     continue
 
                 role_id = str(uuid4())
-                # nosec B608
                 await session.execute(
                     sa.text(f"""
                         INSERT INTO {quoted_schema}.roles (id, name, description, role_type, role_scope,
@@ -97,7 +95,7 @@ async def create_tenant_roles_for_schema(schema_name: str):
                         VALUES (:id, :name, :description, :role_type, :role_scope,
                                :stage, :is_mutable, :permissions_mutable, :is_deletable,
                                :managed_by, :is_active, :etag, :created_at, :updated_at)
-                    """),
+                    """),  # nosec B608
                     {
                         "id"                 : role_id,
                         "name"               : role_config["name"],
@@ -117,12 +115,11 @@ async def create_tenant_roles_for_schema(schema_name: str):
                 )
 
                 for resource, action in role_config["permissions"]:
-                    # nosec B608
                     await session.execute(
                         sa.text(f"""
                             INSERT INTO {quoted_schema}.permissions (id, role_id, resource, action, created_at)
                             VALUES (:id, :role_id, :resource, :action, :created_at)
-                        """),
+                        """),  # nosec B608
                         {
                             "id"        : str(uuid4()),
                             "role_id"   : role_id,

@@ -11,6 +11,7 @@ from exceptions import (
 from fastapi import Request, status
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
+import json
 import logging
 from pydantic import ValidationError as PydanticValidationError
 from typing import Any, Dict
@@ -60,12 +61,20 @@ class EnterpriseExceptionHandler:
         """Convert validation errors to standardized format."""
         validation_errors = []
         for error in errors:
+            input_value = error.get("input")
+            # Convert non-serializable inputs to string representation
+            if input_value is not None:
+                try:
+                    json.dumps(input_value)
+                except (TypeError, ValueError):
+                    input_value = str(input_value)
+
             validation_errors.append(
                 {
                     "field"  : ".".join(str(loc) for loc in error.get("loc", [])),
                     "message": error.get("msg", ""),
                     "type"   : error.get("type", ""),
-                    "input"  : error.get("input"),
+                    "input"  : input_value,
                 }
             )
         return validation_errors

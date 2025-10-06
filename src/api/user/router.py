@@ -33,6 +33,16 @@ routes = APIRouter(
 )
 
 
+@routes.get("/me", response_model=SuccessResponse[UserResponse])
+async def get_current_user_profile(
+    context=Depends(get_tenant_context),
+):
+    """Get currently authenticated user's profile."""
+    current_user, tenant, db = context
+    user = await user_service.get_user_by_id(db, current_user.user_id, tenant)
+    return ResponseFactory.success(user, response_model=UserResponse)
+
+
 @routes.post(
     "/",
     status_code    = status.HTTP_201_CREATED,

@@ -3,11 +3,18 @@
 from api.admin.router import routes as admin_routes
 from api.auth import router as auth_routes
 from api.auth.middleware import AuthMiddleware
+from api.item.router import routes as item_routes
+from api.item_location.models import ItemLocation  # noqa: F401
+from api.item_location.router import routes as item_location_routes
+from api.location.models import Location  # noqa: F401
+from api.location.router import routes as location_routes
 from api.permission.router import routes as permission_routes
 from api.role.router import routes as role_routes
 from api.system.router import routes as system_routes
 from api.tenant.router import routes as tenant_routes
 from api.user.router import routes as user_routes
+from config.cors import install_cors
+from config.rate_limit import install_rate_limiting
 from config.settings import get_settings
 from contextlib import asynccontextmanager
 from exceptions import BaseAppException
@@ -29,13 +36,15 @@ async def lifespan(app: FastAPI):  # noqa: RUF029
     logger.info("Application shutting down")
 
 
+settings = get_settings()
+
+
 app = FastAPI(
     title       = "Vohrad API",
     description = "Inventory and Asset Management Backend API",
     version     = "1.0.0",
     lifespan    = lifespan,
 )
-
 
 app.add_middleware(
     AuthMiddleware,
@@ -51,6 +60,9 @@ app.add_middleware(
 
 
 app.add_middleware(RequestLoggingMiddleware)
+
+install_cors(app)
+install_rate_limiting(app)
 app.add_exception_handler(BaseAppException, EnterpriseExceptionHandler.base_app_exception_handler)
 app.add_exception_handler(RequestValidationError, EnterpriseExceptionHandler.validation_exception_handler)
 app.add_exception_handler(PydanticValidationError, EnterpriseExceptionHandler.pydantic_validation_exception_handler)
@@ -62,4 +74,7 @@ app.include_router(tenant_routes, prefix="/v1")
 app.include_router(user_routes, prefix="/v1")
 app.include_router(role_routes, prefix="/v1")
 app.include_router(permission_routes, prefix="/v1")
+app.include_router(item_routes, prefix="/v1")
+app.include_router(item_location_routes, prefix="/v1")
+app.include_router(location_routes, prefix="/v1")
 app.include_router(system_routes, prefix="/v1")
