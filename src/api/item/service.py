@@ -72,8 +72,8 @@ class ItemService(BaseService[Item, ItemCreate, ItemUpdate]):
             await self._handle_integrity_error(
                 e,
                 {
-                    "operation": "create_item",
-                    "code": item_data.code,
+                    "operation"    : "create_item",
+                    "code"         : item_data.code,
                     "serial_number": item_data.serial_number,
                 },
             )
@@ -90,7 +90,7 @@ class ItemService(BaseService[Item, ItemCreate, ItemUpdate]):
                 e,
                 {
                     "operation": "update_item",
-                    "item_id": str(item_id),
+                    "item_id"  : str(item_id),
                 },
             )
 

@@ -163,10 +163,10 @@ class ItemDetailResponse(ItemResponse):
 
         return [
             ItemLocationData(
-                id=il.location.id,
-                name=il.location.name,
-                code=il.location.code,
-                quantity=il.quantity,
+                id       = il.location.id,
+                name     = il.location.name,
+                code     = il.location.code,
+                quantity = il.quantity,
             )
             for il in self.item_locations
             if il.location

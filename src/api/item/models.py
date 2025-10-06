@@ -46,12 +46,17 @@ class Item(Base):
     item_relation_id       = sa.Column(PostgresUUID(as_uuid=True), sa.ForeignKey("items.id", ondelete="SET NULL"), nullable=True)
     created_at             = sa.Column(sa.DateTime(timezone=True), nullable=False, server_default=func.now())
     updated_at             = sa.Column(sa.DateTime(timezone=True), nullable=False, server_default=func.now(), onupdate=func.now())
-    parent       = relationship("Item", remote_side="Item.id", foreign_keys=[parent_item_id], backref="children")
-    related_item = relationship("Item", remote_side="Item.id", foreign_keys=[item_relation_id], backref="item_relations")
+    parent                 = relationship("Item", remote_side="Item.id", foreign_keys=[parent_item_id], backref="children")
     item_locations         = relationship("ItemLocation", back_populates="item")
+    related_item           = relationship(
+        "Item",
+        remote_side  = "Item.id",
+        foreign_keys = [item_relation_id],
+        backref      = "item_relations"
+    )
     locations              = relationship(
-                 "Location",
-                 secondary=ItemLocation.__table__,
-                 back_populates="items",
-                 viewonly=True,
-                )
+        "Location",
+        secondary      = ItemLocation.__table__,
+        back_populates = "items",
+        viewonly       = True,
+    )

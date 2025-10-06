@@ -19,8 +19,8 @@ from web import (
 )
 
 routes = APIRouter(
-    tags=["items"],
-    prefix="/items",
+    tags   = ["items"],
+    prefix = "/items",
 )
 
 
@@ -142,7 +142,7 @@ async def get_item(
 
 @routes.put("/{item_id}", response_model=UpdatedResponse[ItemResponse])
 async def update_item(
-    item_id: UUID,
+    item_id  : UUID,
     item_data: ItemUpdate,
     context=Depends(get_tenant_context),
 ):
