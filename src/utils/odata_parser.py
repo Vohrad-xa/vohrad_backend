@@ -69,11 +69,20 @@ class ODataToSQLAlchemy:
                 # Regular column
                 field_name = left.name
                 field      = getattr(self.model_class, field_name)
-                right_val  = right.val if hasattr(right, 'val') else right
 
-                # Convert OData boolean to Python boolean
+                # Convert OData value to proper Python type
                 if isinstance(right, ast.Boolean):
-                    right_val = right_val.lower() == 'true'
+                    right_val = right.val.lower() == 'true'
+                elif hasattr(right, 'val'):
+                    val = right.val
+                    try:
+                        # Try to parse as number (int or float)
+                        right_val = int(val) if str(int(val)) == str(val) else float(val)
+                    except (ValueError, TypeError):
+                        # Keep as string if not a number
+                        right_val = str(val)
+                else:
+                    right_val = right
 
                 if isinstance(op, ast.Eq):
                     return field == right_val
