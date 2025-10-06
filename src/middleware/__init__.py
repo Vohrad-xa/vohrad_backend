@@ -1,7 +1,7 @@
 """Middleware components."""
 
 from .decorators import with_database_session
-from .exception_handler import EnterpriseExceptionHandler
+from .exception_handler import ExceptionHandler
 from .logging_middleware import RequestLoggingMiddleware
 from security.password import PasswordManager, hash_password, password_manager, verify_password
 
@@ -9,7 +9,7 @@ from security.password import PasswordManager, hash_password, password_manager, 
 # from security.jwt.middleware import JWTAuthMiddleware
 
 __all__ = [
-    "EnterpriseExceptionHandler",
+    "ExceptionHandler",
     "PasswordManager",
     "RequestLoggingMiddleware",
     "hash_password",

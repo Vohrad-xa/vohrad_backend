@@ -20,7 +20,7 @@ from contextlib import asynccontextmanager
 from exceptions import BaseAppException
 from fastapi import FastAPI
 from fastapi.exceptions import RequestValidationError
-from middleware import EnterpriseExceptionHandler
+from middleware import ExceptionHandler
 from middleware.logging_middleware import RequestLoggingMiddleware
 from observability import get_logger, setup_logging
 from pydantic import ValidationError as PydanticValidationError
@@ -63,10 +63,10 @@ app.add_middleware(RequestLoggingMiddleware)
 
 install_cors(app)
 install_rate_limiting(app)
-app.add_exception_handler(BaseAppException, EnterpriseExceptionHandler.base_app_exception_handler)
-app.add_exception_handler(RequestValidationError, EnterpriseExceptionHandler.validation_exception_handler)
-app.add_exception_handler(PydanticValidationError, EnterpriseExceptionHandler.pydantic_validation_exception_handler)
-app.add_exception_handler(Exception, EnterpriseExceptionHandler.generic_exception_handler)
+app.add_exception_handler(BaseAppException, ExceptionHandler.base_app_exception_handler)
+app.add_exception_handler(RequestValidationError, ExceptionHandler.validation_exception_handler)
+app.add_exception_handler(PydanticValidationError, ExceptionHandler.pydantic_validation_exception_handler)
+app.add_exception_handler(Exception, ExceptionHandler.generic_exception_handler)
 
 app.include_router(auth_routes, prefix="/v1")
 app.include_router(admin_routes, prefix="/v1")

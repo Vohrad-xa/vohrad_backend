@@ -20,7 +20,7 @@ from uuid import uuid4
 logger = logging.getLogger(__name__)
 
 
-class EnterpriseExceptionHandler:
+class ExceptionHandler:
     """Exception handler with structured logging and observability."""
 
     @staticmethod
@@ -82,10 +82,10 @@ class EnterpriseExceptionHandler:
     @staticmethod
     async def base_app_exception_handler(request: Request, exc: BaseAppException) -> JSONResponse:
         """Handle application exceptions with structured metadata."""
-        correlation_id = EnterpriseExceptionHandler._generate_correlation_id(exc)
-        request_metadata = EnterpriseExceptionHandler._extract_request_metadata(request)
+        correlation_id = ExceptionHandler._generate_correlation_id(exc)
+        request_metadata = ExceptionHandler._extract_request_metadata(request)
 
-        error_response = EnterpriseExceptionHandler._create_error_response(
+        error_response = ExceptionHandler._create_error_response(
             exc.error_code,
             exc.message,
             exc.__class__.__name__,
@@ -120,10 +120,10 @@ class EnterpriseExceptionHandler:
     async def validation_exception_handler(request: Request, exc: RequestValidationError) -> JSONResponse:
         """Handle FastAPI validation errors."""
         correlation_id = str(uuid4())
-        request_metadata = EnterpriseExceptionHandler._extract_request_metadata(request)
-        validation_errors = EnterpriseExceptionHandler._format_validation_errors(exc.errors())
+        request_metadata = ExceptionHandler._extract_request_metadata(request)
+        validation_errors = ExceptionHandler._format_validation_errors(exc.errors())
 
-        error_response = EnterpriseExceptionHandler._create_error_response(
+        error_response = ExceptionHandler._create_error_response(
             "VALIDATION_ERROR",
             "Request validation failed",
             "RequestValidationError",
@@ -148,10 +148,10 @@ class EnterpriseExceptionHandler:
     async def pydantic_validation_exception_handler(request: Request, exc: PydanticValidationError) -> JSONResponse:
         """Handle Pydantic validation errors."""
         correlation_id    = str(uuid4())
-        request_metadata  = EnterpriseExceptionHandler._extract_request_metadata(request)
-        validation_errors = EnterpriseExceptionHandler._format_validation_errors(exc.errors())
+        request_metadata  = ExceptionHandler._extract_request_metadata(request)
+        validation_errors = ExceptionHandler._format_validation_errors(exc.errors())
 
-        error_response = EnterpriseExceptionHandler._create_error_response(
+        error_response = ExceptionHandler._create_error_response(
             "PYDANTIC_VALIDATION_ERROR",
             "Data validation failed",
             "PydanticValidationError",
@@ -176,9 +176,9 @@ class EnterpriseExceptionHandler:
     async def generic_exception_handler(request: Request, exc: Exception) -> JSONResponse:
         """Handle unexpected exceptions."""
         correlation_id = str(uuid4())
-        request_metadata = EnterpriseExceptionHandler._extract_request_metadata(request)
+        request_metadata = ExceptionHandler._extract_request_metadata(request)
 
-        error_response = EnterpriseExceptionHandler._create_error_response(
+        error_response = ExceptionHandler._create_error_response(
             "INTERNAL_SERVER_ERROR",
             "An unexpected error occurred",
             "InternalServerError",
