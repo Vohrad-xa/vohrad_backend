@@ -33,7 +33,7 @@ def upgrade(schema: str) -> None:
         sa.Column("price", sa.Numeric(precision=10, scale=2), nullable=True),
         sa.Column("serial_number", sa.String(), nullable=True),
         sa.Column("notes", sa.Text(), nullable=True),
-        sa.Column("is_active", sa.Boolean(), nullable=False, server_default="true"),
+        sa.Column("is_active", sa.Boolean(), nullable=False, server_default=sa.text("true")),
         sa.Column("specifications", sa.dialects.postgresql.JSONB(astext_type=sa.Text()), nullable=True),
         sa.Column("tracking_changed_at", sa.DateTime(timezone=True), nullable=True),
         sa.Column("tracking_change_reason", sa.Text(), nullable=True),
@@ -44,11 +44,12 @@ def upgrade(schema: str) -> None:
         sa.Column("updated_at", sa.DateTime(timezone=True), nullable=False, server_default=sa.func.now()),
         sa.PrimaryKeyConstraint("id"),
         sa.ForeignKeyConstraint(["user_id"], [f"{schema}.users.id"], ondelete="SET NULL"),
-        sa.ForeignKeyConstraint(["parent_item_id"], [f"{schema}.items.id"], ondelete="CASCADE"),
-        sa.ForeignKeyConstraint(["item_relation_id"], [f"{schema}.items.id"], ondelete="CASCADE"),
+        sa.ForeignKeyConstraint(["parent_item_id"], [f"{schema}.items.id"], ondelete="SET NULL"),
+        sa.ForeignKeyConstraint(["item_relation_id"], [f"{schema}.items.id"], ondelete="SET NULL"),
         sa.UniqueConstraint("code", name="items_code_unique"),
         sa.UniqueConstraint("serial_number", name="items_serial_number_unique"),
         sa.CheckConstraint("tracking_mode IN ('abstract', 'standard', 'serialized')", name="items_tracking_mode_check"),
+        sa.CheckConstraint("price IS NULL OR price >= 0", name="items_price_non_negative"),
         schema=schema,
     )
 

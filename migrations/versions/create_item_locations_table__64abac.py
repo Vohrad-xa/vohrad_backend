@@ -24,7 +24,7 @@ def upgrade(schema: str) -> None:
         sa.Column("id", sa.UUID(), nullable=False),
         sa.Column("item_id", sa.UUID(), nullable=False),
         sa.Column("location_id", sa.UUID(), nullable=False),
-        sa.Column("quantity", sa.Numeric(precision=10, scale=2), nullable=False, server_default="1"),
+        sa.Column("quantity", sa.Numeric(precision=10, scale=2), nullable=False, server_default=sa.text("1")),
         sa.Column("moved_date", sa.Date(), nullable=True),
         sa.Column("notes", sa.Text(), nullable=True),
         sa.Column("created_at", sa.DateTime(timezone=True), nullable=False, server_default=sa.func.now()),
