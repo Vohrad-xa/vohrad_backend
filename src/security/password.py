@@ -25,12 +25,14 @@ class PasswordManager:
 
     def hash_password(self, password: str) -> str:
         """Hash a password using bcrypt."""
-        assert self._pwd_context is not None
+        if self._pwd_context is None:
+            raise RuntimeError("Password context is not initialized")
         return self._pwd_context.hash(password)
 
     def verify_password(self, plain_password: str, hashed_password: str) -> bool:
         """Verify a password against its hash."""
-        assert self._pwd_context is not None
+        if self._pwd_context is None:
+            raise RuntimeError("Password context is not initialized")
         return self._pwd_context.verify(plain_password, hashed_password)
 
 

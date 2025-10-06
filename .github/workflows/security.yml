@@ -40,7 +40,7 @@ jobs:
           echo "Running pip-audit to check for known vulnerabilities..."
           pdm run pip-audit --format=json --output=pip-audit-report.json || true
           echo "Summary of vulnerabilities:"
-          pdm run pip-audit --desc || true
+          pdm run pip-audit --desc
 
       - name: Upload security reports
         uses: actions/upload-artifact@v4

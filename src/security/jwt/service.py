@@ -1,5 +1,6 @@
 """JWT service for authentication module following modular architecture."""
 
+import logging
 from typing import TYPE_CHECKING, Optional
 from uuid import UUID
 
@@ -286,8 +287,8 @@ class AuthJWTService:
             try:
                 tenant_id = UUID(tenant_id_str)
                 await self.user_cache.invalidate_user(user_id, tenant_id, payload.get("email"))
-            except Exception:
-                pass
+            except Exception as e:
+                logging.warning(f"Failed to invalidate user cache during logout: {e}")
 
         return True
 
