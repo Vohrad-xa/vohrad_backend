@@ -6,7 +6,7 @@ on:
   pull_request:
     branches: [main, dev]
   schedule:
-    - cron: '0 2 * * 0' # Weekly on Sunday at 2 AM
+    - cron: "0 2 * * 0" # Weekly on Sunday at 2 AM
 
 jobs:
   security:
@@ -19,12 +19,12 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
-          python-version: '3.13'
+          python-version: "3.13"
 
       - name: Set up PDM
         uses: pdm-project/setup-pdm@v4
         with:
-          python-version: '3.13'
+          python-version: "3.13"
 
       - name: Install dependencies
         run: |
@@ -41,7 +41,7 @@ jobs:
           pdm run pip-audit --desc
 
       - name: Upload security reports
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         if: always()
         with:
           name: security-reports
