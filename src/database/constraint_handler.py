@@ -13,10 +13,12 @@ class ConstraintViolationHandler:
         self._constraint_entity_mapping = {
             r".*email.*": "User",
             r".*subdomain.*": "Tenant",
+            r".*locations?.*": "Location",
+            r".*item_locations?.*": "ItemLocation",
             r".*name.*": lambda ctx: self._determine_entity_from_context(ctx),
-            r".*permissions.*": "Permission",
-            r".*items.*": "Item",
-            r".*code.*": "Item",
+            r".*permissions?.*": "Permission",
+            r".*items?.*": "Item",
+            r".*items?[_]?code.*": "Item",
             r".*serial.*": "Item",
             r".*barcode.*": "Item",
         }
