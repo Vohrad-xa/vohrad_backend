@@ -120,6 +120,7 @@ async def update_role(
 async def activate_role(
     role_id: UUID,
     context = Depends(get_tenant_context),
+    _authorized: bool = Depends(RequireRoleManagement),
 ):
     """Activate role"""
     _, _tenant, db = context
@@ -131,6 +132,7 @@ async def activate_role(
 async def deactivate_role(
     role_id: UUID,
     context = Depends(get_tenant_context),
+    _authorized: bool = Depends(RequireRoleManagement),
 ):
     """Deactivate role"""
     _, _tenant, db = context

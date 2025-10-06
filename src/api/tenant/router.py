@@ -1,7 +1,7 @@
 """Tenant router."""
 
 from api.common.context_dependencies import get_authenticated_context, get_shared_context
-from api.permission.dependencies import require_permission
+from api.permission.dependencies import RequireTenantManagement
 from api.tenant.schema import TenantResponse, TenantSettingsUpdate, TenantUpdate
 from api.tenant.service import tenant_service
 from fastapi import APIRouter, Depends
@@ -28,7 +28,7 @@ async def get_current_tenant_endpoint(context=Depends(get_authenticated_context)
 async def update_tenant_settings(
     settings: TenantSettingsUpdate,
     context = Depends(get_shared_context),
-    _authorized: bool = Depends(require_permission("tenant", "manage")),
+    _authorized: bool = Depends(RequireTenantManagement),
 ):
     """Allow tenant managers to update timezone and working hours for their own tenant."""
     _current_user, tenant, db = context

@@ -1,8 +1,9 @@
 """Location schemas."""
 
 from api.common.schemas import BaseResponseSchema
-from pydantic import BaseModel, field_validator
-from typing import Optional
+from decimal import Decimal
+from pydantic import BaseModel, Field, computed_field, field_validator
+from typing import Any, Optional
 from uuid import UUID
 
 
@@ -78,6 +79,15 @@ class LocationUpdate(BaseModel):
         return v
 
 
+class ItemLocationData(BaseModel):
+    """Item summary for location responses (includes quantity)."""
+
+    id      : UUID
+    name    : str
+    code    : str
+    quantity: Decimal
+
+
 class LocationResponse(BaseResponseSchema):
     """Schema for location response."""
 
@@ -88,3 +98,27 @@ class LocationResponse(BaseResponseSchema):
     path       : Optional[str]  = None
     description: Optional[str]  = None
     is_active  : bool
+
+
+class LocationDetailResponse(LocationResponse):
+    """Detailed location response with items (detail views only)."""
+
+    item_locations: Optional[list[Any]] = Field(default=None, exclude=True)
+
+    @computed_field  # type: ignore[misc]
+    @property
+    def items(self) -> Optional[list[ItemLocationData]]:
+        """Derived items with quantities from item_locations relationship when loaded."""
+        if not self.item_locations:
+            return None
+
+        return [
+            ItemLocationData(
+                id       = il.item.id,
+                name     = il.item.name,
+                code     = il.item.code,
+                quantity = il.quantity,
+            )
+            for il in self.item_locations
+            if il.item
+        ] or None
