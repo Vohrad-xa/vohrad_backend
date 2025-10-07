@@ -2,7 +2,12 @@
 
 from api.common.base_router import BaseRouterMixin
 from api.common.context_dependencies import get_tenant_context
-from api.permission.dependencies import RequireManager, RequireRoleManagement, require_permission
+from api.permission.dependencies import (
+    RequireManager,
+    RequireRoleManagement,
+    RequireUserRead,
+    RequireUserUpdate,
+)
 from api.role.schema import RoleResponse
 from api.user.schema import (
     BulkRoleAssignmentRequest,
@@ -76,7 +81,7 @@ async def search_users(
 async def get_user_by_email(
     email: str,
     context=Depends(get_tenant_context),
-    _authorized: bool = Depends(require_permission("user", "read")),
+    _authorized: bool = Depends(RequireUserRead),
 ):
     """Get user by email"""
     _, tenant, db = context
@@ -90,7 +95,7 @@ async def get_user_by_email(
 async def get_user(
     user_id: UUID,
     context=Depends(get_tenant_context),
-    _authorized: bool = Depends(require_permission("user", "read")),
+    _authorized: bool = Depends(RequireUserRead),
 ):
     """Get user by ID"""
     _, tenant, db = context
@@ -115,7 +120,7 @@ async def update_user(
     user_id: UUID,
     user_data: UserUpdate,
     context=Depends(get_tenant_context),
-    _authorized: bool = Depends(require_permission("user", "update")),
+    _authorized: bool = Depends(RequireUserUpdate),
 ):
     """Update user"""
     _, tenant, db = context
@@ -128,7 +133,7 @@ async def update_user_password(
     user_id: UUID,
     password_data: UserPasswordUpdate,
     context=Depends(get_tenant_context),
-    _authorized: bool = Depends(require_permission("user", "update")),
+    _authorized: bool = Depends(RequireUserUpdate),
 ):
     """Update user password"""
     _, tenant, db = context
@@ -140,7 +145,7 @@ async def update_user_password(
 async def verify_user_email(
     user_id: UUID,
     context=Depends(get_tenant_context),
-    _authorized: bool = Depends(require_permission("user", "update")),
+    _authorized: bool = Depends(RequireUserUpdate),
 ):
     """Mark user email as verified"""
     _, tenant, db = context
@@ -164,7 +169,7 @@ async def delete_user(
 async def get_user_roles(
     user_id: UUID,
     context=Depends(get_tenant_context),
-    _authorized: bool = Depends(require_permission("user", "read")),
+    _authorized: bool = Depends(RequireUserRead),
 ):
     """Get roles assigned to user"""
     _, tenant, db = context

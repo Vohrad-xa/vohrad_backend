@@ -8,6 +8,22 @@ from typing import Optional
 from uuid import UUID
 
 
+class Item(BaseResponseSchema):
+    """Compact item details for item-location responses."""
+
+    id  : UUID
+    name: str
+    code: str
+
+
+class Location(BaseResponseSchema):
+    """Compact location details for item-location responses."""
+
+    id  : UUID
+    name: str
+    code: str
+
+
 class ItemLocationBase(BaseModel):
     """Base item location schema."""
 
@@ -56,9 +72,9 @@ class ItemLocationUpdate(BaseModel):
 class ItemLocationResponse(BaseResponseSchema):
     """Schema for item location response."""
 
-    id         : UUID
-    item_id    : UUID
-    location_id: UUID
-    quantity   : Decimal
-    moved_date : Optional[date] = None
-    notes      : Optional[str] = None
+    id        : UUID
+    quantity  : Decimal
+    moved_date: Optional[date] = None
+    notes     : Optional[str] = None
+    item      : Optional[Item] = None
+    location  : Optional[Location] = None

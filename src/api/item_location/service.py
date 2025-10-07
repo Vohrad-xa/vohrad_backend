@@ -27,6 +27,14 @@ class ItemLocationService(BaseService[ItemLocation, ItemLocationCreate, ItemLoca
         return await self.get_multi(db, page, size)
 
 
+    async def create_item_location(
+        self, db: AsyncSession, item_location_data: ItemLocationCreate
+    ) -> ItemLocation:
+        """Create a new item location."""
+        created = await self.create(db, item_location_data)
+        return await self.reload_after_write(db, created.id)
+
+
     async def get_by_item_and_location(
         self, db: AsyncSession, item_id: UUID, location_id: UUID
     ) -> Optional[ItemLocation]:

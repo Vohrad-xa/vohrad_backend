@@ -1,6 +1,5 @@
 """Location model (tenant schemas)."""
 
-from api.item_location.models import ItemLocation
 from database import Base
 import sqlalchemy as sa
 from sqlalchemy.dialects.postgresql import UUID as PostgresUUID
@@ -31,9 +30,3 @@ class Location(Base):
     updated_at     = sa.Column(sa.DateTime(timezone=True), nullable=False, server_default=func.now(), onupdate=func.now())
     parent         = relationship("Location", remote_side="Location.id", foreign_keys=[parent_id], backref="children")
     item_locations = relationship("ItemLocation", back_populates="location")
-    items          = relationship(
-        "Item",
-        secondary      = ItemLocation.__table__,
-        back_populates = "locations",
-        viewonly       = True,
-    )

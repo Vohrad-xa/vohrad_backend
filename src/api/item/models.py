@@ -56,7 +56,6 @@ class Item(Base):
     )
     locations = relationship(
         "Location",
-        secondary      = ItemLocation.__table__,
-        back_populates = "items",
-        viewonly       = True,
+        secondary = ItemLocation.__table__,
+        viewonly  = True,
     )

@@ -17,19 +17,25 @@ class PermissionSupportLevel(Enum):
 
 
 PERMISSION_SUPPORT_REGISTRY: Dict[Tuple[str, str], PermissionSupportLevel] = {
-    ("user", "read")        : PermissionSupportLevel.SUPPORTED,
-    ("user", "update")      : PermissionSupportLevel.SUPPORTED,
-    ("user", "create")      : PermissionSupportLevel.SUPPORTED,
-    ("role", "read")        : PermissionSupportLevel.SUPPORTED,
-    ("role", "manage")      : PermissionSupportLevel.SUPPORTED,
-    ("permission", "read")  : PermissionSupportLevel.SUPPORTED,
-    ("permission", "manage"): PermissionSupportLevel.SUPPORTED,
-    ("system", "read")      : PermissionSupportLevel.SUPPORTED,
-    ("item", "read")        : PermissionSupportLevel.SUPPORTED,
-    ("item", "create")      : PermissionSupportLevel.SUPPORTED,
-    ("item", "update")      : PermissionSupportLevel.SUPPORTED,
-    ("item", "delete")      : PermissionSupportLevel.SUPPORTED,
-    ("item", "manage")      : PermissionSupportLevel.SUPPORTED,
+    ("user", "read")      : PermissionSupportLevel.SUPPORTED,
+    ("user", "update")    : PermissionSupportLevel.SUPPORTED,
+    ("user", "create")    : PermissionSupportLevel.SUPPORTED,
+    ("role", "read")      : PermissionSupportLevel.SUPPORTED,
+    ("role", "*")         : PermissionSupportLevel.SUPPORTED,
+    ("permission", "read"): PermissionSupportLevel.SUPPORTED,
+    ("permission", "*")   : PermissionSupportLevel.SUPPORTED,
+    ("system", "read")    : PermissionSupportLevel.SUPPORTED,
+    ("item", "read")      : PermissionSupportLevel.SUPPORTED,
+    ("item", "create")    : PermissionSupportLevel.SUPPORTED,
+    ("item", "update")    : PermissionSupportLevel.SUPPORTED,
+    ("item", "delete")    : PermissionSupportLevel.SUPPORTED,
+    ("item", "*")         : PermissionSupportLevel.SUPPORTED,
+    ("location", "read")  : PermissionSupportLevel.SUPPORTED,
+    ("location", "create"): PermissionSupportLevel.SUPPORTED,
+    ("location", "update"): PermissionSupportLevel.SUPPORTED,
+    ("location", "delete"): PermissionSupportLevel.SUPPORTED,
+    ("location", "*")     : PermissionSupportLevel.SUPPORTED,
+    ("tenant", "*")       : PermissionSupportLevel.SUPPORTED,
 }
 
 
