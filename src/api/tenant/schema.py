@@ -96,6 +96,7 @@ class TenantResponse(BaseResponseSchema):
     timezone           : Optional[str] = None
     business_hour_start: Optional[str] = None
     business_hour_end  : Optional[str] = None
+    license_id         : Optional[UUID] = None
 
     @field_validator("business_hour_start", mode="before")
     @classmethod
