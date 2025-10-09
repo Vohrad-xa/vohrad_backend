@@ -5,7 +5,7 @@ This prevents introducing invalid/untested permissions in production.
 """
 
 from __future__ import annotations
-from config.settings import get_settings
+from config import get_settings
 from enum import Enum
 from typing import Dict, Tuple
 

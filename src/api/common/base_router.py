@@ -12,13 +12,13 @@ class BaseRouterMixin:
 
     @staticmethod
     def create_paginated_response(
-        items: List[Any],
-        total: int,
-        pagination: PaginationParams,
+        items         : List[Any],
+        total         : int,
+        pagination    : PaginationParams,
         response_model: Type[ResponseSchemaType]
     ):
         """Create standardized paginated response with smart messaging."""
-        item_responses = [response_model.model_validate(item) for item in items]
+        item_responses   = [response_model.model_validate(item) for item in items]
         paginated_result = PaginationUtil.paginate_query_result(
             item_responses, total, pagination.page, pagination.size
         )

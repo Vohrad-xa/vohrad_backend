@@ -1,10 +1,10 @@
 """Role router."""
 
-from api.common.base_router import BaseRouterMixin
+from .schema import RoleCreate, RoleResponse, RoleUpdate
+from .service import role_service
+from api.common import BaseRouterMixin
 from api.common.context_dependencies import get_tenant_context
 from api.permission.dependencies import RequireRoleManagement
-from api.role.schema import RoleCreate, RoleResponse, RoleUpdate
-from api.role.service import role_service
 from fastapi import APIRouter, Depends, Query, status
 from uuid import UUID
 from web import (
@@ -15,9 +15,9 @@ from web import (
     ResponseFactory,
     SuccessResponse,
     UpdatedResponse,
+    get_if_match_header,
     pagination_params,
 )
-from web.headers import get_if_match_header
 
 routes = APIRouter(
     tags   = ["roles"],

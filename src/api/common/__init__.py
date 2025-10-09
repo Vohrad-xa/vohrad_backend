@@ -12,5 +12,5 @@ __all__ = [
     "BaseService",
     "BaseUpdateSchema",
     "CommonValidators",
-    "ErrorResponse"
+    "ErrorResponse",
 ]

@@ -6,12 +6,12 @@ Principles:
 - Optional conditional filters may restrict actions.
 """
 
+from ..policy import apply_conditional_access, merge_permissions_with_precedence
 from api.tenant import get_tenant_schema_resolver
 from constants import RoleScope, RoleStage
 from database import constraint_handler, with_default_db, with_tenant_db
 from datetime import datetime, timezone
 from exceptions import ExceptionFactory
-from security.policy import apply_conditional_access, merge_permissions_with_precedence
 from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
 from typing import Optional

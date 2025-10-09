@@ -1,11 +1,8 @@
 """Stripe payment service for license invoicing."""
 
-from api.license.models import License
-from api.license.schema import LicenseUpdate
-from api.license.service import license_service
-from api.tenant.models import Tenant
-from api.tenant.service import tenant_service
-from config.settings import get_settings
+from api.license import License, LicenseUpdate, license_service
+from api.tenant import Tenant, tenant_service
+from config import get_settings
 from sqlalchemy.ext.asyncio import AsyncSession
 import stripe
 from typing import Optional

@@ -149,8 +149,8 @@ class BaseService(Generic[ModelType, CreateSchemaType, UpdateSchemaType], ABC):
 
     async def create(
         self,
-        db: AsyncSession,
-        obj_data: CreateSchemaType,
+        db       : AsyncSession,
+        obj_data : CreateSchemaType,
         tenant_id: Optional[UUID] = None
     ) -> ModelType:
         """Create a new object."""

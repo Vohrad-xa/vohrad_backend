@@ -16,7 +16,7 @@ from database.cache import UserCache
 from database.constraint_handler import constraint_handler
 from database.sessions import get_default_db_session
 from exceptions import ExceptionFactory, invalid_credentials
-from middleware import hash_password, verify_password
+from security.password import hash_password, verify_password
 from sqlalchemy import func, select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession

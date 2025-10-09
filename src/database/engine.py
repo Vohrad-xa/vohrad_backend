@@ -1,6 +1,6 @@
 """Async SQLAlchemy engine configuration."""
 
-from config.settings import get_settings
+from config import get_settings
 from sqlalchemy.ext.asyncio import create_async_engine
 
 __all__ = ["async_engine"]

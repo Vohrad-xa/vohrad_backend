@@ -5,7 +5,7 @@ from api.common.schemas import BaseResponseSchema
 from constants import TenantDefaults, ValidationMessages
 from datetime import time as dtime
 from pydantic import BaseModel, EmailStr, field_validator
-from security.policy.time_utils import minutes_to_hhmm
+from security.policy import minutes_to_hhmm
 from typing import Optional
 from uuid import UUID
 

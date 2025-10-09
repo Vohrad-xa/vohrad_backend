@@ -1,23 +1,15 @@
-"""Security infrastructure."""
+"""Security infrastructure.
 
-from .jwt.engine import JWTEngine
-from .jwt.revocation import JWTRevocationService, get_jwt_revocation_service
-from .jwt.service import AuthJWTService, get_auth_jwt_service
-from .jwt.tokens import AccessToken, AuthenticatedUser, RefreshToken, TokenPair
-from .password import PasswordManager, hash_password, password_manager, verify_password
+This module contains security-related components organized in submodules:
 
-__all__ = [
-    "AccessToken",
-    "AuthJWTService",
-    "AuthenticatedUser",
-    "JWTEngine",
-    "JWTRevocationService",
-    "PasswordManager",
-    "RefreshToken",
-    "TokenPair",
-    "get_auth_jwt_service",
-    "get_jwt_revocation_service",
-    "hash_password",
-    "password_manager",
-    "verify_password",
-]
+- security.jwt: JWT authentication components (tokens, engine, service, revocation)
+- security.password: Password hashing and verification utilities
+- security.authorization: Authorization service for permission and role checks
+- security.policy: RBAC policy helpers and permission registry
+
+Import from specific submodules:
+    from security.jwt import AuthenticatedUser, get_auth_jwt_service
+    from security.password import hash_password, verify_password
+    from security.authorization import AuthorizationService
+    from security.policy import apply_conditional_access
+"""

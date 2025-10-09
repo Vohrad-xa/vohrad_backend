@@ -6,7 +6,7 @@ from api.tenant.schema import TenantCreate, TenantUpdate
 from database.constraint_handler import constraint_handler
 from datetime import time as dtime
 from exceptions import tenant_not_found
-from security.policy.time_utils import time_to_minutes
+from security.policy import time_to_minutes
 from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession

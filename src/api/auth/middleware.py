@@ -1,11 +1,7 @@
 """Authentication middleware for enterprise security."""
 
 from constants.defaults import SecurityDefaults
-from exceptions.jwt_exceptions import (
-    JWTException,
-    TokenExpiredException,
-    TokenInvalidException,
-)
+from exceptions import JWTException, TokenExpiredException, TokenInvalidException
 from fastapi import Request, Response
 from http import HTTPStatus
 import re
@@ -51,6 +47,7 @@ class AuthMiddleware(BaseHTTPMiddleware):
 
         self.auto_error = auto_error
 
+
     def _is_path_excluded(self, path: str) -> bool:
         """Check if path should skip authentication."""
         # Check exact path matches
@@ -64,6 +61,7 @@ class AuthMiddleware(BaseHTTPMiddleware):
 
         return False
 
+
     def _extract_bearer_token(self, request: Request) -> Optional[str]:
         """Extract Bearer token from Authorization header."""
         authorization = request.headers.get("authorization")
@@ -75,6 +73,7 @@ class AuthMiddleware(BaseHTTPMiddleware):
             return authorization[7:]
 
         return None
+
 
     def _create_error_response(self, exception: JWTException) -> JSONResponse:
         """Create standardized error response."""
@@ -135,8 +134,8 @@ class AuthMiddleware(BaseHTTPMiddleware):
 
         response = await call_next(request)
 
-        # Add security headers
         return self._add_security_headers(response)
+
 
     def _add_security_headers(self, response: Response) -> Response:
         """Add enterprise security headers to response."""
@@ -158,7 +157,6 @@ class AuthMiddleware(BaseHTTPMiddleware):
 
 
 # Convenience factory functions for different configurations
-
 
 def create_strict_auth_middleware(app) -> AuthMiddleware:
     """Create strict auth middleware that requires authentication for most routes."""
@@ -185,8 +183,8 @@ def create_strict_auth_middleware(app) -> AuthMiddleware:
 def create_permissive_auth_middleware(app) -> AuthMiddleware:
     """Create permissive auth middleware that injects context when available."""
     return AuthMiddleware(
-        app=app,
-        auto_error=False,          # Don't automatically error on missing/invalid tokens
-        excluded_paths    = set(),  # Process all paths for context injection
-        excluded_patterns = [],    # No excluded patterns
+        app               = app,
+        auto_error        = False,   # Don't automatically error on missing/invalid tokens
+        excluded_paths    = set(),   # Process all paths for context injection
+        excluded_patterns = [],      # No excluded patterns
     )

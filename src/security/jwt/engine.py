@@ -1,7 +1,6 @@
 """Pure JWT token operations following enterprise security standards."""
 
-from config.jwt import get_jwt_config
-from config.keys import get_key_manager
+from config import get_jwt_config, get_key_manager
 from datetime import datetime, timedelta, timezone
 from exceptions import TokenExpiredException, TokenInvalidException
 import jwt

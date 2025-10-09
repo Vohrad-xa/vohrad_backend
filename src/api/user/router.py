@@ -1,6 +1,6 @@
 """User router."""
 
-from api.common.base_router import BaseRouterMixin
+from api.common import BaseRouterMixin
 from api.common.context_dependencies import get_tenant_context, get_tenant_context_no_license_check
 from api.permission.dependencies import (
     RequireManager,

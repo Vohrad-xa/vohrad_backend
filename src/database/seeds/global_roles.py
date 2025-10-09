@@ -1,7 +1,7 @@
 """Global role seeds for shared schema."""
 
 import asyncio
-from config.settings import get_settings
+from config import get_settings
 from datetime import datetime
 import sqlalchemy as sa
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine

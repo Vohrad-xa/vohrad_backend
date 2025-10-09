@@ -1,7 +1,7 @@
 """Tenant role seeds for tenant schemas."""
 
 import asyncio
-from config.settings import get_settings
+from config import get_settings
 from constants.enums import RoleScope, RoleType
 from datetime import datetime
 import sqlalchemy as sa

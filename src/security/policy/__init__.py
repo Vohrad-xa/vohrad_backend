@@ -14,6 +14,7 @@ from .policy import (
     merge_permissions_with_precedence,
     permission_applies_to_resource,
 )
+from .time_utils import is_within_window, minutes_to_hhmm, time_to_minutes
 
 __all__ = [
     "RESERVED_ROLE_NAMES",
@@ -24,6 +25,9 @@ __all__ = [
     "is_allowed_for_custom_role",
     "is_reserved_role",
     "is_restricted_perm",
+    "is_within_window",
     "merge_permissions_with_precedence",
+    "minutes_to_hhmm",
     "permission_applies_to_resource",
+    "time_to_minutes",
 ]

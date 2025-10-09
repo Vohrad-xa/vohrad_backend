@@ -1,9 +1,7 @@
 """Webhook service for handling Stripe payment events."""
 
-from api.license.models import License
-from api.license.schema import LicenseUpdate
-from api.license.service import license_service
-from api.tenant.models import Tenant
+from api.license import License, LicenseUpdate, license_service
+from api.tenant import Tenant
 from constants import LicenseStatus
 from database.sessions import with_default_db
 from datetime import datetime

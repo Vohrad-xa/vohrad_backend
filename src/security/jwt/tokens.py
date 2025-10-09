@@ -1,6 +1,6 @@
 """JWT token models and payloads following RFC 7519."""
 
-from config.jwt import get_jwt_config
+from config import get_jwt_config
 from datetime import datetime, timedelta, timezone
 from pydantic import BaseModel, Field, field_validator
 from typing import Any, Optional

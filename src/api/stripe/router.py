@@ -1,7 +1,7 @@
 """Webhook routes for external services (Stripe, etc.)."""
 
 from api.stripe import webhook_service
-from config.settings import get_settings
+from config import get_settings
 from fastapi import APIRouter, Depends, Header, HTTPException, Request, status
 import stripe
 

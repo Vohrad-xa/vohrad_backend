@@ -11,13 +11,11 @@ from .schema import (
 )
 from api.tenant.dependencies import get_current_tenant
 from api.tenant.models import Tenant
-from config.keys import get_key_manager
-from config.settings import get_settings
+from config import get_key_manager, get_settings
 from exceptions import AuthenticationException
 from fastapi import APIRouter, Depends, Request, Response
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
-from security.jwt import AuthenticatedUser, get_auth_jwt_service
-from security.jwt.tokens import TokenPair
+from security.jwt import AuthenticatedUser, TokenPair, get_auth_jwt_service
 from web import ResponseFactory, SuccessResponse
 
 settings = get_settings()

@@ -1,12 +1,11 @@
 """License routes for tenant users."""
 
-from api.common.base_router import BaseRouterMixin
+from .schema import LicenseResponse
+from .service import license_service
+from api.common import BaseRouterMixin
 from api.common.context_dependencies import get_shared_context
-from api.license.schema import LicenseResponse
-from api.license.service import license_service
 from fastapi import APIRouter, Depends
-from web import PaginatedResponse, SuccessResponse
-from web.pagination import PaginationParams, pagination_params
+from web import PaginatedResponse, PaginationParams, SuccessResponse, pagination_params
 
 routes = APIRouter(
     tags   = ["licenses"],

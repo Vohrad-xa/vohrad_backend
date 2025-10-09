@@ -1,9 +1,9 @@
 """ItemLocation router."""
 
+from .schema import ItemLocationCreate, ItemLocationResponse
+from .service import item_location_service
 from api.common.base_router import BaseRouterMixin
 from api.common.context_dependencies import get_tenant_context
-from api.item_location.schema import ItemLocationCreate, ItemLocationResponse
-from api.item_location.service import item_location_service
 from api.permission.dependencies import RequireItemCreate
 from fastapi import APIRouter, Depends, status
 from web import (

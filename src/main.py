@@ -1,8 +1,7 @@
 """FastAPI application setup (routers, middleware, handlers)."""
 
-from api.admin.router import routes as admin_routes
-from api.auth import router as auth_routes
-from api.auth.middleware import AuthMiddleware
+from api.admin import routes as admin_routes
+from api.auth import AuthMiddleware, router as auth_routes
 from api.item.router import routes as item_routes
 from api.item_location.models import ItemLocation  # noqa: F401
 from api.item_location.router import routes as item_location_routes
@@ -15,9 +14,7 @@ from api.stripe.router import routes as webhook_routes
 from api.system.router import routes as system_routes
 from api.tenant.router import routes as tenant_routes
 from api.user.router import routes as user_routes
-from config.cors import install_cors
-from config.rate_limit import install_rate_limiting
-from config.settings import get_settings
+from config import get_settings, install_cors, install_rate_limiting
 from contextlib import asynccontextmanager
 from exceptions import BaseAppException
 from fastapi import FastAPI
