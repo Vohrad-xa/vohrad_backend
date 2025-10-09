@@ -3,7 +3,7 @@
 from .base import BaseAppException
 from .registry import ErrorDefinition, ErrorRegistry
 from typing import Any, Dict, Optional
-from uuid import uuid4
+from uuid import UUID, uuid4
 
 
 class ExceptionFactory:
@@ -123,6 +123,20 @@ class ExceptionFactory:
             ErrorRegistry.SERVICE_UNAVAILABLE,
             details = {"service": service, "reason": reason},
             context = f"Service '{service}' unavailable" + (f": {reason}" if reason else ""),
+        )
+
+    @staticmethod
+    def license_limit_exceeded(tenant_id: UUID, current_users: int, seat_limit: int) -> BaseAppException:
+        """Create license seat limit exceeded exception."""
+        from .domain import LicenseLimitExceededException
+
+        return LicenseLimitExceededException(
+            message=f"Tenant has reached license seat limit ({current_users}/{seat_limit})",
+            details={
+                "tenant_id"    : str(tenant_id),
+                "current_users": current_users,
+                "seat_limit"   : seat_limit,
+            },
         )
 
 
