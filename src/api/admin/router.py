@@ -3,6 +3,7 @@
 from .dependencies import get_admin_params
 from .schema import AdminResponse
 from .service import admin_service
+from api.common import BaseRouterMixin
 from api.license import LicenseCreate, LicenseResponse, license_service
 from api.permission import PermissionResponse, permission_service
 from api.role import RoleResponse, role_service
@@ -33,9 +34,8 @@ routes = APIRouter(
 async def list_admin_users(params = Depends(get_admin_params)):
     """List all admin users."""
     pagination, _user, db = params
-    return await admin_service.paginated_call(
-        db, admin_service.get_multi, pagination, AdminResponse
-    )
+    items, total = await admin_service.get_multi(db, pagination.page, pagination.size)
+    return BaseRouterMixin.create_paginated_response(items, total, pagination, AdminResponse)
 
 
 @routes.get(
@@ -45,9 +45,8 @@ async def list_admin_users(params = Depends(get_admin_params)):
 async def list_all_tenants(params = Depends(get_admin_params)):
     """List all tenants."""
     pagination, _user, db = params
-    return await admin_service.paginated_call(
-        db, tenant_service.get_multi, pagination, TenantResponse
-    )
+    items, total = await tenant_service.get_multi(db, pagination.page, pagination.size)
+    return BaseRouterMixin.create_paginated_response(items, total, pagination, TenantResponse)
 
 
 @routes.get(
@@ -57,12 +56,8 @@ async def list_all_tenants(params = Depends(get_admin_params)):
 async def list_all_roles(params = Depends(get_admin_params)):
     """List all roles."""
     pagination, _user, db = params
-    return await admin_service.paginated_call(
-        db,
-        role_service.get_multi,
-        pagination,
-        RoleResponse
-    )
+    items, total = await role_service.get_multi(db, pagination.page, pagination.size)
+    return BaseRouterMixin.create_paginated_response(items, total, pagination, RoleResponse)
 
 
 @routes.get(
@@ -72,12 +67,8 @@ async def list_all_roles(params = Depends(get_admin_params)):
 async def list_all_permissions(params = Depends(get_admin_params)):
     """List all permissions."""
     pagination, _user, db = params
-    return await admin_service.paginated_call(
-        db,
-        permission_service.get_multi,
-        pagination,
-        PermissionResponse
-    )
+    items, total = await permission_service.get_multi(db, pagination.page, pagination.size)
+    return BaseRouterMixin.create_paginated_response(items, total, pagination, PermissionResponse)
 
 
 @routes.put(
@@ -131,7 +122,8 @@ async def create_license(
 async def list_all_licenses(params=Depends(get_admin_params)):
     """List all licenses (admin only)."""
     pagination, _user, db = params
-    return await admin_service.paginated_call(db, license_service.get_multi, pagination, LicenseResponse)
+    items, total = await license_service.get_multi(db, pagination.page, pagination.size)
+    return BaseRouterMixin.create_paginated_response(items, total, pagination, LicenseResponse)
 
 
 @routes.put(
