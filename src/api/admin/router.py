@@ -1,17 +1,15 @@
 """Admin routes with tenant context switching."""
 
 from .dependencies import get_admin_params
+from .schema import AdminResponse
 from .service import admin_service
 from api.license import LicenseCreate, LicenseResponse, license_service
 from api.permission import PermissionResponse, permission_service
 from api.role import RoleResponse, role_service
 from api.stripe import stripe_payment_service
 from api.tenant import TenantResponse, TenantUpdate, tenant_service
-from api.user.schema import UserResponse
-from api.user.service import user_service
 from exceptions import ExceptionFactory
 from fastapi import APIRouter, Depends, Query, status
-from typing import Any, Optional
 from uuid import UUID
 from web import (
     CreatedResponse,
@@ -28,93 +26,87 @@ routes = APIRouter(
 )
 
 
-@routes.get("/tenants", response_model = SuccessResponse[PaginatedResponse[Any]])
+@routes.get(
+    "/users",
+    response_model = SuccessResponse[PaginatedResponse[AdminResponse]]
+)
+async def list_admin_users(params = Depends(get_admin_params)):
+    """List all admin users."""
+    pagination, _user, db = params
+    return await admin_service.paginated_call(
+        db, admin_service.get_multi, pagination, AdminResponse
+    )
+
+
+@routes.get(
+    "/tenants",
+    response_model = SuccessResponse[PaginatedResponse[TenantResponse]]
+)
 async def list_all_tenants(params = Depends(get_admin_params)):
     """List all tenants."""
-    pagination, context = params
+    pagination, _user, db = params
     return await admin_service.paginated_call(
-        context, tenant_service.get_multi, pagination, TenantResponse
+        db, tenant_service.get_multi, pagination, TenantResponse
     )
 
 
-@routes.get("/users", response_model=SuccessResponse[PaginatedResponse[Any]])
-async def list_users(
-    params = Depends(get_admin_params),
-    scope: Optional[str] = Query(None)
-):
-    """List global users or tenant users."""
-    pagination, context = params
-    return await admin_service.paginated_call(
-        context,
-        user_service.get_multi,
-        pagination,
-        UserResponse,
-        tenant_id = context.tenant_id,
-        scope     = scope
-    )
-
-
-@routes.get("/roles", response_model=SuccessResponse[PaginatedResponse[Any]])
-async def list_all_roles(
-    params = Depends(get_admin_params),
-    scope: Optional[str] = Query(None)
-):
+@routes.get(
+    "/roles",
+    response_model=SuccessResponse[PaginatedResponse[RoleResponse]]
+)
+async def list_all_roles(params = Depends(get_admin_params)):
     """List all roles."""
-    pagination, context = params
+    pagination, _user, db = params
     return await admin_service.paginated_call(
-        context,
+        db,
         role_service.get_multi,
         pagination,
-        RoleResponse,
-        scope=scope
+        RoleResponse
     )
 
 
-@routes.get("/permissions", response_model = SuccessResponse[PaginatedResponse[Any]])
-async def list_all_permissions(
-    params = Depends(get_admin_params),
-    scope: Optional[str] = Query(None)
-):
+@routes.get(
+    "/permissions",
+    response_model = SuccessResponse[PaginatedResponse[PermissionResponse]]
+)
+async def list_all_permissions(params = Depends(get_admin_params)):
     """List all permissions."""
-    pagination, context = params
+    pagination, _user, db = params
     return await admin_service.paginated_call(
-        context,
+        db,
         permission_service.get_multi,
         pagination,
-        PermissionResponse,
-        scope=scope
+        PermissionResponse
     )
 
 
-@routes.put("/tenants/{tenant_id}", response_model=UpdatedResponse[TenantResponse])
+@routes.put(
+    "/tenants/{tenant_id}",
+    response_model=UpdatedResponse[TenantResponse]
+)
 async def update_tenant(
     tenant_id  : UUID,
     tenant_data: TenantUpdate,
     params = Depends(get_admin_params)
 ) -> SuccessResponse[TenantResponse]:
     """Update tenant by ID (admin access only)."""
-    _, context = params
-    updated_tenant = await tenant_service.update_tenant_by_id(context.db_session, tenant_id, tenant_data)
+    _pagination, _user, db = params
+    updated_tenant = await tenant_service.update_tenant_by_id(db, tenant_id, tenant_data)
     return ResponseFactory.updated(updated_tenant, response_model=TenantResponse)
 
 
-@routes.delete("/tenants/{tenant_id}", response_model = DeletedResponse)
+@routes.delete(
+    "/tenants/{tenant_id}",
+    response_model = DeletedResponse
+)
 async def delete_tenant(
     tenant_id: UUID,
     params = Depends(get_admin_params)
 ) -> DeletedResponse:
     """Delete tenant."""
-    _, context = params
-    await tenant_service.delete_tenant_by_id(context.db_session, tenant_id)
+    _pagination, _user, db = params
+    await tenant_service.delete_tenant_by_id(db, tenant_id)
     return ResponseFactory.deleted("tenant")
-
-
-@routes.get("/tenant-context", response_model = SuccessResponse[dict])
-async def get_current_tenant_context(params = Depends(get_admin_params)):
-    """Get current tenant context."""
-    _, context = params
-    context_info = await admin_service.get_admin_context_info(context)
-    return ResponseFactory.success(context_info)
 
 
 @routes.post(
@@ -127,24 +119,24 @@ async def create_license(
     params=Depends(get_admin_params),
 ):
     """Create new license (admin only)."""
-    _, context = params
-    license_obj: LicenseResponse = await license_service.create_license(context.db_session, license_data)
+    _pagination, _user, db = params
+    license_obj: LicenseResponse = await license_service.create_license(db, license_data)
     return ResponseFactory.created(license_obj, response_model=LicenseResponse)
 
 
 @routes.get(
     "/licenses",
-    response_model = SuccessResponse[PaginatedResponse[Any]]
+    response_model = SuccessResponse[PaginatedResponse[LicenseResponse]]
 )
 async def list_all_licenses(params=Depends(get_admin_params)):
     """List all licenses (admin only)."""
-    pagination, context = params
-    return await admin_service.paginated_call(context, license_service.get_multi, pagination, LicenseResponse)
+    pagination, _user, db = params
+    return await admin_service.paginated_call(db, license_service.get_multi, pagination, LicenseResponse)
 
 
 @routes.put(
     "/tenants/{tenant_id}/license",
-    response_model=UpdatedResponse[TenantResponse]
+    response_model = UpdatedResponse[TenantResponse]
 )
 async def assign_tenant_license(
     tenant_id : UUID,
@@ -152,9 +144,9 @@ async def assign_tenant_license(
     params = Depends(get_admin_params),
 ):
     """Assign/update license for a tenant (admin only)."""
-    _, context = params
-    await license_service.activate_license(context.db_session, license_id)
-    updated_tenant = await tenant_service.get_tenant_by_id(context.db_session, tenant_id)
+    _pagination, _user, db = params
+    await license_service.activate_license(db, license_id)
+    updated_tenant = await tenant_service.get_tenant_by_id(db, tenant_id)
     return ResponseFactory.updated(updated_tenant, response_model=TenantResponse)
 
 
@@ -167,12 +159,12 @@ async def activate_tenant_license(
     params = Depends(get_admin_params),
 ):
     """Activate tenant's current license (admin only)."""
-    _, context = params
-    tenant = await tenant_service.get_tenant_by_id(context.db_session, tenant_id)
+    _pagination, _user, db = params
+    tenant = await tenant_service.get_tenant_by_id(db, tenant_id)
     if not tenant.license_id:
         raise ExceptionFactory.business_rule("Tenant does not have a license assigned", {"tenant_id": str(tenant_id)})
-    await license_service.activate_license(context.db_session, tenant.license_id)
-    updated_tenant = await tenant_service.get_tenant_by_id(context.db_session, tenant_id)
+    await license_service.activate_license(db, tenant.license_id)
+    updated_tenant = await tenant_service.get_tenant_by_id(db, tenant_id)
     return ResponseFactory.updated(updated_tenant, response_model=TenantResponse)
 
 
@@ -185,12 +177,12 @@ async def suspend_tenant_license(
     params=Depends(get_admin_params),
 ):
     """Suspend tenant's license (admin only)."""
-    _, context = params
-    tenant = await tenant_service.get_tenant_by_id(context.db_session, tenant_id)
+    _pagination, _user, db = params
+    tenant = await tenant_service.get_tenant_by_id(db, tenant_id)
     if not tenant.license_id:
         raise ExceptionFactory.business_rule("Tenant does not have a license assigned", {"tenant_id": str(tenant_id)})
-    await license_service.suspend_license(context.db_session, tenant.license_id)
-    updated_tenant = await tenant_service.get_tenant_by_id(context.db_session, tenant_id)
+    await license_service.suspend_license(db, tenant.license_id)
+    updated_tenant = await tenant_service.get_tenant_by_id(db, tenant_id)
     return ResponseFactory.updated(updated_tenant, response_model=TenantResponse)
 
 
@@ -203,9 +195,9 @@ async def get_tenant_license_info(
     params=Depends(get_admin_params),
 ):
     """Get license information for a tenant including seat usage (admin only)."""
-    _, context = params
-    tenant = await tenant_service.get_tenant_by_id(context.db_session, tenant_id)
-    license_info: dict = await license_service.get_tenant_license_info(context.db_session, tenant)
+    _pagination, _user, db = params
+    tenant = await tenant_service.get_tenant_by_id(db, tenant_id)
+    license_info: dict = await license_service.get_tenant_license_info(db, tenant)
     return ResponseFactory.success(license_info)
 
 
@@ -218,9 +210,9 @@ async def create_license_invoice(
     params=Depends(get_admin_params),
 ):
     """Create and send Stripe invoice for license (admin only)."""
-    _, context = params
+    _pagination, _user, db = params
 
-    result: dict = await stripe_payment_service.process_invoice_flow(context.db_session, license_id)
+    result: dict = await stripe_payment_service.process_invoice_flow(db, license_id)
 
     if result["code"] == "already_active":
         return ResponseFactory.success(result["payload"])
