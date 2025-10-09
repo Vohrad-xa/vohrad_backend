@@ -19,8 +19,8 @@ class CORSConfig:
 
 def _dedupe(sequence: Iterable[str]) -> list[str]:
     """Preserve order while removing duplicates."""
-    seen: set[str] = set()
-    result: list[str] = []
+    seen   : set[str] = set()
+    result : list[str] = []
     for item in sequence:
         if item not in seen:
             seen.add(item)
@@ -31,7 +31,7 @@ def _dedupe(sequence: Iterable[str]) -> list[str]:
 def get_cors_config() -> CORSConfig:
     """Build CORS configuration from application settings."""
     settings = get_settings()
-    origins  = getattr(settings, 'CORS_ALLOWED_ORIGINS', None) or settings.CORS_ALLOW_ORIGINS or []
+    origins  = settings.CORS_ALLOW_ORIGINS or []
     return CORSConfig(allow_origins=origins)
 
 

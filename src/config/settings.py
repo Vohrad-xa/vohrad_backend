@@ -57,6 +57,30 @@ class Settings(BaseSettings):
     JWT_PRIVATE_KEY_PATH       : Optional[str] = Field(default=None, description="Path to JWT private key file")
     JWT_PUBLIC_KEY_PATH        : Optional[str] = Field(default=None, description="Path to JWT public key file")
     ACCESS_TOKEN_EXPIRE_MINUTES: int           = Field(default=30, description="Access token expiration time")
+    REFRESH_TOKEN_EXPIRE_DAYS  : int           = Field(default=7, description="Refresh token expiration in days")
+
+    # JWT Claims settings
+    JWT_ISSUER     : Optional[str] = Field(default=None, description="JWT issuer claim")
+    JWT_AUDIENCE   : Optional[str] = Field(default=None, description="JWT audience claim")
+    JWT_REQUIRE_IAT: bool          = Field(default=True, description="Require 'issued at' claim")
+    JWT_REQUIRE_NBF: bool          = Field(default=True, description="Require 'not before' claim")
+    JWT_REQUIRE_JTI: bool          = Field(default=True, description="Require JWT ID claim")
+    JWT_LEEWAY     : int           = Field(default=0, description="Leeway for token expiration in seconds")
+
+    # JWT Verification settings
+    JWT_VERIFY_SIGNATURE : bool = Field(default=True, description="Verify JWT signature")
+    JWT_VERIFY_EXPIRATION: bool = Field(default=True, description="Verify token expiration")
+    JWT_VERIFY_AUDIENCE  : bool = Field(default=True, description="Verify audience claim")
+    JWT_VERIFY_ISSUER    : bool = Field(default=True, description="Verify issuer claim")
+
+    # Token refresh settings
+    REFRESH_TOKEN_ROTATE      : bool = Field(default=True, description="Rotate refresh tokens on use")
+    MAX_REFRESH_TOKEN_AGE_DAYS: int  = Field(default=30, description="Maximum refresh token age in days")
+
+    # Rate limiting for auth endpoints
+    AUTH_RATE_LIMIT_ENABLED       : bool = Field(default=True, description="Enable rate limiting for auth endpoints")
+    AUTH_RATE_LIMIT_REQUESTS      : int  = Field(default=5, description="Max auth requests per window")
+    AUTH_RATE_LIMIT_WINDOW_MINUTES: int  = Field(default=15, description="Rate limit window in minutes")
 
     # Web session cookie settings
     WEB_REFRESH_COOKIE_NAME: str = Field(
@@ -82,6 +106,13 @@ class Settings(BaseSettings):
     # Pagination defaults
     DEFAULT_PAGE_SIZE: int = Field(default=20, description="Default pagination page size")
     MAX_PAGE_SIZE    : int = Field(default=100, description="Maximum pagination page size")
+
+    # Stripe settings
+    STRIPE_SECRET_KEY     : Optional[str] = Field(default=None, description="Stripe secret key")
+    STRIPE_PUBLISHABLE_KEY: Optional[str] = Field(default=None, description="Stripe publishable key")
+    STRIPE_WEBHOOK_SECRET : Optional[str] = Field(default=None, description="Stripe webhook secret")
+    STRIPE_CURRENCY       : str           = Field(default="eur", description="Stripe default currency")
+    STRIPE_DAYS_UNTIL_DUE : int           = Field(default=7, description="Days until invoice is due")
 
     @field_validator("ENVIRONMENT")
     @classmethod
