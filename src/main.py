@@ -6,10 +6,12 @@ from api.auth.middleware import AuthMiddleware
 from api.item.router import routes as item_routes
 from api.item_location.models import ItemLocation  # noqa: F401
 from api.item_location.router import routes as item_location_routes
+from api.license.router import routes as license_routes
 from api.location.models import Location  # noqa: F401
 from api.location.router import routes as location_routes
 from api.permission.router import routes as permission_routes
 from api.role.router import routes as role_routes
+from api.stripe.router import routes as webhook_routes
 from api.system.router import routes as system_routes
 from api.tenant.router import routes as tenant_routes
 from api.user.router import routes as user_routes
@@ -48,14 +50,15 @@ app = FastAPI(
 
 app.add_middleware(
     AuthMiddleware,
-    excluded_paths = {
+    excluded_paths={
         "/v1/system/health",
         "/v1/auth/login/user",
         "/v1/auth/login/admin",
         "/v1/auth/refresh",
-        "/v1/auth/status"
+        "/v1/auth/status",
+        "/webhooks/stripe",
     },
-    auto_error     = True,
+    auto_error=True,
 )
 
 
@@ -68,12 +71,14 @@ app.add_exception_handler(RequestValidationError, ExceptionHandler.validation_ex
 app.add_exception_handler(PydanticValidationError, ExceptionHandler.pydantic_validation_exception_handler)
 app.add_exception_handler(Exception, ExceptionHandler.generic_exception_handler)
 
+app.include_router(webhook_routes)
 app.include_router(auth_routes, prefix="/v1")
 app.include_router(admin_routes, prefix="/v1")
 app.include_router(tenant_routes, prefix="/v1")
 app.include_router(user_routes, prefix="/v1")
 app.include_router(role_routes, prefix="/v1")
 app.include_router(permission_routes, prefix="/v1")
+app.include_router(license_routes, prefix="/v1")
 app.include_router(item_routes, prefix="/v1")
 app.include_router(item_location_routes, prefix="/v1")
 app.include_router(location_routes, prefix="/v1")

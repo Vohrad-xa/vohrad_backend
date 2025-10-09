@@ -1,9 +1,8 @@
 """Admin service for summaries and paginated calls."""
 
 from .models import Admin
-from api.common.base_router import BaseRouterMixin
-from api.common.base_service import BaseService
-from database.sessions import with_default_db, with_tenant_db
+from api.common import BaseRouterMixin, BaseService
+from database import with_default_db, with_tenant_db
 from sqlalchemy.exc import OperationalError, ProgrammingError
 from typing import Any
 from web import ResponseFactory
@@ -23,9 +22,15 @@ class AdminService(BaseService[Admin, Any, Any]):
 
     async def handle_global_request(self, service_method, pagination, **kwargs):
         """Handle global admin requests (list or summary)."""
+        service_class_name = service_method.__self__.__class__.__name__
+
+        # LicenseService only exists in shared schema - always return actual list
+        if service_class_name == "LicenseService":
+            async with with_default_db() as shared_db:
+                return await service_method(shared_db, pagination.page, pagination.size)
+
         if kwargs.get("scope") == "global":
             async with with_default_db() as shared_db:
-                service_class_name = service_method.__self__.__class__.__name__
                 if service_class_name == "UserService":
                     return await self.get_multi(shared_db, pagination.page, pagination.size)
                 else:

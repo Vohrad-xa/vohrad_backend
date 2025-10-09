@@ -24,6 +24,11 @@ class SubdomainExtractor:
 
             parts = host_without_port.split(".")
 
+            # Development: allow subdomain.localhost (e.g., amine2.localhost)
+            if len(parts) == 2 and parts[1] == "localhost":
+                return parts[0]
+
+            # Production: require subdomain.domain.tld (e.g., amine2.example.com)
             if len(parts) < 3:
                 return None
 
@@ -43,6 +48,11 @@ class SubdomainExtractor:
 
             parts = host_without_port.split(".")
 
+            # Development: allow subdomain.localhost
+            if len(parts) == 2 and parts[1] == "localhost":
+                return parts[0]
+
+            # Production: require subdomain.domain.tld
             if len(parts) < 3:
                 return None
 

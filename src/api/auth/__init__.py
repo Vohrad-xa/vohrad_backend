@@ -1,9 +1,9 @@
 """Authentication module following enterprise patterns."""
 
-# JWT components from security
 from .dependencies import (
+    get_admin_or_tenant_context,
+    get_admin_or_tenant_context_no_license_check,
     get_current_admin,
-    get_current_tenant_and_user,
     get_current_tenant_user,
     get_current_user,
     get_optional_user,
@@ -14,7 +14,6 @@ from .schema import AdminLoginRequest, AuthStatusResponse, RefreshTokenRequest, 
 from security.jwt import AccessToken, AuthenticatedUser, RefreshToken, TokenPair
 
 __all__ = [
-    # JWT components
     "AccessToken",
     "AdminLoginRequest",
     "AuthMiddleware",
@@ -24,16 +23,14 @@ __all__ = [
     "RefreshTokenRequest",
     "TokenPair",
     "TokenResponse",
-    # Schemas
     "UserLoginRequest",
     "create_permissive_auth_middleware",
     "create_strict_auth_middleware",
+    "get_admin_or_tenant_context",
+    "get_admin_or_tenant_context_no_license_check",
     "get_current_admin",
-    "get_current_tenant_and_user",
     "get_current_tenant_user",
-    # Dependencies
     "get_current_user",
     "get_optional_user",
-    # Router and middleware
     "router",
 ]

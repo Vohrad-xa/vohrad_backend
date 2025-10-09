@@ -1,7 +1,7 @@
 """User router."""
 
 from api.common.base_router import BaseRouterMixin
-from api.common.context_dependencies import get_tenant_context
+from api.common.context_dependencies import get_tenant_context, get_tenant_context_no_license_check
 from api.permission.dependencies import (
     RequireManager,
     RequireRoleManagement,
@@ -40,9 +40,9 @@ routes = APIRouter(
 
 @routes.get("/me", response_model=SuccessResponse[UserResponse])
 async def get_current_user_profile(
-    context=Depends(get_tenant_context),
+    context=Depends(get_tenant_context_no_license_check),
 ):
-    """Get currently authenticated user's profile."""
+    """Get currently authenticated user's profile (no active license required)."""
     current_user, tenant, db = context
     user = await user_service.get_user_by_id(db, current_user.user_id, tenant)
     return ResponseFactory.success(user, response_model=UserResponse)
@@ -106,10 +106,10 @@ async def get_user(
 @routes.get("/", response_model=SuccessResponse[PaginatedResponse[UserResponse]])
 async def get_users(
     pagination: PaginationParams = Depends(pagination_params),
-    context=Depends(get_tenant_context),
-    _authorized: bool = Depends(RequireManager),
+    context=Depends(get_tenant_context_no_license_check),
+    _authorized: bool = Depends(RequireUserRead),
 ):
-    """Get paginated list of users"""
+    """Get paginated list of users (no active license required)"""
     _, tenant, db = context
     users, total = await user_service.get_users_paginated(db, pagination.page, pagination.size, tenant)
     return BaseRouterMixin.create_paginated_response(users, total, pagination, UserResponse)
