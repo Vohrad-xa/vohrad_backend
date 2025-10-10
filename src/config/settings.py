@@ -115,6 +115,11 @@ class Settings(BaseSettings):
     STRIPE_CURRENCY       : str           = Field(default="eur", description="Stripe default currency")
     STRIPE_DAYS_UNTIL_DUE : int           = Field(default=7, description="Days until invoice is due")
 
+    # Email settings (Resend)
+    RESEND_API_KEY    : Optional[str] = Field(default=None, description="Resend API key for email delivery")
+    EMAIL_FROM_ADDRESS: str           = Field(default="noreply@example.com", description="Default 'from' email address")
+    EMAIL_FROM_NAME   : str           = Field(default="Vohrad", description="Default 'from' name for emails")
+
     @field_validator("ENVIRONMENT")
     @classmethod
     def validate_environment(cls, v):

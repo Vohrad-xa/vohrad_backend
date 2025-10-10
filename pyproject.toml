@@ -35,6 +35,7 @@ dependencies = [
     "slowapi>=0.1.9",
     "python-multipart>=0.0.20",
     "stripe>=13.0.1",
+    "resend>=2.16.0",
 ]
 
 [dependency-groups]
