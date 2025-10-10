@@ -1,13 +1,14 @@
 """License creation command."""
 
+from api.license.models import License
 from api.license.schema import LicenseCreate
 from api.license.service import license_service
 from api.stripe import stripe_payment_service
 from api.tenant.models import Tenant
 import asyncio
-from commands import CLIStyler, MessageType
+from commands import CLIDateInput, CLIStyler, MessageType
+from constants import LicenseStatus
 from database.sessions import with_default_db
-from datetime import datetime
 from decimal import Decimal
 import inquirer
 from sqlalchemy import select
@@ -31,17 +32,13 @@ async def _get_available_tenants():
 async def _create_license_async():
     """Create a new license for a tenant."""
     styler.console.clear()
-
-    # Use clean header styling
     styler.print_clean_header("License Creation")
-
     styler.print_clean_message("Select the tenant for this license:", MessageType.INFO)
-
     # Get available tenants
     available_tenants = await _get_available_tenants()
     if not available_tenants:
         styler.print_clean_message(
-            "No active tenants found. Please create a tenant first using the tenant management commands.",
+            "No active tenants found.",
             MessageType.ERROR
         )
         return
@@ -69,15 +66,48 @@ async def _create_license_async():
     tenant_answers = inquirer.prompt(tenant_question)
     selected_tenant = tenant_answers["tenant"]
 
+    # Display context about any existing active license for this tenant.
+    async with with_default_db() as db:
+        active_result = await db.execute(
+            select(License)
+            .where(
+                License.tenant_id == selected_tenant.tenant_id,
+                License.status == LicenseStatus.ACTIVE.value,
+            )
+            .order_by(License.starts_at.desc())
+        )
+        active_license: Optional[License] = active_result.scalar_one_or_none()
+
+    had_active_license = active_license is not None
+
+    if active_license:
+        styler.print_clean_message(
+            "Tenant currently has an active license. Activating the new license will automatically suspend the existing one.",
+            MessageType.WARNING,
+        )
+        active_table = {
+            "License ID" : str(active_license.id),
+            "License Key": active_license.license_key,
+            "Status"     : active_license.status,
+            "Seats"      : str(active_license.seats),
+            "Ends At"    : active_license.ends_at.strftime("%Y-%m-%d %H:%M:%S") if active_license.ends_at else "—",
+        }
+        styler.print_clean_table(active_table, "Current Active License")
+    else:
+        styler.print_clean_message(
+            "Tenant does not currently have an active license.",
+            MessageType.INFO,
+        )
+
     styler.print_clean_message("Please provide the following license details:", MessageType.INFO)
     styler.console.print("  All fields marked with * are required")
     styler.console.print("  Seats: Number of users allowed (must be positive)")
-    styler.console.print("  Price: License price in dollars (required, defaults to 0)")
+    styler.console.print("  Price: License price in EUR (required, defaults to 0)")
     styler.console.print("  Start Date: When license becomes active (required)")
-    styler.console.print("  End Date: When license expires (optional)")
+    styler.console.print("  End Date: When license expires (required)")
 
     # Prompt for license details
-    name = typer.prompt("\nLicense name *", type=str)
+    name  = typer.prompt("\nLicense name *", type=str)
     seats = typer.prompt("Number of seats *", type=int)
 
     # Validate seats
@@ -85,7 +115,7 @@ async def _create_license_async():
         styler.print_clean_message("Seats must be a positive number. Please try again.", MessageType.ERROR)
         seats = typer.prompt("Number of seats *", type=int)
 
-    # Price (required, defaults to 0)
+    # Price
     price_input = typer.prompt("Price (EUR, press Enter for 0)", default="0", show_default=True)
     price: Decimal = Decimal("0")
     try:
@@ -97,40 +127,29 @@ async def _create_license_async():
         styler.print_clean_message("Invalid price format. Using 0.", MessageType.WARNING)
         price = Decimal("0")
 
-    # Start date (required)
-    styler.console.print("\nStart date (format: YYYY-MM-DD, press Enter for today)")
-    starts_at_input = typer.prompt("Start date", default="", show_default=False)
-    starts_at: datetime
-    if not starts_at_input:
-        starts_at = datetime.now()
-    else:
-        try:
-            starts_at = datetime.strptime(starts_at_input, "%Y-%m-%d")
-        except ValueError:
-            styler.print_clean_message("Invalid date format. Using today's date.", MessageType.WARNING)
-            starts_at = datetime.now()
+    # Start date
+    styler.console.print()
+    starts_at = CLIDateInput.get_date_input(
+        prompt_text="When should the license start?",
+        allow_empty=False,
+        styler=styler,
+    )
 
-    # End date (optional)
-    styler.console.print("\nEnd date (format: YYYY-MM-DD, press Enter to skip)")
-    ends_at_input = typer.prompt("End date (optional)", default="", show_default=False)
-    ends_at: Optional[datetime] = None
-    if ends_at_input:
-        try:
-            ends_at = datetime.strptime(ends_at_input, "%Y-%m-%d")
-            if ends_at <= starts_at:
-                styler.print_clean_message("End date must be after start date. Skipping end date.", MessageType.WARNING)
-                ends_at = None
-        except ValueError:
-            styler.print_clean_message("Invalid date format. Skipping end date.", MessageType.WARNING)
-            ends_at = None
+    # End date
+    styler.console.print()
+    ends_at = CLIDateInput.get_date_input(
+        prompt_text = "When should the license expire?",
+        allow_empty = False,
+        min_date    = starts_at,
+        styler      = styler,
+        show_today  = False,
+    )
 
-    # Optional description (stored in meta field)
     description = typer.prompt("\nDescription (optional, press Enter to skip)", default="", show_default=False)
     meta: Optional[dict] = None
     if description:
         meta = {"description": description}
 
-    # Ask about activation using inquirer (following project pattern)
     styler.print_clean_message("Choose activation option for this license:", MessageType.INFO)
     styler.console.print("  1. Activate Directly - Activate immediately without payment")
     styler.console.print("  2. Activate with Invoice - Activate after payment via Stripe invoice")
@@ -150,7 +169,7 @@ async def _create_license_async():
     activation_answers = inquirer.prompt(activation_choices)
     activation_choice = activation_answers["activation"]
 
-    # For invoice option, ask if they want to send invoice now
+    # For invoice option, ask to send invoice now
     send_invoice_now = False
     if activation_choice == "2":
         invoice_confirm = [
@@ -165,22 +184,22 @@ async def _create_license_async():
 
     styler.print_clean_message("Creating license...", MessageType.STEP)
 
-    # Create license using the service
+    # Create license
     async with with_default_db() as db:
         license_data = LicenseCreate(
-            tenant_id=selected_tenant.tenant_id,
-            name=name,
-            seats=seats,
-            price=price,
-            starts_at=starts_at,
-            ends_at=ends_at,
-            status="inactive",
-            meta=meta
+            tenant_id = selected_tenant.tenant_id,
+            name      = name,
+            seats     = seats,
+            price     = price,
+            starts_at = starts_at,
+            ends_at   = ends_at,
+            status    = "inactive",
+            meta      = meta
         )
 
         try:
             license_obj = await license_service.create_license(db, license_data)
-            license_id = license_obj.id
+            license_id  = license_obj.id
         except Exception as e:
             styler.print_clean_message(
                 f"Failed to create license: {e!s}",
@@ -188,15 +207,20 @@ async def _create_license_async():
             )
             raise
 
-        # Handle activation based on choice
+        """Handle activation based on choice"""
         if activation_choice == "1":
-            # Direct activation (no payment)
+            """Direct activation (no payment)"""
             styler.print_clean_message("Activating license...", MessageType.STEP)
             try:
                 await license_service.activate_license(db, license_id)
                 # Refresh the license object to get updated status
                 license_obj = await license_service.get_by_id(db, license_id)
                 styler.print_clean_message("License activated successfully!", MessageType.SUCCESS)
+                if had_active_license:
+                    styler.print_clean_message(
+                        "Previous active license suspended automatically.",
+                        MessageType.INFO,
+                    )
             except Exception as e:
                 styler.print_clean_message(
                     f"License created but activation failed: {e!s}",
@@ -204,7 +228,7 @@ async def _create_license_async():
                 )
 
         elif activation_choice == "2":
-            # Invoice-based activation
+            """Invoice-based activation"""
             if send_invoice_now:
                 styler.print_clean_message("Creating Stripe invoice...", MessageType.STEP)
                 try:
@@ -216,6 +240,11 @@ async def _create_license_async():
                         styler.print_clean_message("License was already active!", MessageType.INFO)
                     elif result["code"] == "activated":
                         styler.print_clean_message("Invoice paid! License activated!", MessageType.SUCCESS)
+                        if had_active_license:
+                            styler.print_clean_message(
+                                "Previous active license suspended automatically.",
+                                MessageType.INFO,
+                            )
                     elif result["code"] == "invoice_pending":
                         payload = result["payload"]
                         styler.print_clean_message("Stripe invoice created and sent!", MessageType.SUCCESS)
@@ -235,17 +264,17 @@ async def _create_license_async():
             else:
                 styler.print_clean_message("License created (inactive). Invoice can be sent later.", MessageType.INFO)
 
-        # Build table data while still in session context
+        # Build table data
         table_data = {
-            "License ID": str(license_obj.id),
-            "License Key": license_obj.license_key,
+            "License ID"  : str(license_obj.id),
+            "License Key" : license_obj.license_key,
             "License Name": license_obj.name,
-            "Tenant": selected_tenant.sub_domain,
-            "Tenant ID": str(selected_tenant.tenant_id),
-            "Seats": str(license_obj.seats),
-            "Price": f"€{license_obj.price:.2f}",
-            "Status": license_obj.status,
-            "Starts At": license_obj.starts_at.strftime("%Y-%m-%d %H:%M:%S"),
+            "Tenant"      : selected_tenant.sub_domain,
+            "Tenant ID"   : str(selected_tenant.tenant_id),
+            "Seats"       : str(license_obj.seats),
+            "Price"       : f"€{license_obj.price:.2f}",
+            "Status"      : license_obj.status,
+            "Starts At"   : license_obj.starts_at.strftime("%Y-%m-%d %H:%M:%S"),
         }
 
         if license_obj.ends_at:
@@ -254,8 +283,10 @@ async def _create_license_async():
         if license_obj.meta and license_obj.meta.get("description"):
             table_data["Description"] = license_obj.meta["description"]
 
-    # Display final summary (after session is closed)
-    if table_data["Status"] == "active":
+        final_status = license_obj.status
+
+    # summary
+    if final_status == "active":
         styler.print_clean_message("License created and activated!", MessageType.SUCCESS)
     else:
         styler.print_clean_message("License created!", MessageType.SUCCESS)

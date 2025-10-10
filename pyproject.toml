@@ -80,9 +80,13 @@ seed-tenant-roles = "python management/manage.py security seed-tenant-roles"
 # Permission registry CLI
 perm-registry = "python management/manage.py security perm-registry"
 
-# Tenant commands  
+# Interactive menu
+menu = "python management/manage.py menu main"
+
+# Tenant commands
 create-tenant = "python management/manage.py tenant create_tenant"
 create-license = "python management/manage.py license create"
+send-expiry-reminders = "python management/manage.py send-expiry-reminders"
 
 # User commands
 create-user = "python management/manage.py user create-with-role"
