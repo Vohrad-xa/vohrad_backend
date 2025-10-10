@@ -6,16 +6,16 @@ Invariants:
 - Reserved role names are blocked.
 """
 
+from .models import Role
+from .schema import RoleCreate, RoleUpdate
 from api.common import BaseService
-from api.role.models import Role
-from api.role.schema import RoleCreate, RoleUpdate
 from constants import RoleScope, RoleType
 from database import constraint_handler
 from exceptions import ExceptionFactory
 from security.policy import is_reserved_role
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
-from typing import Any, Optional
+from typing import Any, NoReturn, Optional
 from uuid import UUID
 
 
@@ -210,7 +210,7 @@ class RoleService(BaseService[Role, RoleCreate, RoleUpdate]):
         self,
         error            : IntegrityError,
         operation_context: dict[str, Any]
-    ) -> None:
+    ) -> NoReturn:
         """Map database constraints to domain exceptions."""
         exception = constraint_handler.handle_violation(error, operation_context)
         raise exception

@@ -1,7 +1,7 @@
 """Location service."""
 
 from api.common import BaseService
-from api.item_location.models import ItemLocation
+from api.item_location import ItemLocation
 from api.location.models import Location
 from api.location.schema import LocationCreate, LocationUpdate
 from database.constraint_handler import constraint_handler

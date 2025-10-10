@@ -36,12 +36,22 @@ def upgrade() -> None:
     op.add_column("tenants", sa.Column("settings", sa.JSON(), nullable=True), schema="shared")
     op.add_column("tenants", sa.Column("created_by", sa.UUID(), nullable=True), schema="shared")
     op.add_column(
-        "tenants", sa.Column("created_at", sa.DateTime(), nullable=False, server_default=sa.func.now()), schema="shared"
+        "tenants",
+        sa.Column("created_at",
+        sa.DateTime(timezone=True),
+        nullable=False,
+        server_default=sa.func.now()),
+        schema="shared"
     )
     op.add_column(
-        "tenants", sa.Column("updated_at", sa.DateTime(), nullable=False, server_default=sa.func.now()), schema="shared"
+        "tenants",
+        sa.Column("updated_at",
+        sa.DateTime(timezone=True),
+        nullable=False,
+        server_default=sa.func.now()),
+        schema="shared"
     )
-    op.add_column("tenants", sa.Column("deleted_at", sa.DateTime(), nullable=True), schema="shared")
+    op.add_column("tenants", sa.Column("deleted_at", sa.DateTime(timezone=True), nullable=True), schema="shared")
     op.add_column("tenants", sa.Column("status", sa.String(), nullable=False, server_default="active"), schema="shared")
     op.execute("UPDATE shared.tenants SET status = current_status::text")
     op.drop_column("tenants", "current_status", schema="shared")

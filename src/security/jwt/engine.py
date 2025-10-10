@@ -1,7 +1,6 @@
 """Pure JWT token operations following enterprise security standards."""
 
-from config.jwt import get_jwt_config
-from config.keys import get_key_manager
+from config import get_jwt_config, get_key_manager
 from datetime import datetime, timedelta, timezone
 from exceptions import TokenExpiredException, TokenInvalidException
 import jwt
@@ -69,10 +68,10 @@ class JWTEngine:
                 require_claims.append("jti")
 
             options = {
-                "verify_signature": self.jwt_config.settings.JWT_VERIFY_SIGNATURE,
-                "verify_exp"      : verify_exp and self.jwt_config.settings.JWT_VERIFY_EXPIRATION,
-                "verify_aud"      : self.jwt_config.settings.JWT_VERIFY_AUDIENCE,
-                "verify_iss"      : self.jwt_config.settings.JWT_VERIFY_ISSUER,
+                "verify_signature": self.jwt_config.verify_signature,
+                "verify_exp"      : verify_exp and self.jwt_config.verify_expiration,
+                "verify_aud"      : self.jwt_config.verify_audience,
+                "verify_iss"      : self.jwt_config.verify_issuer,
                 "require"         : require_claims,
             }
 
@@ -80,8 +79,8 @@ class JWTEngine:
                 token,
                 self._verify_key,
                 algorithms = [self._algorithm],
-                audience   = self._audience if self.jwt_config.settings.JWT_VERIFY_AUDIENCE else None,
-                issuer     = self._issuer if self.jwt_config.settings.JWT_VERIFY_ISSUER else None,
+                audience   = self._audience if self.jwt_config.verify_audience else None,
+                issuer     = self._issuer if self.jwt_config.verify_issuer else None,
                 options    = options,
                 leeway     = self.jwt_config.leeway,
             )

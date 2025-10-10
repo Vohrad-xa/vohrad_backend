@@ -46,3 +46,12 @@ class CacheDefaults:
     LRU_TTL_SECONDS         : Final[int] = 3600
     USER_CACHE_MAX_SIZE     : Final[int] = 10000
     USER_CACHE_TTL_SECONDS  : Final[int] = 900
+
+
+class LicenseDefaults:
+    """License-related default values."""
+
+    LICENSE_KEY_PREFIX      : Final[str] = "VRDX"
+    LICENSE_KEY_SEGMENT_SIZE: Final[int] = 4
+    LICENSE_KEY_SEGMENTS    : Final[int] = 6
+    LICENSE_KEY_MAX_ATTEMPTS: Final[int] = 10

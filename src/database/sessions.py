@@ -2,20 +2,11 @@
 
 from .engine import async_engine
 from contextlib import asynccontextmanager
-from domain.subdomain import SubdomainExtractor
 from exceptions import ExceptionFactory, tenant_not_found
-from fastapi import Depends, Header, Query, Request
+from fastapi import Header, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 from typing import Optional
 from uuid import UUID
-
-
-def get_sub_domain_from_request(req: Request) -> str:
-    """Get the subdomain from the request"""
-    subdomain = SubdomainExtractor.from_request(req)
-    if not subdomain:
-        return req.headers.get("host", "localhost").split(":", 1)[0]
-    return subdomain
 
 
 @asynccontextmanager
@@ -46,17 +37,6 @@ async def get_default_db_session():
         yield session
 
 
-async def get_tenant_db_session(tenant_schema_name=Depends(get_sub_domain_from_request)):
-    """FastAPI dependency for tenant-specific database session."""
-    from api.tenant import get_tenant_schema_resolver
-
-    tenant_service = get_tenant_schema_resolver()
-    tenant_schema = await tenant_service.resolve_tenant_schema(tenant_schema_name)
-
-    async with with_tenant_db(tenant_schema=tenant_schema) as session:
-        yield session
-
-
 async def get_admin_db_session(
     tenant_context_id: Optional[UUID] = Query(
         None, alias="tenant_id", description="Tenant ID to manage (for admin context switching)"
@@ -82,11 +62,7 @@ async def get_admin_db_session(
                 raise tenant_not_found(target_tenant_id) from err
 
         async with with_tenant_db(tenant.tenant_schema_name) as session:
-            session._admin_context = True
-            session._tenant_id = target_tenant_id
-            session._tenant_schema = tenant.tenant_schema_name
             yield session
     else:
         async with with_default_db() as session:
-            session._admin_context = True
             yield session

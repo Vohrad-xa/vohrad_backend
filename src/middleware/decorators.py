@@ -1,6 +1,6 @@
 """Utility decorators for common patterns."""
 
-from database.sessions import get_default_db_session, get_tenant_db_session
+from database.sessions import get_default_db_session
 from exceptions import tenant_not_found, user_not_found
 from functools import wraps
 from typing import Awaitable, Callable, TypeVar
@@ -21,7 +21,8 @@ def with_database_session(session_type: str = "tenant"):
                     break
                 return result
             else:
-                session_func = get_tenant_db_session if session_type == "tenant" else get_default_db_session
+                # Deprecated: tenant session path removed; default to shared DB
+                session_func = get_default_db_session
                 async for db in session_func():
                     result = await func(db, *args, **kwargs)
                     break

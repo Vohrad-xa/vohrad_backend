@@ -1,9 +1,9 @@
 """Location router."""
 
-from api.common.base_router import BaseRouterMixin
+from .schema import LocationCreate, LocationDetailResponse, LocationResponse, LocationUpdate
+from .service import location_service
+from api.common import BaseRouterMixin
 from api.common.context_dependencies import get_tenant_context
-from api.location.schema import LocationCreate, LocationDetailResponse, LocationResponse, LocationUpdate
-from api.location.service import location_service
 from api.permission.dependencies import RequireLocationCreate, RequireLocationDelete, RequireLocationUpdate
 from fastapi import APIRouter, Depends, Query, status
 from uuid import UUID

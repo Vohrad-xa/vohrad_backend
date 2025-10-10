@@ -43,3 +43,12 @@ class TenantStatus(Enum):
     ACTIVE    = "active"
     INACTIVE  = "inactive"
     SUSPENDED = "suspended"
+
+
+class LicenseStatus(Enum):
+    """Enumeration of license statuses."""
+
+    INACTIVE  = "inactive"
+    ACTIVE    = "active"
+    SUSPENDED = "suspended"
+    EXPIRED   = "expired"

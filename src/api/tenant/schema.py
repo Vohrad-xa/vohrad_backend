@@ -5,7 +5,7 @@ from api.common.schemas import BaseResponseSchema
 from constants import TenantDefaults, ValidationMessages
 from datetime import time as dtime
 from pydantic import BaseModel, EmailStr, field_validator
-from security.policy.time_utils import minutes_to_hhmm
+from security.policy import minutes_to_hhmm
 from typing import Optional
 from uuid import UUID
 
@@ -96,6 +96,7 @@ class TenantResponse(BaseResponseSchema):
     timezone           : Optional[str] = None
     business_hour_start: Optional[str] = None
     business_hour_end  : Optional[str] = None
+    license_id         : Optional[UUID] = None
 
     @field_validator("business_hour_start", mode="before")
     @classmethod

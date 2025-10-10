@@ -1,24 +1,16 @@
 """Async SQLAlchemy engine configuration."""
 
-from config.settings import get_settings
+from config import get_settings
 from sqlalchemy.ext.asyncio import create_async_engine
 
 __all__ = ["async_engine"]
 
-ASYNC_SQLALCHEMY_DATABASE_URL = (
-    "postgresql+asyncpg://"
-    + get_settings().DB_USER
-    + ":"
-    + get_settings().DB_PASS
-    + "@"
-    + get_settings().DB_HOST
-    + ":"
-    + get_settings().DB_PORT
-    + "/"
-    + get_settings().DB_NAME
-)
+settings = get_settings()
 
-if get_settings().ENVIRONMENT == "development":
+# Convert sync database URL to async URL
+ASYNC_SQLALCHEMY_DATABASE_URL = settings.database_url.replace("postgresql://", "postgresql+asyncpg://")
+
+if settings.is_development:
     async_engine = create_async_engine(
         ASYNC_SQLALCHEMY_DATABASE_URL,
         echo          = True,

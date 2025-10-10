@@ -6,6 +6,7 @@ Notes:
 
 from api.assignment.models import Assignment
 from api.common import BaseService
+from api.license.service import license_service
 from api.role.models import Role
 from api.tenant.models import Tenant
 from api.user.models import User
@@ -13,8 +14,9 @@ from api.user.schema import UserCreate, UserPasswordUpdate, UserUpdate
 from constants.enums import RoleStage
 from database.cache import UserCache
 from database.constraint_handler import constraint_handler
+from database.sessions import get_default_db_session
 from exceptions import ExceptionFactory, invalid_credentials
-from middleware import hash_password, verify_password
+from security.password import hash_password, verify_password
 from sqlalchemy import func, select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -37,12 +39,17 @@ class UserService(BaseService[User, UserCreate, UserUpdate]):
 
     async def create_user(self, db: AsyncSession, user_data: UserCreate, tenant: Tenant) -> User:
         try:
-            hashed_password = hash_password(user_data.password)
-            user_dict = user_data.model_dump(exclude={"password"})
+            # Check seat availability in shared schema
+            async for shared_db in get_default_db_session():
+                await license_service.assert_can_add_user(shared_db, tenant)
+                break
+
+            hashed_password: str = hash_password(user_data.password)
+            user_dict: dict = user_data.model_dump(exclude={"password"})
             user_dict["password"] = hashed_password
             user_dict["tenant_id"] = tenant.tenant_id
 
-            user = User(**user_dict)
+            user: User = User(**user_dict)
             db.add(user)
             await db.commit()
             await db.refresh(user)
@@ -116,7 +123,6 @@ class UserService(BaseService[User, UserCreate, UserUpdate]):
 
         return user
 
-
     async def delete_user(self, db: AsyncSession, user_id: UUID, tenant: Tenant) -> None:
         # Cache key requires email
         user = await self.get_by_id(db, user_id, tenant.tenant_id)
@@ -181,9 +187,7 @@ class UserService(BaseService[User, UserCreate, UserUpdate]):
 
     async def revoke_role_from_user(self, db: AsyncSession, user_id: UUID, role_id: UUID, tenant: Tenant) -> None:
         user = (
-            await db.execute(
-                select(User).where(User.id == user_id).options(selectinload(User.assignments))
-            )
+            await db.execute(select(User).where(User.id == user_id).options(selectinload(User.assignments)))
         ).scalar_one_or_none()
         if not user:
             raise ExceptionFactory.not_found("User", user_id)
@@ -203,10 +207,10 @@ class UserService(BaseService[User, UserCreate, UserUpdate]):
 
     async def assign_roles_bulk(
         self,
-        db         : AsyncSession,
+        db: AsyncSession,
         assignments: list[tuple[UUID, UUID]],
         assigned_by: UUID,
-        tenant     : Tenant,
+        tenant: Tenant,
     ) -> int:
         """Replace users' current roles with provided roles in one transaction."""
         try:
@@ -231,11 +235,7 @@ class UserService(BaseService[User, UserCreate, UserUpdate]):
 
             user_ids = list(target_roles.keys())
             if user_ids:
-                result = await db.execute(
-                    select(User)
-                    .where(User.id.in_(user_ids))
-                    .options(selectinload(User.assignments))
-                )
+                result = await db.execute(select(User).where(User.id.in_(user_ids)).options(selectinload(User.assignments)))
                 users = {u.id: u for u in result.scalars().all()}
             else:
                 users = {}
@@ -245,10 +245,10 @@ class UserService(BaseService[User, UserCreate, UserUpdate]):
                 raise ExceptionFactory.not_found("User", missing[0])
 
             for user_id, role_id in target_roles.items():
-                user_obj             = users[user_id]
-                role_obj             = roles[role_id]
+                user_obj = users[user_id]
+                role_obj = roles[role_id]
                 user_obj.assignments = [Assignment(role=role_obj, assigned_by=assigned_by)]
-                user_obj.role        = role_obj.name
+                user_obj.role = role_obj.name
 
             await db.commit()
             return len(target_roles)
@@ -258,7 +258,7 @@ class UserService(BaseService[User, UserCreate, UserUpdate]):
                 e,
                 {
                     "operation": "assign_roles_bulk",
-                    "count"    : len(assignments),
+                    "count": len(assignments),
                 },
             )
 

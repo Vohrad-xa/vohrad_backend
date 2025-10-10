@@ -34,6 +34,8 @@ dependencies = [
     "bleach>=6.2.0",
     "slowapi>=0.1.9",
     "python-multipart>=0.0.20",
+    "stripe>=13.0.1",
+    "resend>=2.16.0",
 ]
 
 [dependency-groups]
@@ -78,8 +80,13 @@ seed-tenant-roles = "python management/manage.py security seed-tenant-roles"
 # Permission registry CLI
 perm-registry = "python management/manage.py security perm-registry"
 
-# Tenant commands  
+# Interactive menu
+menu = "python management/manage.py menu main"
+
+# Tenant commands
 create-tenant = "python management/manage.py tenant create_tenant"
+create-license = "python management/manage.py license create"
+send-expiry-reminders = "python management/manage.py send-expiry-reminders"
 
 # User commands
 create-user = "python management/manage.py user create-with-role"

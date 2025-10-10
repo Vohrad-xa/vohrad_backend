@@ -7,6 +7,7 @@ from uuid import UUID
 if TYPE_CHECKING:
     from api.user.models import User
 
+from ..password import verify_password
 from .engine import JWTEngine
 from .revocation import get_jwt_revocation_service
 from .tokens import (
@@ -19,11 +20,10 @@ from .tokens import (
     create_user_access_payload,
 )
 from api.tenant import get_tenant_schema_resolver
-from config.jwt import get_jwt_config
+from config import get_jwt_config
 from database import with_default_db, with_tenant_db
 from database.cache import UserCache
 from exceptions import AuthenticationException, TokenInvalidException
-from security.password import verify_password
 
 
 class AuthJWTService:

@@ -1,7 +1,7 @@
 """System monitoring and health check endpoints."""
 
 from api.tenant import get_tenant_schema_resolver
-from config.keys import get_key_manager
+from config import get_key_manager
 from fastapi import APIRouter
 from web import ResponseFactory, SuccessResponse
 
