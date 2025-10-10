@@ -119,6 +119,11 @@ class Settings(BaseSettings):
     RESEND_API_KEY    : Optional[str] = Field(default=None, description="Resend API key for email delivery")
     EMAIL_FROM_ADDRESS: str           = Field(default="noreply@example.com", description="Default 'from' email address")
     EMAIL_FROM_NAME   : str           = Field(default="Vohrad", description="Default 'from' name for emails")
+    LICENSE_TERM_DAYS_DEFAULT: int    = Field(default=365, description="Default license term extension in days")
+    LICENSE_RENEW_URL_TEMPLATE: Optional[str] = Field(
+        default=None,
+        description="Format string for license renewal CTA (supports {tenant_id} and {license_id}).",
+    )
 
     @field_validator("ENVIRONMENT")
     @classmethod

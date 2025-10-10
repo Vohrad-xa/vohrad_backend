@@ -107,5 +107,28 @@ class EmailService:
 
         return await self.send_email(to=to, subject=subject, html=html)
 
+    async def send_license_expiry_reminder_email(
+        self,
+        to           : str,
+        customer_name: str,
+        license_name : str,
+        expires_on   : str,
+        days_remaining: int,
+        renew_url    : str | None = None,
+    ) -> dict:
+        """Send license expiry reminder email to customer."""
+        day_label = "day" if days_remaining == 1 else "days"
+        subject = f"{license_name} license expires in {days_remaining} {day_label}"
+        html = EmailTemplate.license_expiry_reminder_template(
+            customer_name = customer_name,
+            license_name  = license_name,
+            expires_on    = expires_on,
+            days_remaining= days_remaining,
+            company_name  = self.from_name,
+            renew_url     = renew_url,
+        )
+
+        return await self.send_email(to=to, subject=subject, html=html)
+
 
 email_service = EmailService()

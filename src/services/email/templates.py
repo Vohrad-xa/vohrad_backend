@@ -135,6 +135,136 @@ class EmailTemplate:
 </html>"""
 
     @staticmethod
+    def license_expiry_reminder_template(
+        customer_name: str,
+        license_name: str,
+        expires_on: str,
+        days_remaining: int,
+        company_name: str,
+        renew_url: str | None = None,
+    ) -> str:
+        """Generate license expiry reminder email HTML."""
+        # ruff: noqa: E501
+        day_label = "day" if days_remaining == 1 else "days"
+        button_block = ""
+        if renew_url:
+            button_block = f"""
+                <table align=\"center\" width=\"100%\" border=\"0\" cellpadding=\"0\" cellspacing=\"0\" role=\"presentation\" style=\"padding:32px 40px\">
+                    <tbody>
+                        <tr>
+                            <td align=\"center\">
+                                <a href=\"{renew_url}\" style=\"display:inline-block;padding:14px 48px;background-color:#1f2937;color:#ffffff;text-decoration:none;border-radius:4px;font-size:15px;font-weight:600\">Renew License</a>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            """
+
+        return f"""<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html dir="ltr" lang="en">
+<head>
+    <meta content="text/html; charset=UTF-8" http-equiv="Content-Type" />
+    <meta name="x-apple-disable-message-reformatting" />
+</head>
+<body style="background-color:#f6f9fc;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Oxygen-Sans,Ubuntu,Cantarell,'Helvetica Neue',sans-serif">
+    <table align="center" width="100%" border="0" cellpadding="0" cellspacing="0" role="presentation">
+        <tbody>
+            <tr>
+                <td style="background-color:#f6f9fc">
+                    <table align="center" width="100%" border="0" cellpadding="0" cellspacing="0" role="presentation" style="max-width:37.5em;margin:30px auto;background-color:#fff;border-radius:8px;overflow:hidden">
+                        <tbody>
+                            <tr style="width:100%">
+                                <td>
+                                    <table align="center" width="100%" border="0" cellpadding="0" cellspacing="0" role="presentation" style="background-color:#f8f9fa;padding:20px 40px;border-bottom:1px solid #e5e7eb">
+                                        <tbody>
+                                            <tr>
+                                                <td>
+                                                    <h1 style="font-size:20px;font-weight:600;color:#1f2937;margin:0">{company_name}</h1>
+                                                </td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                    <table align="center" width="100%" border="0" cellpadding="0" cellspacing="0" role="presentation" style="padding:0 40px">
+                                        <tbody>
+                                            <tr>
+                                                <td>
+                                                    <hr style="width:100%;border:none;border-top:1px solid #e8eaed;margin:20px 0" />
+                                                    <p style="font-size:14px;line-height:24px;color:#3c4043;margin:20px 0">Hi {customer_name},</p>
+                                                    <p style="font-size:14px;line-height:24px;color:#3c4043;margin:16px 0">This is a reminder that your <strong>{license_name}</strong> license will expire in <strong>{days_remaining} {day_label}</strong> on <strong>{expires_on}</strong>.</p>
+                                                    <p style="font-size:14px;line-height:24px;color:#3c4043;margin:16px 0">Renewing today keeps your team running without disruption and ensures continued access to every feature.</p>
+                                                    <p style="font-size:14px;line-height:24px;color:#3c4043;margin:16px 0">If you already renewed, great news—no further action is required.</p>
+                                                    <p style="font-size:14px;line-height:24px;color:#3c4043;margin:20px 0 8px 0">Best regards,</p>
+                                                    <p style="font-size:16px;line-height:24px;color:#3c4043;margin:0 0 20px 0;font-weight:600">The {company_name} Team</p>
+                                                    <hr style="width:100%;border:none;border-top:1px solid #e8eaed;margin:20px 0" />
+                                                </td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                    <table align="center" width="100%" border="0" cellpadding="0" cellspacing="0" role="presentation" style="padding:0 40px;margin-bottom:8px">
+                                        <tbody>
+                                            <tr>
+                                                <td>
+                                                    <table width="100%" border="0" cellpadding="0" cellspacing="0" style="background-color:#f8f9fa;border-radius:8px;padding:24px">
+                                                        <tbody>
+                                                            <tr>
+                                                                <td>
+                                                                    <table width="100%" border="0" cellpadding="0" cellspacing="0">
+                                                                        <tr>
+                                                                            <td style="padding:8px 0">
+                                                                                <span style="font-size:13px;color:#5f6368;text-transform:uppercase;letter-spacing:0.5px">License</span>
+                                                                            </td>
+                                                                            <td align="right" style="padding:8px 0">
+                                                                                <span style="font-size:14px;color:#202124;font-weight:600">{license_name}</span>
+                                                                            </td>
+                                                                        </tr>
+                                                                        <tr>
+                                                                            <td style="padding:8px 0">
+                                                                                <span style="font-size:13px;color:#5f6368;text-transform:uppercase;letter-spacing:0.5px">Expiration Date</span>
+                                                                            </td>
+                                                                            <td align="right" style="padding:8px 0">
+                                                                                <span style="font-size:14px;color:#202124;font-weight:600">{expires_on}</span>
+                                                                            </td>
+                                                                        </tr>
+                                                                        <tr>
+                                                                            <td style="padding:8px 0">
+                                                                                <span style="font-size:13px;color:#5f6368;text-transform:uppercase;letter-spacing:0.5px">Time Remaining</span>
+                                                                            </td>
+                                                                            <td align="right" style="padding:8px 0">
+                                                                                <span style="font-size:14px;color:#202124;font-weight:600">{days_remaining} {day_label}</span>
+                                                                            </td>
+                                                                        </tr>
+                                                                    </table>
+                                                                </td>
+                                                            </tr>
+                                                        </tbody>
+                                                    </table>
+                                                </td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                    {button_block}
+                                    <table align="center" width="100%" border="0" cellpadding="0" cellspacing="0" role="presentation" style="padding:24px 40px;background-color:#fafafa">
+                                        <tbody>
+                                            <tr>
+                                                <td>
+                                                    <p style="font-size:12px;line-height:20px;color:#5f6368;text-align:center;margin:0">© 2025 {company_name}. All rights reserved.</p>
+                                                    <p style="font-size:12px;line-height:20px;color:#5f6368;text-align:center;margin:8px 0 0 0">Need help? <a href="mailto:contact@vohrad.be" style="color:#2563eb;text-decoration:underline;font-weight:600">contact@vohrad.be</a></p>
+                                                </td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </td>
+            </tr>
+        </tbody>
+    </table>
+</body>
+</html>"""
+
+    @staticmethod
     def invoice_template(
         customer_name: str,
         invoice_url: str,
