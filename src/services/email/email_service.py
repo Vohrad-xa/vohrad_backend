@@ -87,5 +87,25 @@ class EmailService:
 
         return await self.send_email(to=to, subject=subject, html=html)
 
+    async def send_license_activation_email(
+        self,
+        to           : str,
+        customer_name: str,
+        license_name : str,
+        license_key  : str,
+        license_seats: int,
+    ) -> dict:
+        """Send license activation email to customer."""
+        subject = f"Your {license_name} License is Active - {self.from_name}"
+        html = EmailTemplate.license_activation_template(
+            customer_name = customer_name,
+            license_name  = license_name,
+            license_key   = license_key,
+            license_seats = license_seats,
+            company_name  = self.from_name,
+        )
+
+        return await self.send_email(to=to, subject=subject, html=html)
+
 
 email_service = EmailService()

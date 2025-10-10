@@ -1,10 +1,11 @@
 """Webhook service for handling Stripe payment events."""
 
 from api.license import License, LicenseUpdate, license_service
-from api.tenant import Tenant
+from api.tenant import Tenant, tenant_service
 from constants import LicenseStatus
 from database.sessions import with_default_db
 from datetime import datetime
+from services.email import email_service
 from sqlalchemy import select, update
 from typing import Optional
 
@@ -38,8 +39,20 @@ class WebhookService:
             if not license:
                 return True
 
+            # Skip if already active (idempotency - prevent duplicate emails)
+            if license.status == LicenseStatus.ACTIVE.value:
+                return True
+
             license_id = license.id
             tenant_id = license.tenant_id
+            license_name = license.name
+            license_key = license.license_key
+            license_seats = license.seats
+
+            # Get tenant details for email
+            tenant = await tenant_service.get_tenant_by_id(db, tenant_id)
+            tenant_email = tenant.email
+            tenant_name = tenant.sub_domain
 
             update_data: dict = {"status": LicenseStatus.ACTIVE.value}
             if not license.starts_at or license.starts_at > datetime.now():
@@ -52,6 +65,22 @@ class WebhookService:
                 .values(license_id=license_id)
             )
             await db.commit()
+
+            # Send activation email (only sent once since we check status above)
+            if tenant_email:
+                try:
+                    await email_service.send_license_activation_email(
+                        to=tenant_email,
+                        customer_name=tenant_name or "Customer",
+                        license_name=license_name,
+                        license_key=license_key,
+                        license_seats=license_seats,
+                    )
+                except Exception as e:
+                    from observability.logger import get_logger
+                    logger = get_logger()
+                    logger.error(f"Failed to send activation email: {e}")
+
         return True
 
 
