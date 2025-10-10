@@ -4,7 +4,7 @@ from .models import License
 from .schema import LicenseCreate, LicenseUpdate
 from api.common import BaseService
 from api.tenant.models import Tenant
-from constants import LicenseStatus
+from constants import LicenseDefaults, LicenseStatus
 from database import constraint_handler, with_tenant_db
 from datetime import datetime, timedelta, timezone
 from exceptions import ExceptionFactory
@@ -19,11 +19,6 @@ from uuid import UUID
 
 class LicenseService(BaseService[License, LicenseCreate, LicenseUpdate]):
     """License operations with seat validation."""
-
-    # License key generation constants
-    LICENSE_KEY_PREFIX = "LIC"
-    LICENSE_KEY_LENGTH = 16
-    LICENSE_KEY_MAX_ATTEMPTS = 10
 
     def __init__(self):
         super().__init__(License)
@@ -41,13 +36,13 @@ class LicenseService(BaseService[License, LicenseCreate, LicenseUpdate]):
     async def create_license(self, db: AsyncSession, license_data: LicenseCreate) -> License:
         """Create license with auto-generated license key."""
         try:
-            license_key: str = await self._generate_unique_license_key(db)
+            license_key : str  = await self._generate_unique_license_key(db)
             license_dict: dict = license_data.model_dump()
             license_dict["license_key"] = license_key
 
             license: License = License(**license_dict)
             db.add(license)
-            await db.flush()  # Flush to get the ID before suspending others
+            await db.flush()
 
             # If creating an active license, activate it properly
             if license.status == LicenseStatus.ACTIVE.value:
@@ -60,15 +55,21 @@ class LicenseService(BaseService[License, LicenseCreate, LicenseUpdate]):
 
         except IntegrityError as e:
             await db.rollback()
-            await self._handle_integrity_error(e, {"operation": "create_license", "tenant_id": license_data.tenant_id})
+            await self._handle_integrity_error(
+                e,
+                {
+                    "operation": "create_license",
+                    "tenant_id": license_data.tenant_id
+                }
+            )
 
 
     async def activate_license(
         self,
-        db: AsyncSession,
-        license_id: UUID,
+        db            : AsyncSession,
+        license_id    : UUID,
         extension_days: Optional[int] = None,
-        meta_updates: Optional[dict] = None,
+        meta_updates  : Optional[dict] = None,
     ) -> License:
         """Activate a license and set it as tenant's current license."""
         license: License = await self.get_by_id(db, license_id)
@@ -113,7 +114,8 @@ class LicenseService(BaseService[License, LicenseCreate, LicenseUpdate]):
     async def check_seat_availability(self, db: AsyncSession, tenant: Tenant) -> bool:
         """Check if tenant has available seats for new users."""
         if not tenant.license_id:
-            return False  # No license = no seats
+            return False
+
         license: License = await self.get_by_id(db, tenant.license_id)
         if not self._is_license_active(license):
             return False
@@ -214,8 +216,8 @@ class LicenseService(BaseService[License, LicenseCreate, LicenseUpdate]):
 
     async def _suspend_other_active_licenses(
         self,
-        db: AsyncSession,
-        tenant_id: UUID,
+        db                : AsyncSession,
+        tenant_id         : UUID,
         current_license_id: UUID,
     ) -> None:
         """Suspend any other active licenses for the tenant."""
@@ -266,18 +268,22 @@ class LicenseService(BaseService[License, LicenseCreate, LicenseUpdate]):
 
 
     async def _generate_unique_license_key(self, db: AsyncSession) -> str:
-        """Generate unique license key (format: PREFIX-XXXXXXXXXXXXXXXX)."""
+        """Generate unique license key (format: VRDX-XXXX-XXXX-XXXX-XXXX-XXXX-XXXX)."""
         chars = ascii_uppercase + digits
-        for _ in range(self.LICENSE_KEY_MAX_ATTEMPTS):
-            random_part = "".join(random.choices(chars, k=self.LICENSE_KEY_LENGTH))
-            license_key = f"{self.LICENSE_KEY_PREFIX}-{random_part}"
+        for _ in range(LicenseDefaults.LICENSE_KEY_MAX_ATTEMPTS):
+
+            segments = [
+                "".join(random.choices(chars, k=LicenseDefaults.LICENSE_KEY_SEGMENT_SIZE))
+                for _ in range(LicenseDefaults.LICENSE_KEY_SEGMENTS)
+            ]
+            license_key = f"{LicenseDefaults.LICENSE_KEY_PREFIX}-{'-'.join(segments)}"
             # Check if unique
             result = await db.execute(select(License).where(License.license_key == license_key))
             if not result.scalar_one_or_none():
                 return license_key
 
         raise ExceptionFactory.business_rule(
-            f"Failed to generate unique license key after {self.LICENSE_KEY_MAX_ATTEMPTS} attempts"
+            f"Failed to generate unique license key after {LicenseDefaults.LICENSE_KEY_MAX_ATTEMPTS} attempts"
         )
 
 
