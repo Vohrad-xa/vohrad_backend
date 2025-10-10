@@ -86,7 +86,7 @@ async def _create_license_async():
         seats = typer.prompt("Number of seats *", type=int)
 
     # Price (required, defaults to 0)
-    price_input = typer.prompt("Price (USD, press Enter for 0)", default="0", show_default=True)
+    price_input = typer.prompt("Price (EUR, press Enter for 0)", default="0", show_default=True)
     price: Decimal = Decimal("0")
     try:
         price = Decimal(price_input)
@@ -132,18 +132,16 @@ async def _create_license_async():
 
     # Ask about activation using inquirer (following project pattern)
     styler.print_clean_message("Choose activation option for this license:", MessageType.INFO)
-    styler.console.print("  1. Leave Inactive - License will not be active until manually activated")
-    styler.console.print("  2. Activate Directly - Activate immediately without payment")
-    styler.console.print("  3. Create Stripe Invoice - Send invoice and activate after payment")
+    styler.console.print("  1. Activate Directly - Activate immediately without payment")
+    styler.console.print("  2. Activate with Invoice - Activate after payment via Stripe invoice")
 
     activation_choices = [
         inquirer.List(
             "activation",
             message="Select activation option",
             choices=[
-                ("Leave Inactive (default)", "1"),
-                ("Activate Directly (no payment)", "2"),
-                ("Create Stripe Invoice (activate after payment)", "3"),
+                ("Activate Directly (no payment)", "1"),
+                ("Activate with Invoice (requires payment)", "2"),
             ],
             default="1",
         )
@@ -151,6 +149,19 @@ async def _create_license_async():
 
     activation_answers = inquirer.prompt(activation_choices)
     activation_choice = activation_answers["activation"]
+
+    # For invoice option, ask if they want to send invoice now
+    send_invoice_now = False
+    if activation_choice == "2":
+        invoice_confirm = [
+            inquirer.Confirm(
+                "send_invoice",
+                message="Do you want to send the invoice now?",
+                default=True,
+            )
+        ]
+        invoice_answers = inquirer.prompt(invoice_confirm)
+        send_invoice_now = invoice_answers["send_invoice"]
 
     styler.print_clean_message("Creating license...", MessageType.STEP)
 
@@ -178,7 +189,7 @@ async def _create_license_async():
             raise
 
         # Handle activation based on choice
-        if activation_choice == "2":
+        if activation_choice == "1":
             # Direct activation (no payment)
             styler.print_clean_message("Activating license...", MessageType.STEP)
             try:
@@ -192,34 +203,37 @@ async def _create_license_async():
                     MessageType.WARNING
                 )
 
-        elif activation_choice == "3":
-            # Create Stripe invoice
-            styler.print_clean_message("Creating Stripe invoice...", MessageType.STEP)
-            try:
-                result = await stripe_payment_service.process_invoice_flow(db, license_id)
-                # Refresh the license object
-                license_obj = await license_service.get_by_id(db, license_id)
+        elif activation_choice == "2":
+            # Invoice-based activation
+            if send_invoice_now:
+                styler.print_clean_message("Creating Stripe invoice...", MessageType.STEP)
+                try:
+                    result = await stripe_payment_service.process_invoice_flow(db, license_id)
+                    # Refresh the license object
+                    license_obj = await license_service.get_by_id(db, license_id)
 
-                if result["code"] == "already_active":
-                    styler.print_clean_message("License was already active!", MessageType.INFO)
-                elif result["code"] == "activated":
-                    styler.print_clean_message("Invoice paid! License activated!", MessageType.SUCCESS)
-                elif result["code"] == "invoice_pending":
-                    payload = result["payload"]
-                    styler.print_clean_message("Stripe invoice created and sent!", MessageType.SUCCESS)
-                    styler.console.print(f"  Invoice ID: {payload.get('invoice_id')}")
-                    styler.console.print(f"  Hosted URL: {payload.get('hosted_invoice_url')}")
-                    styler.console.print(f"  Status: {payload.get('status')}")
-                elif result["code"] == "invoice_created":
-                    payload = result["payload"]
-                    styler.print_clean_message("Stripe invoice created and sent!", MessageType.SUCCESS)
-                    styler.console.print(f"  Invoice ID: {payload.get('invoice_id')}")
-                    styler.console.print(f"  Hosted URL: {payload.get('hosted_invoice_url')}")
-            except Exception as e:
-                styler.print_clean_message(
-                    f"License created but Stripe invoice failed: {e!s}",
-                    MessageType.WARNING
-                )
+                    if result["code"] == "already_active":
+                        styler.print_clean_message("License was already active!", MessageType.INFO)
+                    elif result["code"] == "activated":
+                        styler.print_clean_message("Invoice paid! License activated!", MessageType.SUCCESS)
+                    elif result["code"] == "invoice_pending":
+                        payload = result["payload"]
+                        styler.print_clean_message("Stripe invoice created and sent!", MessageType.SUCCESS)
+                        styler.console.print(f"  Invoice ID: {payload.get('invoice_id')}")
+                        styler.console.print(f"  Hosted URL: {payload.get('hosted_invoice_url')}")
+                        styler.console.print(f"  Status: {payload.get('status')}")
+                    elif result["code"] == "invoice_created":
+                        payload = result["payload"]
+                        styler.print_clean_message("Stripe invoice created and sent!", MessageType.SUCCESS)
+                        styler.console.print(f"  Invoice ID: {payload.get('invoice_id')}")
+                        styler.console.print(f"  Hosted URL: {payload.get('hosted_invoice_url')}")
+                except Exception as e:
+                    styler.print_clean_message(
+                        f"License created but Stripe invoice failed: {e!s}",
+                        MessageType.WARNING
+                    )
+            else:
+                styler.print_clean_message("License created (inactive). Invoice can be sent later.", MessageType.INFO)
 
         # Build table data while still in session context
         table_data = {
@@ -229,7 +243,7 @@ async def _create_license_async():
             "Tenant": selected_tenant.sub_domain,
             "Tenant ID": str(selected_tenant.tenant_id),
             "Seats": str(license_obj.seats),
-            "Price": f"${license_obj.price:.2f}",
+            "Price": f"€{license_obj.price:.2f}",
             "Status": license_obj.status,
             "Starts At": license_obj.starts_at.strftime("%Y-%m-%d %H:%M:%S"),
         }
@@ -241,9 +255,7 @@ async def _create_license_async():
             table_data["Description"] = license_obj.meta["description"]
 
     # Display final summary (after session is closed)
-    if activation_choice == "1":
-        styler.print_clean_message("License created successfully (inactive)!", MessageType.SUCCESS)
-    elif table_data["Status"] == "active":
+    if table_data["Status"] == "active":
         styler.print_clean_message("License created and activated!", MessageType.SUCCESS)
     else:
         styler.print_clean_message("License created!", MessageType.SUCCESS)
