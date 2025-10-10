@@ -3,7 +3,9 @@
 from api.license import License, LicenseUpdate, license_service
 from api.tenant import Tenant, tenant_service
 from config import get_settings
+from datetime import datetime, timedelta
 from decimal import ROUND_HALF_UP, Decimal
+from services.email import email_service
 from sqlalchemy.ext.asyncio import AsyncSession
 import stripe
 from typing import Optional
@@ -55,8 +57,10 @@ class StripePaymentService:
 
 
     async def create_invoice_for_license(self, db: AsyncSession, license: License) -> dict:
-        """Create and send Stripe invoice for license."""
+        """Create Stripe invoice for license and send email notification."""
         tenant      : Tenant = await tenant_service.get_tenant_by_id(db, license.tenant_id)
+        tenant_email: Optional[str] = tenant.email
+        tenant_name : Optional[str] = tenant.sub_domain
         customer_id : str    = await self.ensure_stripe_customer(db, tenant)
         price        = Decimal(str(license.price or 0))
         seats        = max(1, int(license.seats or 1))
@@ -76,26 +80,50 @@ class StripePaymentService:
             "customer"                      : customer_id,
             "collection_method"             : "send_invoice",
             "days_until_due"                : self.days_until_due,
+            "auto_advance"                  : False,
             "pending_invoice_items_behavior": "include",
             "metadata"                      : metadata,
         }, {"idempotency_key": f"invoice:{idempotency_base}"})
 
-        finalized = self.stripe.invoices.finalize_invoice(invoice.id)
+        # Manually finalize without triggering Stripe's automatic email
+        finalized = self.stripe.invoices.finalize_invoice(invoice.id, {"auto_advance": False})
 
-        if finalized.status == "open":
-            self.stripe.invoices.send_invoice(finalized.id)
-
+        # Store invoice metadata
         meta: dict = license.meta or {}
         meta.update(
             {
                 "stripe_invoice_id" : finalized.id,
                 "hosted_invoice_url": finalized.hosted_invoice_url,
+                "invoice_pdf"       : finalized.invoice_pdf,
                 "amount_cents"      : amount_cents,
                 "currency"          : self.currency,
             }
         )
 
         await license_service.update(db, license.id, LicenseUpdate(meta=meta))
+
+        # Send invoice email via resend
+        if finalized.status == "open" and tenant_email:
+            due_date = datetime.now() + timedelta(days=self.days_until_due)
+            amount_display = f"{price * Decimal(seats):.2f}"
+
+            try:
+                await email_service.send_invoice_email(
+                    to              = tenant_email,
+                    customer_name   = tenant_name or "Customer",
+                    invoice_url     = finalized.hosted_invoice_url,
+                    amount          = amount_display,
+                    currency        = self.currency,
+                    due_date        = due_date.strftime("%B %d, %Y"),
+                    invoice_number  = finalized.number or finalized.id,
+                    invoice_pdf_url = finalized.invoice_pdf or "",
+                    license_name    = license.name,
+                    license_seats   = seats,
+                )
+            except Exception as e:
+                from observability.logger import get_logger
+                logger = get_logger()
+                logger.error(f"Failed to send invoice email: {e}")
 
         return {"invoice_id": finalized.id, "hosted_invoice_url": finalized.hosted_invoice_url}
 
