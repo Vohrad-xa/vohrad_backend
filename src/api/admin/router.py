@@ -51,7 +51,7 @@ async def list_all_tenants(params = Depends(get_admin_params)):
 
 @routes.get(
     "/roles",
-    response_model=SuccessResponse[PaginatedResponse[RoleResponse]]
+    response_model = SuccessResponse[PaginatedResponse[RoleResponse]]
 )
 async def list_all_roles(params = Depends(get_admin_params)):
     """List all roles."""

@@ -16,7 +16,10 @@ routes = APIRouter(
 )
 
 
-@routes.get("/", response_model=SuccessResponse[PaginatedResponse[LicenseResponse]])
+@routes.get(
+    "/",
+    response_model = SuccessResponse[PaginatedResponse[LicenseResponse]]
+)
 async def list_tenant_licenses(
     pagination: PaginationParams = Depends(pagination_params),
     context = Depends(get_shared_context_no_license_check),
@@ -37,7 +40,10 @@ async def list_tenant_licenses(
     )
 
 
-@routes.post("/renew", response_model=SuccessResponse[dict])
+@routes.post(
+    "/renew",
+    response_model = SuccessResponse[dict]
+)
 async def renew_current_license(
     context = Depends(get_shared_context_no_license_check),
 ):
