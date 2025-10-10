@@ -10,7 +10,6 @@ venv.bak/
 pyvenv.cfg
 .pdm-python/
 .pdm-build/
-pdm.lock
 build/
 dist/
 *.egg-info/
