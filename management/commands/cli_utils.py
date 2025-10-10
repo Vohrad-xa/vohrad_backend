@@ -1,11 +1,14 @@
 """Shared CLI utilities for consistent styling across management commands."""
 
+import click
+from datetime import datetime, timedelta
+from dateutil import parser as date_parser  # type: ignore[import]
 from enum import Enum
 import os
 from pathlib import Path
 from rich.console import Console
 from rich.table import Table
-from typing import Dict, Optional
+from typing import Dict, List, Optional, Tuple, Union
 
 try:
     from config.settings import Settings
@@ -120,6 +123,88 @@ class CLIEnvironment:
     def get_project_root() -> Path:
         """Get project root directory."""
         return Path(__file__).parent.parent.parent
+
+
+class CLIDateInput:
+    """Date input utilities for CLI commands with validation and presets."""
+
+    @staticmethod
+    def get_date_input(
+        prompt_text: str,
+        allow_empty: bool = False,
+        min_date: Optional[datetime] = None,
+        styler: Optional[CLIStyler] = None,
+        show_today: bool = True,
+    ) -> Optional[datetime]:
+        """Get date input from user with preset options and custom input."""
+        if styler is None:
+            styler = CLIStyler()
+
+        import inquirer
+
+        # Build choices
+        choices: List[Tuple[str, Union[datetime, str]]] = []
+        if show_today:
+            choices.append(("Today", datetime.now()))
+        choices.extend([
+            ("1 Year from today", datetime.now() + timedelta(days=365)),
+            ("Custom date", "custom"),
+        ])
+
+        questions = [inquirer.List("date_choice", message=prompt_text, choices=choices)]
+
+        answer = inquirer.prompt(questions)
+        selected = answer["date_choice"]
+
+        # If preset was selected, return it
+        if isinstance(selected, datetime):
+            return selected
+
+        return CLIDateInput._get_custom_date_input(min_date=min_date, styler=styler)
+
+    @staticmethod
+    def _get_custom_date_input(min_date: Optional[datetime] = None, styler: Optional[CLIStyler] = None) -> datetime:
+        """Get custom date input using Click's built-in value_proc for datetime parsing."""
+        if styler is None:
+            styler = CLIStyler()
+
+        def parse_date(value: str) -> datetime:
+            """Parse date string with multiple format support."""
+            if not value:
+                raise click.BadParameter("Date is required")
+
+            try:
+                # parsing with dateutil
+                parsed_date = date_parser.parse(value, dayfirst=False)
+                return parsed_date
+            except (ValueError, TypeError) as e:
+                raise click.BadParameter(f"Invalid date format: {e}") from e
+
+        while True:
+            styler.console.print("[dim]Enter date (e.g., 2025-12-20, 20251220, Dec 20 2025)[/dim]")
+
+            try:
+                result = click.prompt(
+                    "Date",
+                    value_proc=parse_date,
+                    show_default=False,
+                )
+
+                # Validate
+                if min_date and result < min_date:
+                    styler.print_clean_message(
+                        f"Date must be on or after {min_date.strftime('%Y-%m-%d')}", MessageType.ERROR
+                    )
+                    continue
+
+                # Show formatted date for confirmation
+                styler.console.print(f"[green]Date entered: {result.strftime('%Y-%m-%d')}[/green]")
+                return result
+
+            except click.Abort:
+                raise
+            except click.exceptions.Exit:
+                raise
 
 
 class CLIFileUtils:
