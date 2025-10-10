@@ -3,6 +3,7 @@
 from api.license import License, LicenseUpdate, license_service
 from api.tenant import Tenant, tenant_service
 from config import get_settings
+from decimal import ROUND_HALF_UP, Decimal
 from sqlalchemy.ext.asyncio import AsyncSession
 import stripe
 from typing import Optional
@@ -22,6 +23,17 @@ class StripePaymentService:
     async def ensure_stripe_customer(self, db: AsyncSession, tenant: Tenant) -> str:
         """Ensure tenant has a Stripe customer ID, create if missing."""
         if tenant.stripe_id:
+            try:
+                customer = self.stripe.customers.retrieve(tenant.stripe_id)
+                updates: dict = {}
+                if tenant.email and getattr(customer, "email", None) != tenant.email:
+                    updates["email"] = tenant.email
+                if tenant.sub_domain and getattr(customer, "name", None) != tenant.sub_domain:
+                    updates["name"] = tenant.sub_domain
+                if updates:
+                    self.stripe.customers.update(customer.id, updates)
+            except Exception:
+                pass
             return tenant.stripe_id
 
         customer = self.stripe.customers.create({
@@ -44,10 +56,13 @@ class StripePaymentService:
 
     async def create_invoice_for_license(self, db: AsyncSession, license: License) -> dict:
         """Create and send Stripe invoice for license."""
-        tenant: Tenant = await tenant_service.get_tenant_by_id(db, license.tenant_id)
-        customer_id: str = await self.ensure_stripe_customer(db, tenant)
-        amount_cents: int = round(float(license.price or 0) * 100) * max(1, license.seats)
-        metadata: dict = {"license_id": str(license.id), "tenant_id": str(tenant.tenant_id)}
+        tenant      : Tenant = await tenant_service.get_tenant_by_id(db, license.tenant_id)
+        customer_id : str    = await self.ensure_stripe_customer(db, tenant)
+        price        = Decimal(str(license.price or 0))
+        seats        = max(1, int(license.seats or 1))
+        amount_cents = int((price * Decimal(seats) * Decimal(100)).quantize(Decimal("1"), rounding=ROUND_HALF_UP))
+        metadata     = {"license_id": str(license.id), "tenant_id": str(tenant.tenant_id)}
+        idempotency_base = f"license:{license.id}:amount:{amount_cents}:cur:{self.currency}"
 
         self.stripe.invoice_items.create({
             "customer"   : customer_id,
@@ -55,7 +70,7 @@ class StripePaymentService:
             "currency"   : self.currency,
             "description": f"License {license.name} ({license.seats} seats)",
             "metadata"   : metadata,
-        })
+        }, {"idempotency_key": f"invoice_item:{idempotency_base}"})
 
         invoice = self.stripe.invoices.create({
             "customer"                      : customer_id,
@@ -63,7 +78,7 @@ class StripePaymentService:
             "days_until_due"                : self.days_until_due,
             "pending_invoice_items_behavior": "include",
             "metadata"                      : metadata,
-        })
+        }, {"idempotency_key": f"invoice:{idempotency_base}"})
 
         finalized = self.stripe.invoices.finalize_invoice(invoice.id)
 
@@ -90,7 +105,10 @@ class StripePaymentService:
         license: License = await license_service.get_by_id(db, license_id)
 
         if license.status == "active":
-            return {"code": "already_active", "payload": license}
+            return {
+                "code"   : "already_active",
+                "payload": license
+                }
 
         meta: dict = license.meta or {}
         existing_invoice_id: Optional[str] = meta.get("stripe_invoice_id")
@@ -98,7 +116,7 @@ class StripePaymentService:
         if existing_invoice_id:
             invoice = self.stripe.invoices.retrieve(existing_invoice_id)
 
-            if invoice.status == "paid" or invoice.paid is True:
+            if invoice.status == "paid":
                 updated: License = await license_service.activate_license(db, license_id)
                 return {"code": "activated", "payload": updated}
 
@@ -108,7 +126,7 @@ class StripePaymentService:
                     "invoice_id"        : existing_invoice_id,
                     "hosted_invoice_url": invoice.hosted_invoice_url or meta.get("hosted_invoice_url"),
                     "status"            : invoice.status,
-                    "paid"              : invoice.paid or False,
+                    "paid"              : (invoice.status == "paid"),
                 },
             }
 

@@ -25,19 +25,26 @@ async def stripe_webhook(
     settings = get_settings()
 
     try:
-        event = stripe.Webhook.construct_event(body, stripe_signature, settings.STRIPE_WEBHOOK_SECRET)
+        event = stripe.Webhook.construct_event(
+            body,
+            stripe_signature,
+            settings.STRIPE_WEBHOOK_SECRET,
+            tolerance=settings.STRIPE_WEBHOOK_TOLERANCE,
+        )
     except ValueError:
         raise HTTPException(status_code=400, detail="Invalid payload") from None
-    except stripe.error.SignatureVerificationError:
+    except stripe.SignatureVerificationError:
         raise HTTPException(status_code=400, detail="Invalid signature") from None
 
     event_type: str = event["type"]
 
     try:
-        if event_type in ["invoice.payment_succeeded", "invoice.paid"]:
+        if event_type in ["invoice.payment_succeeded", "invoice.paid", "invoice_payment.paid"]:
             await webhook_service.handle_payment_succeeded(event)
-        elif event_type == "invoice.payment_failed":
+        elif event_type in ["invoice.payment_failed", "invoice_payment.failed"]:
             await webhook_service.handle_payment_failed(event)
+        elif event_type in ["invoice.updated"]:
+            await webhook_service.handle_invoice_updated(event)
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error processing webhook: {e!s}") from e
 

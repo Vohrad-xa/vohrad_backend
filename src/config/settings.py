@@ -111,6 +111,7 @@ class Settings(BaseSettings):
     STRIPE_SECRET_KEY     : Optional[str] = Field(default=None, description="Stripe secret key")
     STRIPE_PUBLISHABLE_KEY: Optional[str] = Field(default=None, description="Stripe publishable key")
     STRIPE_WEBHOOK_SECRET : Optional[str] = Field(default=None, description="Stripe webhook secret")
+    STRIPE_WEBHOOK_TOLERANCE: int        = Field(default=300, description="Stripe webhook timestamp tolerance (seconds)")
     STRIPE_CURRENCY       : str           = Field(default="eur", description="Stripe default currency")
     STRIPE_DAYS_UNTIL_DUE : int           = Field(default=7, description="Days until invoice is due")
 

@@ -81,6 +81,7 @@ perm-registry = "python management/manage.py security perm-registry"
 
 # Tenant commands  
 create-tenant = "python management/manage.py tenant create_tenant"
+create-license = "python management/manage.py license create"
 
 # User commands
 create-user = "python management/manage.py user create-with-role"
