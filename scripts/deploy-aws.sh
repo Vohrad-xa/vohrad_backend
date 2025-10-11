@@ -229,7 +229,7 @@ sleep 15
 # Generate JWT keys
 echo ""
 echo "Generating JWT keys..."
-docker compose --env-file .env.production -f docker-compose.prod.yml exec -T api pdm run python management/manage.py generate-jwt-keys --to-file keys/jwt_private.pem
+docker compose --env-file .env.production -f docker-compose.prod.yml exec -T api pdm run python management/manage.py security generate-jwt-keys --to-file keys/jwt_private.pem
 
 # Get wildcard SSL certificate
 echo ""
