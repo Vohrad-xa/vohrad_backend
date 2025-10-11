@@ -266,8 +266,8 @@ echo -e "  API Docs: ${GREEN}https://$DOMAIN/docs${NC}"
 
 echo ""
 echo "Next steps:"
-echo "  1. Create admin user: docker compose --env-file .env.production -f docker-compose.prod.yml exec api pdm run python management/manage.py create-admin"
-echo "  2. Create tenant: docker compose --env-file .env.production -f docker-compose.prod.yml exec api pdm run python management/manage.py create-tenant"
+echo "  1. Create admin user: docker compose --env-file .env.production -f docker-compose.prod.yml exec api pdm run python management/manage.py user create-with-role"
+echo "  2. Create tenant: docker compose --env-file .env.production -f docker-compose.prod.yml exec api pdm run python management/manage.py tenant create_tenant"
 echo "  3. Update your Stripe/Email API keys in .env.production"
 
 echo ""
