@@ -206,6 +206,15 @@ echo "Setting up wildcard SSL configuration for $DOMAIN and *.$DOMAIN..."
 # Create required directories
 mkdir -p logs backups certbot/conf certbot/www keys
 
+# Generate JWT keys
+echo ""
+echo "Generating JWT keys..."
+openssl genrsa -out keys/jwt_private.pem 2048
+openssl rsa -in keys/jwt_private.pem -pubout -out keys/jwt_public.pem
+chmod 600 keys/jwt_private.pem
+chmod 644 keys/jwt_public.pem
+echo "JWT keys generated successfully"
+
 # Set up firewall
 echo ""
 echo "Configuring firewall..."
@@ -223,13 +232,10 @@ echo ""
 echo "Starting services..."
 docker compose --env-file .env.production -f docker-compose.prod.yml up -d
 
-# Wait for services
-sleep 15
-
-# Generate JWT keys
+# Wait for services to be ready
 echo ""
-echo "Generating JWT keys..."
-docker compose --env-file .env.production -f docker-compose.prod.yml exec -T api pdm run python management/manage.py security generate-jwt-keys --to-dir keys
+echo "Waiting for services to start..."
+sleep 15
 
 # Get wildcard SSL certificate
 echo ""
