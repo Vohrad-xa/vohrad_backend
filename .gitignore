@@ -23,6 +23,8 @@ dist/
 *.sqlite3
 .local_database/
 logs/
+certbot/
+backups/
 .DS_Store
 .Trashes
 Thumbs.db
