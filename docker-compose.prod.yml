@@ -10,13 +10,13 @@ services:
       - ./nginx/conf.d:/etc/nginx/conf.d:ro
       - ./certbot/conf:/etc/letsencrypt:ro
       - ./certbot/www:/var/www/certbot:ro
-    environment:
-      - DOMAIN=${DOMAIN}
+    tmpfs:
+      - /var/cache/nginx
+      - /var/run
     depends_on:
       - api
     networks:
       - vohrad
-    command: /bin/sh -c "envsubst '$${DOMAIN}' < /etc/nginx/conf.d/production.conf > /etc/nginx/conf.d/production.conf.tmp && mv /etc/nginx/conf.d/production.conf.tmp /etc/nginx/conf.d/production.conf && nginx -g 'daemon off;'"
 
   certbot:
     image: certbot/dns-route53

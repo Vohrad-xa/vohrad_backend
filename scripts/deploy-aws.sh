@@ -200,8 +200,8 @@ EOF
 # Create SSL configuration for this domain
 echo ""
 echo "Setting up wildcard SSL configuration for $DOMAIN and *.$DOMAIN..."
-# The production.conf already exists with ${DOMAIN} placeholder
-# It will be substituted by docker-compose when nginx starts
+# Process the production.conf template with the actual domain
+envsubst '${DOMAIN}' < nginx/conf.d/production.conf > nginx/conf.d/default.conf
 
 # Create required directories
 mkdir -p logs backups certbot/conf certbot/www keys
