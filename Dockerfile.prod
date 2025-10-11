@@ -1,0 +1,64 @@
+# syntax=docker/dockerfile:1
+
+FROM python:3.13-slim as builder
+
+ENV PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1 \
+    PIP_DISABLE_PIP_VERSION_CHECK=1 \
+    PIP_NO_CACHE_DIR=1
+
+WORKDIR /app
+
+RUN apt-get update \
+    && apt-get install --no-install-recommends -y build-essential libpq-dev libffi-dev curl \
+    && rm -rf /var/lib/apt/lists/*
+
+ARG PDM_VERSION=2.25.9
+RUN pip install --upgrade pip \
+    && pip install "pdm==${PDM_VERSION}"
+
+COPY pyproject.toml pdm.lock ./
+RUN pdm install --prod --no-editable --no-self --frozen
+
+FROM python:3.13-slim as production
+
+ENV PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1 \
+    PYTHONPATH=/app:/app/src \
+    PDM_USE_VENV=1 \
+    PDM_VENV_IN_PROJECT=1 \
+    PATH=/app/.venv/bin:$PATH
+
+WORKDIR /app
+
+RUN apt-get update \
+    && apt-get install --no-install-recommends -y libpq5 curl \
+    && rm -rf /var/lib/apt/lists/* \
+    && groupadd -r appuser \
+    && useradd -r -g appuser appuser \
+    && mkdir -p /app/logs /app/keys /app/backups \
+    && chown -R appuser:appuser /app
+
+ARG PDM_VERSION=2.25.9
+RUN pip install --upgrade pip \
+    && pip install "pdm==${PDM_VERSION}"
+
+COPY --from=builder --chown=appuser:appuser /app/.venv /app/.venv
+
+COPY --chown=appuser:appuser src ./src
+COPY --chown=appuser:appuser management ./management
+COPY --chown=appuser:appuser migrations ./migrations
+COPY --chown=appuser:appuser alembic.ini ./alembic.ini
+COPY --chown=appuser:appuser scripts ./scripts
+COPY --chown=appuser:appuser pyproject.toml ./pyproject.toml
+
+RUN chmod +x /app/scripts/start-prod.sh
+
+USER appuser
+
+HEALTHCHECK --interval=30s --timeout=30s --start-period=5s --retries=3 \
+    CMD curl -f http://localhost:8000/v1/system/health || exit 1
+
+EXPOSE 8000
+
+CMD ["/app/scripts/start-prod.sh"]
