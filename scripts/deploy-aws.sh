@@ -201,7 +201,7 @@ EOF
 echo ""
 echo "Setting up wildcard SSL configuration for $DOMAIN and *.$DOMAIN..."
 # Process the production.conf template with the actual domain
-envsubst '${DOMAIN}' < nginx/conf.d/production.conf > nginx/conf.d/default.conf
+envsubst '${DOMAIN}' < nginx/templates/production.conf > nginx/conf.d/default.conf
 
 # Create required directories
 mkdir -p logs backups certbot/conf certbot/www keys

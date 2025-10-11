@@ -1,0 +1,3 @@
+# Ignore processed config files - only templates should be in git
+*.conf
+!.gitignore
