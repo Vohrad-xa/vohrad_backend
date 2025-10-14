@@ -5,10 +5,12 @@ from constants.attachments import (
     MAX_UPLOAD_SIZE,
     SUPPORTED_EXTENSIONS,
     SUPPORTED_MIME_TYPES,
+    AttachmentKind,
     AttachmentTarget,
+    detect_attachment_kind,
 )
 from datetime import datetime
-from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
+from pydantic import BaseModel, ConfigDict, Field, computed_field, field_validator, model_validator
 from typing import Optional
 from uuid import UUID
 
@@ -75,11 +77,15 @@ class AttachmentResponse(AttachmentBase, BaseResponseSchema):
 
     model_config = ConfigDict(from_attributes=True, populate_by_name=True)
 
+    @computed_field  # type: ignore[misc]
+    @property
+    def kind(self) -> AttachmentKind:
+        return detect_attachment_kind(self.file_type, self.extension)
+
 
 class AttachmentLinkRequest(BaseModel):
     """Link an existing attachment to a new entity."""
 
-    attachment_id: UUID
     target_type: AttachmentTarget
     target_id: UUID
 
@@ -87,12 +93,15 @@ class AttachmentLinkRequest(BaseModel):
 class AttachmentFilterParams(BaseModel):
     """Filter options accepted by attachment listings."""
 
-    category       : Optional[str]  = None
-    file_type      : Optional[str]  = None
-    user_id        : Optional[UUID] = None
-    min_size       : Optional[int]  = Field(default=None, ge=0)
-    max_size       : Optional[int]  = Field(default=None, ge=0)
-    include_deleted: bool           = False
+    category       : Optional[str]          = None
+    file_type      : Optional[str]          = None
+    user_id        : Optional[UUID]         = None
+    min_size       : Optional[int]          = Field(default=None, ge=0)
+    max_size       : Optional[int]          = Field(default=None, ge=0)
+    include_deleted: bool                   = False
+    target_type    : Optional[AttachmentTarget] = None
+    target_id      : Optional[UUID]         = None
+    kind           : Optional[AttachmentKind] = None
 
     @model_validator(mode="after")
     def validate_size_bounds(self) -> "AttachmentFilterParams":

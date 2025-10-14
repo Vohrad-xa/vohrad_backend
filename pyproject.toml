@@ -36,6 +36,8 @@ dependencies = [
     "python-multipart>=0.0.20",
     "stripe>=13.0.1",
     "resend>=2.16.0",
+    "aiofiles>=24.1.0",
+    "aioboto3>=12.4.0",
 ]
 
 [dependency-groups]
