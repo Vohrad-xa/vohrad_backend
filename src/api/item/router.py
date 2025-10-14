@@ -42,7 +42,10 @@ async def create_item(
     return ResponseFactory.created(item, response_model=ItemResponse)
 
 
-@routes.get("/", response_model=SuccessResponse[PaginatedResponse[ItemResponse]])
+@routes.get(
+    "/",
+    response_model = SuccessResponse[PaginatedResponse[ItemResponse]]
+)
 async def get_items(
     pagination: PaginationParams = Depends(pagination_params),
     odata_filter: str | None = Query(None, description="OData filter expression"),
@@ -58,7 +61,10 @@ async def get_items(
     return BaseRouterMixin.create_paginated_response(items, total, pagination, ItemResponse)
 
 
-@routes.get("/search", response_model=SuccessResponse[PaginatedResponse[ItemResponse]])
+@routes.get(
+    "/search",
+    response_model = SuccessResponse[PaginatedResponse[ItemResponse]]
+)
 async def search_items(
     q: str = Query(..., min_length=2, description="Search term"),
     pagination: PaginationParams = Depends(pagination_params),
@@ -70,7 +76,10 @@ async def search_items(
     return BaseRouterMixin.create_paginated_response(items, total, pagination, ItemResponse)
 
 
-@routes.get("/code/{code}", response_model=SuccessResponse[ItemDetailResponse])
+@routes.get(
+    "/code/{code}",
+    response_model = SuccessResponse[ItemDetailResponse]
+)
 async def get_item_by_code(
     code: str,
     context=Depends(get_tenant_context),
@@ -83,7 +92,10 @@ async def get_item_by_code(
     return ResponseFactory.success(item, response_model=ItemDetailResponse)
 
 
-@routes.get("/barcode/{barcode}", response_model=SuccessResponse[ItemDetailResponse])
+@routes.get(
+    "/barcode/{barcode}",
+    response_model = SuccessResponse[ItemDetailResponse]
+)
 async def get_item_by_barcode(
     barcode: str,
     context=Depends(get_tenant_context),
@@ -96,7 +108,10 @@ async def get_item_by_barcode(
     return ResponseFactory.success(item, response_model=ItemDetailResponse)
 
 
-@routes.get("/serial/{serial_number}", response_model=SuccessResponse[ItemDetailResponse])
+@routes.get(
+    "/serial/{serial_number}",
+    response_model = SuccessResponse[ItemDetailResponse]
+)
 async def get_item_by_serial(
     serial_number: str,
     context=Depends(get_tenant_context),
@@ -109,7 +124,10 @@ async def get_item_by_serial(
     return ResponseFactory.success(item, response_model=ItemDetailResponse)
 
 
-@routes.get("/tracking/{tracking_mode}", response_model=SuccessResponse[PaginatedResponse[ItemResponse]])
+@routes.get(
+    "/tracking/{tracking_mode}",
+    response_model = SuccessResponse[PaginatedResponse[ItemResponse]]
+)
 async def get_items_by_tracking_mode(
     tracking_mode: str,
     pagination   : PaginationParams = Depends(pagination_params),
@@ -121,7 +139,10 @@ async def get_items_by_tracking_mode(
     return BaseRouterMixin.create_paginated_response(items, total, pagination, ItemResponse)
 
 
-@routes.get("/active", response_model=SuccessResponse[PaginatedResponse[ItemResponse]])
+@routes.get(
+    "/active",
+    response_model = SuccessResponse[PaginatedResponse[ItemResponse]]
+)
 async def get_active_items(
     pagination: PaginationParams = Depends(pagination_params),
     context=Depends(get_tenant_context),
@@ -143,7 +164,10 @@ async def get_item(
     return ResponseFactory.success(item, response_model=ItemDetailResponse)
 
 
-@routes.put("/{item_id}", response_model=UpdatedResponse[ItemResponse])
+@routes.put(
+    "/{item_id}",
+    response_model = UpdatedResponse[ItemResponse]
+)
 async def update_item(
     item_id  : UUID,
     item_data: ItemUpdate,
@@ -155,7 +179,10 @@ async def update_item(
     return ResponseFactory.updated(item, response_model=ItemResponse)
 
 
-@routes.delete("/{item_id}", response_model=DeletedResponse)
+@routes.delete(
+    "/{item_id}",
+    response_model = DeletedResponse
+)
 async def delete_item(
     item_id     : UUID,
     context=Depends(get_tenant_context),
@@ -167,7 +194,10 @@ async def delete_item(
     return ResponseFactory.deleted("item")
 
 
-@routes.put("/{item_id}/locations/{location_id}", response_model=UpdatedResponse[ItemLocationResponse])
+@routes.put(
+    "/{item_id}/locations/{location_id}",
+    response_model = UpdatedResponse[ItemLocationResponse]
+)
 async def update_item_location(
     item_id           : UUID,
     location_id       : UUID,
@@ -183,7 +213,10 @@ async def update_item_location(
     return ResponseFactory.updated(item_location, response_model=ItemLocationResponse)
 
 
-@routes.delete("/{item_id}/locations/{location_id}", response_model=DeletedResponse)
+@routes.delete(
+    "/{item_id}/locations/{location_id}",
+    response_model = DeletedResponse
+)
 async def delete_item_from_location(
     item_id     : UUID,
     location_id : UUID,

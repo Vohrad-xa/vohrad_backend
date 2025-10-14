@@ -3,11 +3,16 @@
 from api.attachment.schema import AttachmentResponse
 from api.common.schemas import BaseResponseSchema
 from api.common.validators import CommonValidators
+from constants.attachments import AttachmentKind, detect_attachment_kind
 from datetime import datetime
 from decimal import Decimal
 from pydantic import BaseModel, Field, computed_field, field_validator
-from typing import Any, Literal, Optional
+from typing import TYPE_CHECKING, Literal, Optional
 from uuid import UUID
+
+if TYPE_CHECKING:  # pragma: no cover - import for typing only
+    from api.attachment.models import Attachment
+    from api.item_location.models import ItemLocation
 
 
 class ItemLocationInput(BaseModel):
@@ -29,7 +34,7 @@ class ItemBase(BaseModel):
     serial_number         : Optional[str] = None
     notes                 : Optional[str] = None
     is_active             : bool = True
-    specifications        : Optional[dict[str, Any]] = None
+    specifications        : Optional[dict[str, object]] = None
     tracking_change_reason: Optional[str] = None
     user_id               : Optional[UUID] = None
     parent_item_id        : Optional[UUID] = None
@@ -80,7 +85,7 @@ class ItemUpdate(BaseModel):
     serial_number         : Optional[str] = None
     notes                 : Optional[str] = None
     is_active             : Optional[bool] = None
-    specifications        : Optional[dict[str, Any]] = None
+    specifications        : Optional[dict[str, object]] = None
     tracking_change_reason: Optional[str] = None
     user_id               : Optional[UUID] = None
     parent_item_id        : Optional[UUID] = None
@@ -140,13 +145,14 @@ class ItemResponse(BaseResponseSchema):
     serial_number         : Optional[str] = None
     notes                 : Optional[str] = None
     is_active             : bool
-    specifications        : Optional[dict[str, Any]] = None
+    specifications        : Optional[dict[str, object]] = None
     tracking_changed_at   : Optional[datetime] = None
     tracking_change_reason: Optional[str] = None
     user_id               : Optional[UUID] = None
     parent_item_id        : Optional[UUID] = None
     item_relation_id      : Optional[UUID] = None
-    item_locations        : Optional[list[Any]] = Field(default=None, exclude=True)
+    item_locations        : Optional[list["ItemLocation"]] = Field(default=None, exclude=True)
+    attachments           : Optional[list["Attachment"]] = Field(default=None, exclude=True)
 
     @computed_field  # type: ignore[misc]
     @property
@@ -156,12 +162,27 @@ class ItemResponse(BaseResponseSchema):
             return Decimal("0")
         return sum((il.quantity or Decimal("0") for il in self.item_locations), Decimal("0"))
 
+    @computed_field  # type: ignore[misc]
+    @property
+    def thumbnail(self) -> Optional[AttachmentResponse]:
+        """First image attachment, suitable for list thumbnails."""
+        if not self.attachments:
+            return None
+
+        for attachment in self.attachments:
+            file_type = getattr(attachment, "file_type", None)
+            extension = getattr(attachment, "extension", None)
+            if detect_attachment_kind(file_type, extension) == AttachmentKind.IMAGE:
+                return AttachmentResponse.model_validate(attachment)
+
+        return None
+
 
 class ItemDetailResponse(ItemResponse):
     """Detailed item response with locations (detail views only)."""
 
-    item_locations: Optional[list[Any]] = Field(default=None, exclude=True)
-    attachments: Optional[list[AttachmentResponse]] = None
+    item_locations: Optional[list["ItemLocation"]] = Field(default=None, exclude=True)
+    attachments   : Optional[list[AttachmentResponse]] = Field(default=None)
 
     @computed_field  # type: ignore[misc]
     @property

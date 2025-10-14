@@ -26,10 +26,21 @@ class ItemService(BaseService[Item, ItemCreate, ItemUpdate]):
     def get_search_fields(self) -> list[str]:
         return ["name", "code", "description", "barcode", "serial_number"]
 
+    def _list_load_options(self):
+        """Relationships required for list view serialization."""
+        return (
+            selectinload(Item.item_locations),
+            selectinload(Item.attachments),
+        )
 
-    async def get_items_for_list(self, db: AsyncSession, page: int, size: int) -> tuple[list[Item], int]:
+
+    async def get_items_for_list(
+        self,
+        db: AsyncSession,
+        page: int, size: int
+    ) -> tuple[list[Item], int]:
         """List view: minimal loading (only item_locations for total_quantity)."""
-        query  = select(Item).options(selectinload(Item.item_locations))
+        query  = select(Item).options(*self._list_load_options())
         total  = await self._count_with_filters(db)
         offset = PaginationUtil.get_offset(page, size)
         query  = query.offset(offset).limit(size)
@@ -59,7 +70,12 @@ class ItemService(BaseService[Item, ItemCreate, ItemUpdate]):
         return await self.get_item_for_detail(db, obj_id)
 
 
-    async def create_item(self, db: AsyncSession, item_data: ItemCreate, current_user: AuthenticatedUser) -> Item:
+    async def create_item(
+        self,
+        db: AsyncSession,
+        item_data: ItemCreate,
+        current_user: AuthenticatedUser
+    ) -> Item:
         """Create a new item with optional locations."""
         try:
             item_dict = item_data.model_dump(exclude={"locations"})
@@ -71,9 +87,9 @@ class ItemService(BaseService[Item, ItemCreate, ItemUpdate]):
             if item_data.locations:
                 item.item_locations = [
                     ItemLocation(
-                        location_id=loc.location_id,
-                        quantity=loc.quantity,
-                        moved_date=func.now()
+                        location_id = loc.location_id,
+                        quantity    = loc.quantity,
+                        moved_date  = func.now()
                     )
                     for loc in item_data.locations
                 ]
@@ -95,7 +111,12 @@ class ItemService(BaseService[Item, ItemCreate, ItemUpdate]):
             )
 
 
-    async def update_item(self, db: AsyncSession, item_id: UUID, item_data: ItemUpdate) -> Item:
+    async def update_item(
+        self,
+        db: AsyncSession,
+        item_id: UUID,
+        item_data: ItemUpdate
+    ) -> Item:
         """Update an item."""
         try:
             updated = await self.update(db, item_id, item_data)
@@ -116,7 +137,12 @@ class ItemService(BaseService[Item, ItemCreate, ItemUpdate]):
         await self.delete(db, item_id)
 
 
-    async def _get_detail_by_field(self, db: AsyncSession, field_name: str, value: UUID | str) -> Optional[Item]:
+    async def _get_detail_by_field(
+        self,
+        db: AsyncSession,
+        field_name: str,
+        value: UUID | str
+    ) -> Optional[Item]:
         """Get item by field value."""
         field = getattr(Item, field_name)
         query = (
@@ -139,24 +165,42 @@ class ItemService(BaseService[Item, ItemCreate, ItemUpdate]):
         return item
 
 
-    async def get_item_by_code(self, db: AsyncSession, code: str) -> Optional[Item]:
+    async def get_item_by_code(
+        self,
+        db: AsyncSession,
+        code: str
+    ) -> Optional[Item]:
         """Get item by code."""
         return await self._get_detail_by_field(db, "code", code)
 
 
-    async def get_item_by_barcode(self, db: AsyncSession, barcode: str) -> Optional[Item]:
+    async def get_item_by_barcode(
+        self,
+        db: AsyncSession,
+        barcode: str
+    ) -> Optional[Item]:
         """Get item by barcode."""
         return await self._get_detail_by_field(db, "barcode", barcode)
 
 
-    async def get_item_by_serial(self, db: AsyncSession, serial_number: str) -> Optional[Item]:
+    async def get_item_by_serial(
+        self,
+        db: AsyncSession,
+        serial_number: str
+    ) -> Optional[Item]:
         """Get item by serial."""
         return await self._get_detail_by_field(db, "serial_number", serial_number)
 
 
-    async def search_items(self, db: AsyncSession, search_term: str, page: int = 1, size: int = 20) -> tuple[list[Item], int]:
+    async def search_items(
+        self,
+        db: AsyncSession,
+        search_term: str,
+        page: int = 1,
+        size: int = 20
+    ) -> tuple[list[Item], int]:
         """Search list view with minimal loading (item_locations only)."""
-        query = select(Item).options(selectinload(Item.item_locations))
+        query = select(Item).options(*self._list_load_options())
 
         search_fields = self.get_search_fields()
         search_conditions = []
@@ -183,7 +227,7 @@ class ItemService(BaseService[Item, ItemCreate, ItemUpdate]):
         size: int = 20,
     ) -> tuple[list[Item], int]:
         """OData filter list view with minimal loading (item_locations only)."""
-        query = select(Item).options(selectinload(Item.item_locations))
+        query = select(Item).options(*self._list_load_options())
         if filter_expression is not None:
             from utils.odata_parser import ODataToSQLAlchemy
 
@@ -208,7 +252,11 @@ class ItemService(BaseService[Item, ItemCreate, ItemUpdate]):
         size: int = 20,
     ) -> tuple[list[Item], int]:
         """Get items by tracking mode."""
-        query  = select(Item).where(Item.tracking_mode == tracking_mode).options(selectinload(Item.item_locations))
+        query  = (
+            select(Item)
+            .where(Item.tracking_mode == tracking_mode)
+            .options(*self._list_load_options())
+        )
         total  = await self._count_with_filters(db, filters=(Item.tracking_mode == tracking_mode))
         offset = PaginationUtil.get_offset(page, size)
         query  = query.offset(offset).limit(size)
@@ -216,17 +264,29 @@ class ItemService(BaseService[Item, ItemCreate, ItemUpdate]):
         return result.scalars().all(), total
 
 
-    async def get_active_items(self, db: AsyncSession, page: int = 1, size: int = 20) -> tuple[list[Item], int]:
+    async def get_active_items(
+        self,
+        db: AsyncSession,
+        page: int = 1, size: int = 20
+    ) -> tuple[list[Item], int]:
         """Get active items."""
-        query  = select(Item).where(Item.is_active == True).options(selectinload(Item.item_locations))  # noqa: E712
-        total  = await self._count_with_filters(db, filters=(Item.is_active == True))  # noqa: E712
+        query  = (
+            select(Item)
+            .where(Item.is_active.is_(True))
+            .options(*self._list_load_options())
+        )
+        total  = await self._count_with_filters(db, filters=(Item.is_active.is_(True)))
         offset = PaginationUtil.get_offset(page, size)
         query  = query.offset(offset).limit(size)
         result = await db.execute(query)
         return result.scalars().all(), total
 
 
-    async def _handle_integrity_error(self, error: IntegrityError, operation_context: dict[str, Any]) -> NoReturn:
+    async def _handle_integrity_error(
+        self,
+        error: IntegrityError,
+        operation_context: dict[str, Any]
+    ) -> NoReturn:
         """Map database constraints to domain exceptions."""
         exception = constraint_handler.handle_violation(error, operation_context)
         raise exception
