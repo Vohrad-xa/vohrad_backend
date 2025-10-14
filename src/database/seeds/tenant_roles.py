@@ -33,6 +33,7 @@ TENANT_ROLES = [
             ("user", "update"),
             ("item", "*"),
             ("location", "*"),
+            ("attachment", "*"),
         ],
     },
     {
@@ -42,7 +43,11 @@ TENANT_ROLES = [
         "role_scope"         : RoleScope.TENANT.name,
         "permissions_mutable": True,
         "managed_by"         : "manager",
-        "permissions"        : [],
+        "permissions"        : [
+            ("attachment", "*"),
+            ("item", "*"),
+            ("location", "*"),
+        ],
     },
 ]
 
