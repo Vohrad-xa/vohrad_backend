@@ -1,18 +1,17 @@
 """Item schemas."""
 
+from __future__ import annotations
+from api.attachment.models import Attachment
 from api.attachment.schema import AttachmentResponse
 from api.common.schemas import BaseResponseSchema
 from api.common.validators import CommonValidators
+from api.item_location.models import ItemLocation
 from constants.attachments import AttachmentKind, detect_attachment_kind
 from datetime import datetime
 from decimal import Decimal
-from pydantic import BaseModel, Field, computed_field, field_validator
-from typing import TYPE_CHECKING, Literal, Optional
+from pydantic import BaseModel, ConfigDict, Field, computed_field, field_validator
+from typing import Literal, Optional
 from uuid import UUID
-
-if TYPE_CHECKING:  # pragma: no cover - import for typing only
-    from api.attachment.models import Attachment
-    from api.item_location.models import ItemLocation
 
 
 class ItemLocationInput(BaseModel):
@@ -135,6 +134,8 @@ class ItemResponse(BaseResponseSchema):
         Eagerly loaded by service to prevent N+1 queries.
     """
 
+    model_config = ConfigDict(arbitrary_types_allowed=True)
+
     id                    : UUID
     name                  : str
     code                  : str
@@ -151,8 +152,8 @@ class ItemResponse(BaseResponseSchema):
     user_id               : Optional[UUID] = None
     parent_item_id        : Optional[UUID] = None
     item_relation_id      : Optional[UUID] = None
-    item_locations        : Optional[list["ItemLocation"]] = Field(default=None, exclude=True)
-    attachments           : Optional[list["Attachment"]] = Field(default=None, exclude=True)
+    item_locations        : Optional[list[ItemLocation]] = Field(default=None, exclude=True)
+    attachments           : Optional[list[Attachment]] = Field(default=None, exclude=True)
 
     @computed_field  # type: ignore[misc]
     @property
@@ -181,7 +182,7 @@ class ItemResponse(BaseResponseSchema):
 class ItemDetailResponse(ItemResponse):
     """Detailed item response with locations (detail views only)."""
 
-    item_locations: Optional[list["ItemLocation"]] = Field(default=None, exclude=True)
+    item_locations: Optional[list[ItemLocation]] = Field(default=None, exclude=True)
     attachments   : Optional[list[AttachmentResponse]] = Field(default=None)
 
     @computed_field  # type: ignore[misc]
@@ -201,3 +202,7 @@ class ItemDetailResponse(ItemResponse):
             for il in self.item_locations
             if il.location
         ] or None
+
+
+ItemResponse.model_rebuild()
+ItemDetailResponse.model_rebuild()
