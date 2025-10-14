@@ -108,21 +108,51 @@ class Settings(BaseSettings):
     MAX_PAGE_SIZE    : int = Field(default=100, description="Maximum pagination page size")
 
     # Stripe settings
-    STRIPE_SECRET_KEY     : Optional[str] = Field(default=None, description="Stripe secret key")
-    STRIPE_PUBLISHABLE_KEY: Optional[str] = Field(default=None, description="Stripe publishable key")
-    STRIPE_WEBHOOK_SECRET : Optional[str] = Field(default=None, description="Stripe webhook secret")
-    STRIPE_WEBHOOK_TOLERANCE: int        = Field(default=300, description="Stripe webhook timestamp tolerance (seconds)")
-    STRIPE_CURRENCY       : str           = Field(default="eur", description="Stripe default currency")
-    STRIPE_DAYS_UNTIL_DUE : int           = Field(default=7, description="Days until invoice is due")
+    STRIPE_SECRET_KEY       : Optional[str] = Field(default=None, description="Stripe secret key")
+    STRIPE_PUBLISHABLE_KEY  : Optional[str] = Field(default=None, description="Stripe publishable key")
+    STRIPE_WEBHOOK_SECRET   : Optional[str] = Field(default=None, description="Stripe webhook secret")
+    STRIPE_WEBHOOK_TOLERANCE: int = Field(default=300, description="Stripe webhook timestamp tolerance (seconds)")
+    STRIPE_CURRENCY         : str = Field(default="eur", description="Stripe default currency")
+    STRIPE_DAYS_UNTIL_DUE   : int = Field(default=7, description="Days until invoice is due")
 
     # Email settings (Resend)
-    RESEND_API_KEY    : Optional[str] = Field(default=None, description="Resend API key for email delivery")
-    EMAIL_FROM_ADDRESS: str           = Field(default="noreply@example.com", description="Default 'from' email address")
-    EMAIL_FROM_NAME   : str           = Field(default="Vohrad", description="Default 'from' name for emails")
-    LICENSE_TERM_DAYS_DEFAULT: int    = Field(default=365, description="Default license term extension in days")
+    RESEND_API_KEY            : Optional[str] = Field(default=None, description="Resend API key for email delivery")
+    EMAIL_FROM_ADDRESS        : str = Field(default="noreply@example.com", description="Default 'from' email address")
+    EMAIL_FROM_NAME           : str = Field(default="Vohrad", description="Default 'from' name for emails")
+    LICENSE_TERM_DAYS_DEFAULT : int = Field(default=365, description="Default license term extension in days")
     LICENSE_RENEW_URL_TEMPLATE: Optional[str] = Field(
         default=None,
         description="Format string for license renewal CTA (supports {tenant_id} and {license_id}).",
+    )
+
+    # Attachment storage settings
+    ATTACHMENT_STORAGE_BACKEND: str = Field(
+        default     = "local",
+        description = "Attachment storage backend (local, s3)",
+    )
+    ATTACHMENT_STORAGE_BASE_PATH: str = Field(
+        default     = "./uploads",
+        description = "Base path for local attachment storage",
+    )
+    ATTACHMENT_STORAGE_CHUNK_SIZE: int = Field(
+        default     = 524_288,
+        description = "Chunk size (bytes) for streaming uploads",
+    )
+    ATTACHMENT_PRESIGNED_TTL_SECONDS: int = Field(
+        default     = 900,
+        description = "Presigned URL TTL in seconds",
+    )
+    ATTACHMENT_STORAGE_S3_BUCKET: Optional[str] = Field(
+        default     = None,
+        description = "S3 bucket for attachment storage",
+    )
+    ATTACHMENT_STORAGE_S3_REGION: Optional[str] = Field(
+        default     = None,
+        description = "S3 region for attachment storage",
+    )
+    ATTACHMENT_STORAGE_S3_ENDPOINT: Optional[str] = Field(
+        default     = None,
+        description = "Custom S3 endpoint override",
     )
 
     @field_validator("ENVIRONMENT")

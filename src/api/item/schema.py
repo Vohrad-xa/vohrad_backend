@@ -1,5 +1,6 @@
 """Item schemas."""
 
+from api.attachment.schema import AttachmentResponse
 from api.common.schemas import BaseResponseSchema
 from api.common.validators import CommonValidators
 from datetime import datetime
@@ -160,6 +161,7 @@ class ItemDetailResponse(ItemResponse):
     """Detailed item response with locations (detail views only)."""
 
     item_locations: Optional[list[Any]] = Field(default=None, exclude=True)
+    attachments: Optional[list[AttachmentResponse]] = None
 
     @computed_field  # type: ignore[misc]
     @property

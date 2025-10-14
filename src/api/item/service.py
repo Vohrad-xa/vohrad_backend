@@ -42,7 +42,10 @@ class ItemService(BaseService[Item, ItemCreate, ItemUpdate]):
         query = (
             select(Item)
             .where(Item.id == item_id)
-            .options(selectinload(Item.item_locations).selectinload(ItemLocation.location))
+            .options(
+                selectinload(Item.item_locations).selectinload(ItemLocation.location),
+                selectinload(Item.attachments),
+            )
         )
         result = await db.execute(query)
         item   = result.scalar_one_or_none()
@@ -119,7 +122,10 @@ class ItemService(BaseService[Item, ItemCreate, ItemUpdate]):
         query = (
             select(Item)
             .where(field == value)
-            .options(selectinload(Item.item_locations).selectinload(ItemLocation.location))
+            .options(
+                selectinload(Item.item_locations).selectinload(ItemLocation.location),
+                selectinload(Item.attachments),
+            )
         )
         result = await db.execute(query)
         return result.scalar_one_or_none()

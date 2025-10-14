@@ -1,6 +1,7 @@
 """FastAPI application setup (routers, middleware, handlers)."""
 
 from api.admin import routes as admin_routes
+from api.attachment.router import routes as attachment_routes
 from api.auth import AuthMiddleware, router as auth_routes
 from api.item.router import routes as item_routes
 from api.item_location.models import ItemLocation  # noqa: F401
@@ -76,6 +77,7 @@ app.include_router(user_routes, prefix="/v1")
 app.include_router(role_routes, prefix="/v1")
 app.include_router(permission_routes, prefix="/v1")
 app.include_router(license_routes, prefix="/v1")
+app.include_router(attachment_routes, prefix="/v1")
 app.include_router(item_routes, prefix="/v1")
 app.include_router(item_location_routes, prefix="/v1")
 app.include_router(location_routes, prefix="/v1")
