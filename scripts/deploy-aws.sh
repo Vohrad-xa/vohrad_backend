@@ -213,6 +213,8 @@ openssl genrsa -out keys/jwt_private.pem 2048
 openssl rsa -in keys/jwt_private.pem -pubout -out keys/jwt_public.pem
 chmod 600 keys/jwt_private.pem
 chmod 644 keys/jwt_public.pem
+# Set ownership to match container's appuser (UID 999)
+chown -R 999:999 keys/
 echo "JWT keys generated successfully"
 
 # Set up firewall
