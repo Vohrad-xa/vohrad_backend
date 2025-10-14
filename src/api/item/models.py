@@ -1,10 +1,12 @@
 """Item model (tenant schemas)."""
 
+from api.attachment import Attachable, Attachment
 from api.item_location.models import ItemLocation
+from constants.attachments import AttachmentTarget
 from database import Base
 import sqlalchemy as sa
 from sqlalchemy.dialects.postgresql import JSONB, UUID as PostgresUUID
-from sqlalchemy.orm import relationship
+from sqlalchemy.orm import foreign, relationship
 from sqlalchemy.sql import func
 from uuid import uuid4
 
@@ -58,4 +60,19 @@ class Item(Base):
         "Location",
         secondary = ItemLocation.__table__,
         viewonly  = True,
+    )
+
+    attachments = relationship(
+        "Attachment",
+        secondary=Attachable.__table__,
+        primaryjoin=lambda: sa.and_(
+            foreign(Attachable.attachable_id) == Item.id,
+            Attachable.attachable_type == AttachmentTarget.ITEM.value,
+        ),
+        secondaryjoin=lambda: sa.and_(
+            foreign(Attachable.attachment_id) == Attachment.id,
+            Attachment.deleted_at.is_(None),
+        ),
+        lazy="selectin",
+        overlaps="attachables,attachment",
     )
