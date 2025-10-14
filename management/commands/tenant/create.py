@@ -1,10 +1,14 @@
 """Tenant creation commands."""
 
-import alembic
 from alembic.config import Config
 from alembic.migration import MigrationContext
 import alembic.script
+from api.attachment.models import Attachable, Attachment  # noqa: F401
+from api.item.models import Item  # noqa: F401
+from api.item_location.models import ItemLocation  # noqa: F401
+from api.location.models import Location  # noqa: F401
 from api.tenant.models import Tenant
+from api.user.models import User  # noqa: F401
 import asyncio
 from commands import CLIStyler, MessageType
 from database import Base
@@ -65,12 +69,7 @@ async def _create_tenant(
     city: str | None = None,
     country: str | None = None,
 ) -> None:
-    """Create a new tenant in the shared schema tenants table and create the schema in the database.
-
-    1. check if the database is up-to-date with migrations.
-    2. add the new tenant.
-    3. create the schema in the database.
-    4. commit the transaction."""
+    """Create a new tenant in the shared schema tenants table and create the schema in the database."""
     async with with_default_db() as db:
         connection = await db.connection()
 
@@ -111,7 +110,6 @@ async def _create_tenant(
         await db.execute(sa.schema.CreateSchema(schema_name))
         await db.commit()
 
-    """create tables in tenant schema."""
     from database.engine import async_engine
 
     def create_tables_sync(sync_conn):
